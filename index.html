@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rin’s Touring Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { margin: 0; padding: 0; font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; background: #f0f2f5; color: #333; }
+        
+        /* ヘッダーとロゴのスタイル */
+        header { background: #1a202c; color: white; padding: 15px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .header-content { display: flex; align-items: center; gap: 15px; max-width: 1200px; margin: 0 auto; }
+        .header-logo { height: 50px; width: auto; border-radius: 4px; background: #2d3748; } /* 読み込み前も枠を維持 */
+        header h1 { margin: 0; font-size: 1.6rem; letter-spacing: 1px; flex-grow: 1; text-align: left; }
+        
+        main { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        /* 地図エリア */
+        .map-section { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        .map-wrapper iframe { width: 100%; height: 65vh; border: 0; display: block; background: #e5e7eb; }
+        .map-footer { padding: 8px; background: #f8fafc; text-align: right; border-top: 1px solid #eee; }
+        .map-footer a { color: #3182ce; font-size: 0.8rem; text-decoration: none; }
+
+        /* コンテンツカード汎用 */
+        .content-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        .content-card h2 { margin-top: 0; font-size: 1.1rem; border-left: 5px solid #3182ce; padding-left: 10px; margin-bottom: 15px; }
+
+        /* 天気グリッド */
+        .weather-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+        .weather-panel { background: #ffffff; border-radius: 10px; padding: 15px; border: 1px solid #e2e8f0; }
+        .weather-panel h3 { margin: 0 0 12px 0; font-size: 1.1rem; text-align: center; color: #2d3748; border-bottom: 1px solid #edf2f7; padding-bottom: 8px; }
+        
+        .forecast-days { display: flex; justify-content: space-between; gap: 8px; }
+        .day-box { flex: 1; text-align: center; padding: 10px 4px; border-radius: 8px; background: #f8fafc; border: 1px solid #f1f5f9; }
+        .day-label { font-size: 0.8rem; font-weight: bold; color: #64748b; margin-bottom: 6px; }
+        .day-icon { font-size: 1.8rem; margin: 8px 0; display: block; min-height: 35px; color: #4a5568; }
+        .day-temp-max { font-size: 1rem; font-weight: bold; color: #2d3748; margin-bottom: 2px; }
+        .day-temp-min { font-size: 0.85rem; font-weight: bold; color: #718096; }
+
+        /* ツール・検索 */
+        .tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .search-box { display: flex; flex-direction: column; gap: 8px; }
+        .search-box input { padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
+        .btn-full { width: 100%; padding: 12px; background: #3182ce; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; box-sizing: border-box; font-size: 1rem; display: block; }
+        .btn-full:hover { background: #2b6cb0; }
+        .btn-orange { background: #ed8936; }
+
+        /* 周辺検索ボタンのレイアウト */
+        .nearby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-nearby { padding: 10px; background: #4a5568; color: white; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; }
+        .btn-nearby:hover { background: #2d3748; }
+        
+        /* 旅の計画（カテゴリ別リンク集） */
+        .link-category { margin-bottom: 20px; }
+        .link-category h3 { font-size: 0.95rem; color: #4a5568; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dashed #cbd5e1; }
+        .link-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+        .link-card { display: flex; align-items: center; justify-content: center; padding: 12px; background: #edf2f7; color: #2d3748; text-decoration: none; border-radius: 8px; font-weight: bold; border: 1px solid #cbd5e1; font-size: 0.85rem; text-align: center; transition: all 0.2s; }
+        .link-card:hover { background: #3182ce; color: white; transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-content">
+        <img src="logo.jpg" alt="Logo" class="header-logo">
+        <h1>Rin’s Touring Hub</h1>
+    </div>
+</header>
+
+<main>
+    <div class="map-section">
+        <div class="map-wrapper">
+            <iframe allowfullscreen allow="geolocation" src="https://umap.openstreetmap.fr/ja/map/map_1403055?scaleControl=true&miniMap=true&scrollWheelZoom=true&zoomControl=true&editMode=disabled&moreControl=true&searchControl=null&tilelayersControl=null&embedControl=null&datalayersControl=true&onLoadPanel=none&captionBar=false&captionMenus=true&locateControl=true"></iframe>
+        </div>
+        <div class="map-footer">
+            <a href="https://umap.openstreetmap.fr/ja/map/map_1403055?scaleControl=true&miniMap=true&scrollWheelZoom=true&zoomControl=true&editMode=disabled&moreControl=true&searchControl=null&tilelayersControl=null&embedControl=null&datalayersControl=true&onLoadPanel=none&captionBar=false&captionMenus=true&locateControl=true" target="_blank">別タブでフルスクリーン表示 ↗</a>
+        </div>
+    </div>
+
+    <div class="content-card">
+        <h2>主要ポイントの天気（3日間）</h2>
+        <div class="weather-grid" id="weather-container"></div>
+    </div>
+
+    <div class="tool-grid">
+        <div class="content-card">
+            <h2>周辺を一発検索</h2>
+            <div class="nearby-grid">
+                <a href="https://www.google.com/maps/search/?api=1&query=ガソリンスタンド" target="_blank" class="btn-nearby"><i class="fa-solid fa-gas-pump"></i> スタンド</a>
+                <a href="https://www.google.com/maps/search/?api=1&query=コンビニ" target="_blank" class="btn-nearby"><i class="fa-solid fa-shop"></i> コンビニ</a>
+                <a href="https://www.google.com/maps/search/?api=1&query=ファミレス" target="_blank" class="btn-nearby"><i class="fa-solid fa-shop"></i> ファミレス</a>
+                <a href="https://www.google.com/maps/search/?api=1&query=快活Club" target="_blank" class="btn-nearby"><i class="fa-solid fa-shirt"></i> 快活Club</a>
+            </div>
+        </div>
+        <div class="content-card">
+            <h2>地名で天気検索</h2>
+            <div class="search-box">
+                <input type="text" id="weather-input" placeholder="例：阿蘇山、道の駅箱根">
+                <button class="btn-full btn-orange" onclick="searchWeather()">tenki.jpで検索</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-card">
+        <h2>旅の計画</h2>
+        <div id="category-container"></div>
+    </div>
+</main>
+
+<script>
+    // 天気ウィジェット処理
+    const weatherGrid = document.getElementById('weather-container');
+    const locations = [
+        { name: "東京", lat: 35.6895, lon: 139.6917 },
+        { name: "伊勢崎", lat: 36.3228, lon: 139.1939 },
+        { name: "山中湖", lat: 35.4259, lon: 138.8759 },
+        { name: "茅野", lat: 35.9953, lon: 138.1558 }
+    ];
+
+    function getWeatherIcon(code) {
+        if (code === 0) return '<i class="fa-solid fa-sun"></i>';
+        if (code <= 2) return '<i class="fa-solid fa-cloud-sun"></i>';
+        if (code === 3) return '<i class="fa-solid fa-cloud"></i>';
+        if (code <= 48) return '<i class="fa-solid fa-smog"></i>';
+        if (code <= 67) return '<i class="fa-solid fa-cloud-rain"></i>';
+        if (code <= 77) return '<i class="fa-solid fa-snowflake"></i>';
+        if (code <= 82) return '<i class="fa-solid fa-cloud-showers-heavy"></i>';
+        if (code <= 86) return '<i class="fa-solid fa-snowflake"></i>';
+        if (code <= 99) return '<i class="fa-solid fa-cloud-bolt"></i>';
+        return '<i class="fa-solid fa-circle-question"></i>';
+    }
+
+    locations.forEach(loc => {
+        const panel = document.createElement('div');
+        panel.className = 'weather-panel';
+        panel.innerHTML = `<h3>${loc.name}</h3><div style="text-align:center; padding:20px;">読み込み中...</div>`;
+        weatherGrid.appendChild(panel);
+
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo`;
+
+        fetch(url).then(res => res.json()).then(data => {
+            let html = `<h3>${loc.name}</h3><div class="forecast-days">`;
+            const labels = ["今日", "明日", "明後日"];
+            for(let i=0; i<3; i++) {
+                const icon = getWeatherIcon(data.daily.weather_code[i]);
+                html += `
+                    <div class="day-box">
+                        <div class="day-label">${labels[i]}</div>
+                        <div class="day-icon">${icon}</div>
+                        <div class="day-temp-max">${Math.round(data.daily.temperature_2m_max[i])}℃</div>
+                        <div class="day-temp-min">${Math.round(data.daily.temperature_2m_min[i])}℃</div>
+                    </div>`;
+            }
+            html += `</div>`;
+            panel.innerHTML = html;
+        }).catch(() => {
+            panel.innerHTML = `<h3>${loc.name}</h3><div style="color:red; text-align:center;">エラー</div>`;
+        });
+    });
+
+    // 天気検索処理
+    function searchWeather() {
+        const place = document.getElementById('weather-input').value;
+        if (place) window.open("https://tenki.jp/search/?keyword=" + encodeURIComponent(place), '_blank');
+    }
+
+    // カテゴリ別リンク集処理
+    const linkCategories = [
+        {
+            title: "ルート作成・交通情報関連",
+            links: [
+                { name: "Google マップナビ", url: "https://www.google.co.jp/maps/dir///" },
+                { name: "JARTIC 渋滞情報", url: "https://www.jartic.or.jp/" },
+                { name: "ドラぷら詳細料金", url: "https://www.driveplaza.com/dp/SearchTop" },
+                { name: "二輪車定率割引申込", url: "https://hayatabi.c-nexco.co.jp/drive/detail.html?id=203" },
+                { name: "二輪車割引料金検索", url: "https://search.w-nexco.co.jp/touring-search/" }
+            ]
+        },
+        {
+            title: "車両管理・その他",
+            links: [
+                { name: "Honda Total Care", url: "https://htc.honda.co.jp/member/" },
+                { name: "Starlink ログイン", url: "https://www.starlink.com/account/home" }
+            ]
+        },
+        {
+            title: "宿泊・温泉",
+            links: [
+                { name: "じゃらん", url: "https://www.jalan.net/" },
+                { name: "楽天トラベル", url: "https://travel.rakuten.co.jp/" },
+                { name: "ゆる～と", url: "https://yuru-to.net/" }
+            ]
+        },
+        {
+            title: "交通その他",
+            links: [
+                { name: "航路マップ", url: "https://searoute.info/" }
+            ]
+        }
+    ];
+
+    const categoryContainer = document.getElementById('category-container');
+    linkCategories.forEach(cat => {
+        const catDiv = document.createElement('div');
+        catDiv.className = 'link-category';
+        
+        let html = `<h3><i class="fa-solid fa-chevron-right" style="font-size:0.8rem; margin-right:5px;"></i>${cat.title}</h3>`;
+        html += `<div class="link-grid">`;
+        cat.links.forEach(link => {
+            html += `<a href="${link.url}" class="link-card" target="_blank">${link.name}</a>`;
+        });
+        html += `</div>`;
+        
+        catDiv.innerHTML = html;
+        categoryContainer.appendChild(catDiv);
+    });
+</script>
+</body>
+</html>
