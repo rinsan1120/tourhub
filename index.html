@@ -8,25 +8,21 @@
     <style>
         body { margin: 0; padding: 0; font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; background: #f0f2f5; color: #333; }
         
-        /* ヘッダーとロゴのスタイル */
         header { background: #1a202c; color: white; padding: 15px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .header-content { display: flex; align-items: center; gap: 15px; max-width: 1200px; margin: 0 auto; }
-        .header-logo { height: 50px; width: auto; border-radius: 4px; background: #2d3748; } /* 読み込み前も枠を維持 */
+        .header-logo { height: 50px; width: auto; border-radius: 4px; background: #2d3748; }
         header h1 { margin: 0; font-size: 1.6rem; letter-spacing: 1px; flex-grow: 1; text-align: left; }
         
         main { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
-        /* 地図エリア */
         .map-section { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; }
         .map-wrapper iframe { width: 100%; height: 65vh; border: 0; display: block; background: #e5e7eb; }
         .map-footer { padding: 8px; background: #f8fafc; text-align: right; border-top: 1px solid #eee; }
         .map-footer a { color: #3182ce; font-size: 0.8rem; text-decoration: none; }
 
-        /* コンテンツカード汎用 */
         .content-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; }
         .content-card h2 { margin-top: 0; font-size: 1.1rem; border-left: 5px solid #3182ce; padding-left: 10px; margin-bottom: 15px; }
 
-        /* 天気グリッド */
         .weather-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
         .weather-panel { background: #ffffff; border-radius: 10px; padding: 15px; border: 1px solid #e2e8f0; }
         .weather-panel h3 { margin: 0 0 12px 0; font-size: 1.1rem; text-align: center; color: #2d3748; border-bottom: 1px solid #edf2f7; padding-bottom: 8px; }
@@ -38,7 +34,6 @@
         .day-temp-max { font-size: 1rem; font-weight: bold; color: #2d3748; margin-bottom: 2px; }
         .day-temp-min { font-size: 0.85rem; font-weight: bold; color: #718096; }
 
-        /* ツール・検索 */
         .tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         .search-box { display: flex; flex-direction: column; gap: 8px; }
         .search-box input { padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
@@ -46,17 +41,23 @@
         .btn-full:hover { background: #2b6cb0; }
         .btn-orange { background: #ed8936; }
 
-        /* 周辺検索ボタンのレイアウト */
         .nearby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-nearby { padding: 10px; background: #4a5568; color: white; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; }
         .btn-nearby:hover { background: #2d3748; }
         
-        /* 旅の計画（カテゴリ別リンク集） */
         .link-category { margin-bottom: 20px; }
         .link-category h3 { font-size: 0.95rem; color: #4a5568; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dashed #cbd5e1; }
         .link-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
         .link-card { display: flex; align-items: center; justify-content: center; padding: 12px; background: #edf2f7; color: #2d3748; text-decoration: none; border-radius: 8px; font-weight: bold; border: 1px solid #cbd5e1; font-size: 0.85rem; text-align: center; transition: all 0.2s; }
         .link-card:hover { background: #3182ce; color: white; transform: translateY(-2px); }
+
+        /* 更新履歴のデザイン */
+        .update-history { font-size: 0.85rem; color: #4a5568; }
+        .update-list { list-style: none; padding: 0; margin: 0; max-height: 180px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: #fafafa; }
+        .update-list li { margin-bottom: 10px; display: flex; align-items: flex-start; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .update-list li:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+        .update-date { font-family: monospace; font-weight: bold; color: #2d3748; min-width: 100px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; margin-right: 12px; font-size: 0.8rem; }
+        .update-content { line-height: 1.5; }
     </style>
 </head>
 <body>
@@ -71,10 +72,10 @@
 <main>
     <div class="map-section">
         <div class="map-wrapper">
-            <iframe allowfullscreen allow="geolocation" src="https://umap.openstreetmap.fr/ja/map/map_1403055?scaleControl=true&miniMap=true&scrollWheelZoom=true&zoomControl=true&editMode=disabled&moreControl=true&searchControl=null&tilelayersControl=null&embedControl=null&datalayersControl=true&onLoadPanel=none&captionBar=false&captionMenus=true&locateControl=true"></iframe>
+            <iframe allowfullscreen allow="geolocation" src="https://umap.openstreetmap.fr/ja/map/map_1403055?scaleControl=true&miniMap=false&scrollWheelZoom=true&zoomControl=true&editMode=disabled&moreControl=true&searchControl=null&tilelayersControl=null&embedControl=null&datalayersControl=true&onLoadPanel=none&captionBar=false&captionMenus=true&locateControl=true"></iframe>
         </div>
         <div class="map-footer">
-            <a href="https://umap.openstreetmap.fr/ja/map/map_1403055?scaleControl=true&miniMap=true&scrollWheelZoom=true&zoomControl=true&editMode=disabled&moreControl=true&searchControl=null&tilelayersControl=null&embedControl=null&datalayersControl=true&onLoadPanel=none&captionBar=false&captionMenus=true&locateControl=true" target="_blank">別タブでフルスクリーン表示 ↗</a>
+            <a href="https://umap.openstreetmap.fr/ja/map/map_1403055?scaleControl=true&miniMap=false&scrollWheelZoom=true&zoomControl=true&editMode=disabled&moreControl=true&searchControl=null&tilelayersControl=null&embedControl=null&datalayersControl=true&onLoadPanel=none&captionBar=false&captionMenus=true&locateControl=true" target="_blank">別タブでフルスクリーン表示 ↗</a>
         </div>
     </div>
 
@@ -87,16 +88,16 @@
         <div class="content-card">
             <h2>周辺を一発検索</h2>
             <div class="nearby-grid">
-                <a href="https://www.google.com/maps/search/?api=1&query=ガソリンスタンド" target="_blank" class="btn-nearby"><i class="fa-solid fa-gas-pump"></i> スタンド</a>
-                <a href="https://www.google.com/maps/search/?api=1&query=コンビニ" target="_blank" class="btn-nearby"><i class="fa-solid fa-shop"></i> コンビニ</a>
-                <a href="https://www.google.com/maps/search/?api=1&query=ファミレス" target="_blank" class="btn-nearby"><i class="fa-solid fa-shop"></i> ファミレス</a>
-                <a href="https://www.google.com/maps/search/?api=1&query=快活Club" target="_blank" class="btn-nearby"><i class="fa-solid fa-shirt"></i> 快活Club</a>
+                <a href="https://www.google.com/maps/search/ガソリンスタンド/" target="_blank" class="btn-nearby"><i class="fa-solid fa-gas-pump"></i> スタンド</a>
+                <a href="https://www.google.com/maps/search/セブンイレブン/" target="_blank" class="btn-nearby"><i class="fa-solid fa-shop"></i> セブン</a>
+                <a href="https://www.google.com/maps/search/ファミリーレストラン/" target="_blank" class="btn-nearby"><i class="fa-solid fa-utensils"></i> ファミレス</a>
+                <a href="https://www.google.com/maps/search/快活Club/" target="_blank" class="btn-nearby"><i class="fa-solid fa-bed"></i> 快活Club</a>
             </div>
         </div>
         <div class="content-card">
             <h2>地名で天気検索</h2>
             <div class="search-box">
-                <input type="text" id="weather-input" placeholder="例：阿蘇、箱根">
+                <input type="text" id="weather-input" placeholder="例：阿蘇山、道の駅箱根">
                 <button class="btn-full btn-orange" onclick="searchWeather()">tenki.jpで検索</button>
             </div>
         </div>
@@ -106,10 +107,22 @@
         <h2>旅の計画</h2>
         <div id="category-container"></div>
     </div>
+
+    <div class="content-card">
+        <h2>Update Log</h2>
+        <div class="update-history">
+            <ul class="update-list">
+                <li><span class="update-date">2026.05.11</span><span class="update-content">Update Logセクションを新設。</span></li>
+                <li><span class="update-date">2026.05.11</span><span class="update-content">umapのミニマップ表示を無効化。</span></li>
+                <li><span class="update-date">2026.05.11</span><span class="update-content">周辺検索を実機リンクへ修正、ドラぷらボタンを統合。</span></li>
+                <li><span class="update-date">2026.05.11</span><span class="update-content">ロゴ画像をJPGへ変更・最適化（軽量化）。</span></li>
+                <li><span class="update-date">2026.05.10</span><span class="update-content">システム名称を「Rin’s Touring Hub」に決定しロゴを反映。</span></li>
+            </ul>
+        </div>
+    </div>
 </main>
 
 <script>
-    // 天気ウィジェット処理
     const weatherGrid = document.getElementById('weather-container');
     const locations = [
         { name: "東京", lat: 35.6895, lon: 139.6917 },
@@ -159,13 +172,11 @@
         });
     });
 
-    // 天気検索処理
     function searchWeather() {
         const place = document.getElementById('weather-input').value;
         if (place) window.open("https://tenki.jp/search/?keyword=" + encodeURIComponent(place), '_blank');
     }
 
-    // カテゴリ別リンク集処理
     const linkCategories = [
         {
             title: "ルート作成・交通情報関連",
@@ -204,14 +215,12 @@
     linkCategories.forEach(cat => {
         const catDiv = document.createElement('div');
         catDiv.className = 'link-category';
-        
         let html = `<h3><i class="fa-solid fa-chevron-right" style="font-size:0.8rem; margin-right:5px;"></i>${cat.title}</h3>`;
         html += `<div class="link-grid">`;
         cat.links.forEach(link => {
             html += `<a href="${link.url}" class="link-card" target="_blank">${link.name}</a>`;
         });
         html += `</div>`;
-        
         catDiv.innerHTML = html;
         categoryContainer.appendChild(catDiv);
     });
