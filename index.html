@@ -248,10 +248,13 @@
                         // レイヤー名をカテゴリーとして渡す
                         marker.bindPopup(createPopupContent(f.properties.name || "名称未設定", coords[1], coords[0], f.properties.description, layerName));
                         pCount++;
-                    } else if (f.geometry.type === "LineString") {
-                        L.polyline(coords.map(c => [c[1], c[0]]), { color: color, weight: 6, opacity: 0.8 }).addTo(group).bindPopup(`<strong>${f.properties.name}</strong><br>カテゴリー: ${layerName}`);
-                        lCount++;
-                    }
+                } else if (f.geometry.type === "LineString") {
+                    L.polyline(coords.map(c => [c[1], c[0]]), { color: color, weight: 6, opacity: 0.8 })
+                     .addTo(group)
+                     // 点（Point）と同じポップアップ生成関数を使うように変更
+                     .bindPopup(createPopupContent(f.properties.name || "名称未設定", coords[0][1], coords[0][0], f.properties.description, layerName));
+                    lCount++;
+                }        
                 });
             });
             badge.innerText = `点: ${pCount} / 線: ${lCount}`;
