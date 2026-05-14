@@ -193,7 +193,7 @@
     });
 
     function placeTempPin(latlng) {
-        const url = `https://www.google.com/maps/dir/?api=1&destination=${latlng.lat},${latlng.lng}`;
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${latlng.lat},${latlng.lng}&travelmode=driving`;
         if (tempMarker) tempMarker.setLatLng(latlng);
         else tempMarker = L.marker(latlng).addTo(map);
         tempMarker.bindPopup(`<div style="text-align:center;"><strong>指定した地点</strong><br><a href="${url}" target="_blank" class="popup-btn"><i class="fa-solid fa-route"></i> ここへのルートを検索</a></div>`).openPopup();
@@ -220,7 +220,7 @@
                     const coords = f.geometry.coordinates;
                     if (f.geometry.type === "Point") {
                         const marker = L.circleMarker([coords[1], coords[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(group);
-                        const url = `https://www.google.com/maps/dir/?api=1&destination=${coords[1]},${coords[0]}`;
+                        const url = `https://www.google.com/maps/dir/?api=1&destination=${coords[1]},${coords[0]}&travelmode=driving`;
                         let content = `<div style="min-width:180px;"><strong>${f.properties.name || "名称未設定"}</strong><br>`;
                         if(f.properties.description) content += `<span style="font-size:0.8rem; color:#666;">${f.properties.description.replace(/\n/g, '<br>')}</span><br>`;
                         content += `<a href="${url}" target="_blank" class="popup-btn"><i class="fa-solid fa-route"></i> ここへのルートを検索</a></div>`;
