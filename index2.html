@@ -198,7 +198,7 @@
         const badge = document.getElementById('stats-badge');
         const legendItems = document.getElementById('legend-items');
         try {
-            const response = await fetch('umap_backup_map (3).umap');
+            const response = await fetch('umap_backup_map.umap');
             const data = await response.json();
             let pCount = 0, lCount = 0;
             data.layers.forEach(layer => {
