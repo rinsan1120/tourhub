@@ -130,8 +130,11 @@
     // 初期表示位置を東京近辺に設定
     const map = L.map('map').setView([35.6895, 139.6917], 8);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    // 境界線のないシンプルな地図タイル（CARTO Voyager）に変更
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20
     }).addTo(map);
 
     // GeoJSONデータの読み込み（locations.geojsonを同じディレクトリに置く前提）
