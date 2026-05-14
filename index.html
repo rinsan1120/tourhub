@@ -13,18 +13,31 @@
         .header-logo { height: 50px; width: auto; border-radius: 4px; background: #2d3748; }
         header h1 { margin: 0; font-size: 1.6rem; letter-spacing: 1px; flex-grow: 1; text-align: left; }
         main { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .map-section { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; position: relative; }
-        #map { width: 100%; height: 65vh; background: #e5e7eb; touch-action: none; }
-        .legend { position: absolute; bottom: 20px; left: 10px; z-index: 1000; background: rgba(255, 255, 255, 0.95); padding: 12px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.2); font-size: 0.8rem; line-height: 1.6; }
-        .legend-title { font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
-        .legend-item { display: flex; align-items: center; margin-bottom: 5px; cursor: pointer; }
-        .legend-item input { margin-right: 8px; cursor: pointer; }
-        .legend-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; }
-        .legend-line { width: 14px; height: 3px; border-radius: 2px; margin-right: 8px; flex-shrink: 0; }
+        .map-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 25px; }
+        .map-section { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; width: 100%; }
+        
+        /* iPhoneのメニューをCSSでも抑制 */
+        #map { 
+            width: 100%; height: 65vh; background: #e5e7eb; 
+            -webkit-touch-callout: none; /* 長押しメニュー禁止 */
+            user-select: none;
+        }
+
+        .legend { background: white; padding: 12px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 0.85rem; line-height: 1.6; }
+        .legend-title { font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px; display: flex; align-items: center; gap: 5px; }
+        #legend-items { display: flex; flex-wrap: wrap; gap: 12px; }
+        .legend-item { display: flex; align-items: center; cursor: pointer; white-space: nowrap; background: #f8fafc; padding: 4px 10px; border-radius: 20px; border: 1px solid #e2e8f0; }
+        .legend-item input { margin-right: 6px; cursor: pointer; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; flex-shrink: 0; }
+        .legend-line { width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; flex-shrink: 0; }
+
+        @media (min-width: 768px) {
+            .legend { position: absolute; bottom: 20px; left: 10px; z-index: 1000; width: auto; max-width: 250px; }
+            #legend-items { flex-direction: column; gap: 5px; }
+            .legend-item { background: transparent; border: none; padding: 0; }
+        }
+
         .loc-btn { position: absolute; bottom: 20px; right: 10px; z-index: 1000; background: rgba(255, 255, 255, 0.95); border: none; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.2); width: 44px; height: 44px; font-size: 1.2rem; color: #4a5568; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .my-location-marker { background: #2196F3; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; position: relative; }
-        .my-location-marker::after { content: ""; width: 14px; height: 14px; border-radius: 50%; background: #2196F3; position: absolute; top: -2px; left: -2px; animation: pulse 2s infinite; border: 2px solid #2196F3; }
-        @keyframes pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(3.5); opacity: 0; } }
         #stats-badge { position: absolute; top: 10px; left: 50px; z-index: 1000; background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; color: #666; border: 1px solid #ddd; pointer-events: none; }
         .popup-btn { display: inline-block; margin-top: 10px; padding: 10px 15px; background: #4285F4; color: white !important; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem; text-align: center; width: 100%; box-sizing: border-box; }
         .content-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; }
@@ -37,7 +50,6 @@
         .day-label { font-size: 0.8rem; font-weight: bold; color: #64748b; margin-bottom: 6px; }
         .day-icon { font-size: 1.8rem; margin: 8px 0; display: block; min-height: 35px; color: #4a5568; }
         .day-temp-max { font-size: 1rem; font-weight: bold; color: #2d3748; margin-bottom: 2px; }
-        .day-temp-min { font-size: 0.85rem; font-weight: bold; color: #718096; }
         .tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         .search-box { display: flex; flex-direction: column; gap: 8px; }
         .search-box input { padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
@@ -62,20 +74,22 @@
     </div>
 </header>
 <main>
-    <div class="map-section">
-        <div id="map"></div>
-        <div id="stats-badge">読み込み中...</div>
-        <div id="operation-guide" style="position: absolute; top: 10px; right: 10px; z-index: 1000; background: rgba(0,0,0,0.6); color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; pointer-events: none;">
-            <i class="fa-solid fa-circle-info"></i> <span id="guide-text">読み込み中...</span>
+    <div class="map-container">
+        <div class="map-section">
+            <div id="map"></div>
+            <div id="stats-badge">読み込み中...</div>
+            <div id="operation-guide" style="position: absolute; top: 10px; right: 10px; z-index: 1000; background: rgba(0,0,0,0.6); color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; pointer-events: none;">
+                <i class="fa-solid fa-circle-info"></i> <span id="guide-text">読み込み中...</span>
+            </div>
+            <button id="current-location-btn" class="loc-btn" onclick="goToMyLocation()" title="現在地に戻る">
+                <i class="fa-solid fa-crosshairs"></i>
+            </button>
         </div>
-        <button id="current-location-btn" class="loc-btn" onclick="goToMyLocation()" title="現在地に戻る">
-            <i class="fa-solid fa-crosshairs"></i>
-        </button>
         <div id="legend" class="legend">
-            <div class="legend-title">レイヤー表示</div>
+            <div class="legend-title"><i class="fa-solid fa-layer-group"></i> 表示レイヤー切り替え</div>
             <div id="legend-items">
-                <div class="legend-item" style="cursor: default;">
-                    <div style="background:#2196F3; width:10px; height:10px; border-radius:50%; border:1px solid white; margin-right:11px; margin-left:1px;"></div>
+                <div class="legend-item" style="cursor: default; border: none; background: transparent;">
+                    <div style="background:#2196F3; width:10px; height:10px; border-radius:50%; border:1px solid white; margin-right:6px;"></div>
                     <span>現在地</span>
                 </div>
             </div>
@@ -116,10 +130,10 @@
 </main>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-    // iOSのダブルタップ・ズーム干渉を避けるため doubleClickZoom を明示的にオフ
+    // doubleClickZoom をオンに戻して標準の拡大を有効化
     const map = L.map('map', { 
         tap: false, 
-        doubleClickZoom: false 
+        doubleClickZoom: true 
     }).setView([35.6895, 139.6917], 8);
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(map);
@@ -131,7 +145,7 @@
     function updateGuideText() {
         const guide = document.getElementById('guide-text');
         const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        guide.innerText = isTouch ? "ダブルタップでピン設置・ルート検索" : "右クリックでピン設置・ルート検索";
+        guide.innerText = isTouch ? "長押しでピン設置" : "右クリックでピン設置";
     }
     updateGuideText();
 
@@ -151,21 +165,24 @@
         if (myLocMarker) map.flyTo(myLocMarker.getLatLng(), 14, { animate: true, duration: 0.5 });
     }
 
-    // --- PC：右クリック ---
+    // --- PC：右クリック / iPhone：長押しメニューの抑制 ---
     map.on('contextmenu', (e) => {
+        L.DomEvent.stopPropagation(e); // イベント伝播を止める
         placeTempPin(e.latlng);
+        return false; // ブラウザ標準メニューを出さない
     });
 
-    // --- スマホ：自前のダブルタップ判定 ---
-    let lastTap = 0;
-    map.on('touchstart', (e) => {
-        const now = Date.now();
-        const timesince = now - lastTap;
-        if (timesince < 300 && timesince > 0) {
-            // ダブルタップ成立
+    // --- スマホ：長押し判定（標準ズームと共存） ---
+    let pressTimer;
+    map.on('touchstart', function(e) {
+        if (e.originalEvent.touches.length > 1) return; // マルチタッチ時は無視
+        pressTimer = setTimeout(() => {
             placeTempPin(e.latlng);
-        }
-        lastTap = now;
+        }, 800); // 800ms長押しで発火
+    });
+
+    map.on('touchend touchmove dblclick', () => {
+        clearTimeout(pressTimer); // 指が離れたり、動いたり、ダブルタップされたらキャンセル
     });
 
     function placeTempPin(latlng) {
