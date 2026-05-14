@@ -13,16 +13,17 @@
         .header-logo { height: 50px; width: auto; border-radius: 4px; background: #2d3748; }
         header h1 { margin: 0; font-size: 1.6rem; letter-spacing: 1px; flex-grow: 1; text-align: left; }
         main { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
         .map-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 25px; }
         .map-section { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; width: 100%; }
         
-        /* iPhoneのメニューをCSSでも抑制 */
         #map { 
             width: 100%; height: 65vh; background: #e5e7eb; 
-            -webkit-touch-callout: none; /* 長押しメニュー禁止 */
+            -webkit-touch-callout: none; 
             user-select: none;
         }
 
+        /* --- レイヤー切り替え（スマホデフォルト：地図の下） --- */
         .legend { background: white; padding: 12px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 0.85rem; line-height: 1.6; }
         .legend-title { font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px; display: flex; align-items: center; gap: 5px; }
         #legend-items { display: flex; flex-wrap: wrap; gap: 12px; }
@@ -31,8 +32,18 @@
         .legend-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; flex-shrink: 0; }
         .legend-line { width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; flex-shrink: 0; }
 
+        /* --- PC表示：元のスタイル（地図の左下に浮かせる） --- */
         @media (min-width: 768px) {
-            .legend { position: absolute; bottom: 20px; left: 10px; z-index: 1000; width: auto; max-width: 250px; }
+            .map-container { position: relative; } /* コンテナを基準にする */
+            .legend { 
+                position: absolute; 
+                bottom: 20px; 
+                left: 10px; 
+                z-index: 1000; 
+                width: auto; 
+                max-width: 250px; 
+                box-shadow: 0 0 15px rgba(0,0,0,0.2); /* 浮遊感を出すための影 */
+            }
             #legend-items { flex-direction: column; gap: 5px; }
             .legend-item { background: transparent; border: none; padding: 0; }
         }
@@ -130,7 +141,6 @@
 </main>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
-    // doubleClickZoom をオンに戻して標準の拡大を有効化
     const map = L.map('map', { 
         tap: false, 
         doubleClickZoom: true 
@@ -165,24 +175,21 @@
         if (myLocMarker) map.flyTo(myLocMarker.getLatLng(), 14, { animate: true, duration: 0.5 });
     }
 
-    // --- PC：右クリック / iPhone：長押しメニューの抑制 ---
     map.on('contextmenu', (e) => {
-        L.DomEvent.stopPropagation(e); // イベント伝播を止める
+        L.DomEvent.stopPropagation(e);
         placeTempPin(e.latlng);
-        return false; // ブラウザ標準メニューを出さない
+        return false;
     });
 
-    // --- スマホ：長押し判定（標準ズームと共存） ---
     let pressTimer;
     map.on('touchstart', function(e) {
-        if (e.originalEvent.touches.length > 1) return; // マルチタッチ時は無視
+        if (e.originalEvent.touches.length > 1) return;
         pressTimer = setTimeout(() => {
             placeTempPin(e.latlng);
-        }, 800); // 800ms長押しで発火
+        }, 800);
     });
-
     map.on('touchend touchmove dblclick', () => {
-        clearTimeout(pressTimer); // 指が離れたり、動いたり、ダブルタップされたらキャンセル
+        clearTimeout(pressTimer);
     });
 
     function placeTempPin(latlng) {
@@ -254,6 +261,7 @@
     }
     loadUpdateLog();
 
+    // 天気
     const weatherGrid = document.getElementById('weather-container');
     const weatherLocs = [{ name: "東京", lat: 35.68, lon: 139.69 }, { name: "伊勢崎", lat: 36.32, lon: 139.19 }, { name: "山中湖", lat: 35.42, lon: 138.87 }, { name: "茅野", lat: 35.99, lon: 138.15 }];
     function getWeatherIcon(code) {
