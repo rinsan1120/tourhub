@@ -126,7 +126,7 @@
     }).addTo(map);
 
     // .umapファイルを読み込む (ファイル名は適宜変更してね)
-    fetch('umap_backup_map (3).umap')
+    fetch('umap_backup_map.umap')
         .then(res => res.json())
         .then(data => {
             if (!data.layers) return;
