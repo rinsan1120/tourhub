@@ -177,10 +177,16 @@
     });
     map.on('touchend touchmove dblclick', () => { clearTimeout(pressTimer); });
 
+    // --- ここを修正：Google公式URL ＋ コンソール出力 ---
     function createPopupContent(name, lat, lng, description = "") {
-        // 変数展開を ${lat} の形式に修正
+        // 正しいGoogleマップのルート検索URL
         const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
         const localUrl = `${baseUrl}&avoid=tolls,highways`;
+        
+        // コンソールにURLを吐き出して確認
+        console.log(`■ ${name} へのルート`);
+        console.log(`高速使用: ${baseUrl}`);
+        console.log(`下道のみ: ${localUrl}`);
         
         let html = `<div class="popup-container">`;
         html += `<span class="popup-title">${name}</span>`;
