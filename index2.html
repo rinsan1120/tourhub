@@ -16,11 +16,10 @@
         
         main { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
-        /* 地図セクション */
         .map-section { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; position: relative; }
         #map { width: 100%; height: 65vh; background: #e5e7eb; }
 
-        /* Leaflet用コントロール */
+        /* Leaflet用スタイル */
         .legend { position: absolute; bottom: 20px; left: 10px; z-index: 1000; background: rgba(255, 255, 255, 0.95); padding: 12px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.2); font-size: 0.8rem; line-height: 1.6; }
         .legend-title { font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
         .legend-item { display: flex; align-items: center; margin-bottom: 5px; cursor: pointer; }
@@ -124,8 +123,7 @@
     <div class="content-card">
         <h2>Update Log</h2>
         <div class="update-history">
-            <ul id="dynamic-update-list" class="update-list">
-                </ul>
+            <ul id="dynamic-update-list" class="update-list"></ul>
         </div>
     </div>
 </main>
@@ -139,6 +137,13 @@
     let tempMarker = null;
     let myLocMarker = null;
     const layerGroups = {};
+
+    function updateGuideText() {
+        const guide = document.getElementById('guide-text');
+        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        guide.innerText = isTouch ? "長押しでピン設置・ルート検索" : "右クリックでピン設置・ルート検索";
+    }
+    updateGuideText();
 
     function updateMyLocation() {
         if (!navigator.geolocation) return;
@@ -156,7 +161,6 @@
         if (myLocMarker) map.flyTo(myLocMarker.getLatLng(), 14, { animate: true, duration: 0.5 });
     }
 
-    // 操作判定
     let pressTimer;
     map.on('touchstart', (e) => {
         if (e.originalEvent.touches && e.originalEvent.touches.length > 1) return;
@@ -166,7 +170,7 @@
     map.on('contextmenu', (e) => { placeTempPin(e.latlng); });
 
     function placeTempPin(latlng) {
-        const url = `https://www.google.com/maps/dir/?api=1&destination=$$${latlng.lat},${latlng.lng}`;
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${latlng.lat},${latlng.lng}`;
         if (tempMarker) tempMarker.setLatLng(latlng);
         else tempMarker = L.marker(latlng).addTo(map);
         tempMarker.bindPopup(`<div style="text-align:center;"><strong>指定した地点</strong><br><a href="${url}" target="_blank" class="popup-btn"><i class="fa-solid fa-route"></i> ここへのルートを検索</a></div>`).openPopup();
@@ -193,7 +197,7 @@
                     const coords = f.geometry.coordinates;
                     if (f.geometry.type === "Point") {
                         const marker = L.circleMarker([coords[1], coords[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(group);
-                        const url = `https://www.google.com/maps/dir/?api=1&destination=$$${coords[1]},${coords[0]}`;
+                        const url = `https://www.google.com/maps/dir/?api=1&destination=${coords[1]},${coords[0]}`;
                         let content = `<div style="min-width:180px;"><strong>${f.properties.name || "名称未設定"}</strong><br>`;
                         if(f.properties.description) content += `<span style="font-size:0.8rem; color:#666;">${f.properties.description.replace(/\n/g, '<br>')}</span><br>`;
                         content += `<a href="${url}" target="_blank" class="popup-btn"><i class="fa-solid fa-route"></i> ここへのルートを検索</a></div>`;
@@ -215,24 +219,13 @@
     }
     loadUmapData();
 
-// --- 操作ガイドの表示切り替え ---
-    function updateGuideText() {
-        const guide = document.getElementById('guide-text');
-        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        guide.innerText = isTouch ? "長押しでピン設置・ルート検索" : "右クリックでピン設置・ルート検索";
-    }
-    updateGuideText();
-
-    // --- 外部ファイルからUpdate Logを読み込む処理（キャッシュ対策版） ---
     async function loadUpdateLog() {
         const updateList = document.getElementById('dynamic-update-list');
         try {
-            // 末尾に時間を付けてキャッシュを回避
             const response = await fetch('updates.txt?t=' + new Date().getTime());
             if (!response.ok) throw new Error();
             const text = await response.text();
             const lines = text.trim().split('\n');
-            
             updateList.innerHTML = '';
             lines.forEach(line => {
                 const parts = line.split('|');
@@ -242,13 +235,10 @@
                     updateList.appendChild(li);
                 }
             });
-        } catch (e) {
-            updateList.innerHTML = '<li>更新履歴の読み込みに失敗しました。</li>';
-        }
+        } catch (e) { updateList.innerHTML = '<li>更新履歴の読み込みに失敗しました。</li>'; }
     }
     loadUpdateLog();
 
-    // 元のスクリプト
     const weatherGrid = document.getElementById('weather-container');
     const weatherLocs = [{ name: "東京", lat: 35.68, lon: 139.69 }, { name: "伊勢崎", lat: 36.32, lon: 139.19 }, { name: "山中湖", lat: 35.42, lon: 138.87 }, { name: "茅野", lat: 35.99, lon: 138.15 }];
     function getWeatherIcon(code) {
