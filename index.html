@@ -23,7 +23,7 @@
             user-select: none;
         }
 
-        /* レイヤー切り替え（スマホデフォルト：地図の下） */
+        /* レイヤー切り替え */
         .legend { background: white; padding: 12px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 0.85rem; line-height: 1.6; }
         .legend-title { font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px; display: flex; align-items: center; gap: 5px; }
         #legend-items { display: flex; flex-wrap: wrap; gap: 12px; }
@@ -32,7 +32,6 @@
         .legend-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; flex-shrink: 0; }
         .legend-line { width: 14px; height: 3px; border-radius: 2px; margin-right: 6px; flex-shrink: 0; }
 
-        /* PC表示：地図の左下に浮かせる（元のスタイル） */
         @media (min-width: 768px) {
             .map-container { position: relative; }
             .legend { 
@@ -56,7 +55,7 @@
         .popup-title { font-weight: bold; margin-bottom: 10px; display: block; border-bottom: 1px solid #eee; padding-bottom: 5px; }
         .popup-label { font-size: 0.8rem; color: #666; margin-bottom: 8px; display: block; }
         .btn-group { display: flex; flex-direction: column; gap: 8px; }
-        .popup-btn { display: block; padding: 10px; color: white !important; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem; text-align: center; }
+        .popup-btn { display: block; padding: 12px; color: white !important; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 0.9rem; text-align: center; }
         .btn-high { background: #4285F4; }
         .btn-local { background: #34A853; }
 
@@ -80,7 +79,6 @@
         .link-category h3 { font-size: 0.95rem; color: #4a5568; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dashed #cbd5e1; }
         .link-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
         .link-card { display: flex; align-items: center; justify-content: center; padding: 12px; background: #edf2f7; color: #2d3748; text-decoration: none; border-radius: 8px; font-weight: bold; border: 1px solid #cbd5e1; font-size: 0.85rem; text-align: center; }
-        .update-history { font-size: 0.85rem; color: #4a5568; }
         .update-list { list-style: none; padding: 0; margin: 0; max-height: 180px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: #fafafa; }
         .update-list li { margin-bottom: 10px; display: flex; align-items: flex-start; border-bottom: 1px solid #eee; padding-bottom: 8px; }
         .update-date { font-family: monospace; font-weight: bold; color: #2d3748; min-width: 100px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; margin-right: 12px; font-size: 0.8rem; }
@@ -123,10 +121,10 @@
         <div class="content-card">
             <h2>周辺を一発検索</h2>
             <div class="nearby-grid">
-                <a href="https://www.google.com/maps/search/?api=1&query=ガソリンスタンド" target="_blank" class="btn-nearby"><i class="fa-solid fa-gas-pump"></i> GS</a>
-                <a href="https://www.google.com/maps/search/?api=1&query=コンビニ" target="_blank" class="btn-nearby"><i class="fa-solid fa-shop"></i> コンビニ</a>
-                <a href="https://www.google.com/maps/search/?api=1&query=ファミリーレストラン" target="_blank" class="btn-nearby"><i class="fa-solid fa-utensils"></i> ファミレス</a>
-                <a href="https://www.google.com/maps/search/?api=1&query=快活CLUB" target="_blank" class="btn-nearby"><i class="fa-solid fa-bed"></i> 快活Club</a>
+                <a href="https://www.google.com/maps/search/?api=1&query=gas+station" target="_blank" class="btn-nearby"><i class="fa-solid fa-gas-pump"></i> GS</a>
+                <a href="https://www.google.com/maps/search/?api=1&query=convenience+store" target="_blank" class="btn-nearby"><i class="fa-solid fa-shop"></i> コンビニ</a>
+                <a href="https://www.google.com/maps/search/?api=1&query=restaurant" target="_blank" class="btn-nearby"><i class="fa-solid fa-utensils"></i> ファミレス</a>
+                <a href="https://www.google.com/maps/search/?api=1&query=kaikatsu+club" target="_blank" class="btn-nearby"><i class="fa-solid fa-bed"></i> 快活Club</a>
             </div>
         </div>
         <div class="content-card">
@@ -194,8 +192,8 @@
     });
     map.on('touchend touchmove dblclick', () => { clearTimeout(pressTimer); });
 
+    // --- ここが修正ポイント：Googleマップ公式URLを正しく組み立てる ---
     function createPopupContent(name, lat, lng, description = "") {
-        // 公式のGoogle Maps URLs形式を使用
         const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
         const localUrl = baseUrl + `&avoid=tolls|highways`;
         
