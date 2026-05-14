@@ -17,23 +17,24 @@
         main { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
         .map-section { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; position: relative; }
+        
+        /* --- Leaflet用地図スタイル --- */
         #map { width: 100%; height: 65vh; background: #e5e7eb; }
-
-        /* Leaflet用スタイル */
         .legend { position: absolute; bottom: 20px; left: 10px; z-index: 1000; background: rgba(255, 255, 255, 0.95); padding: 12px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.2); font-size: 0.8rem; line-height: 1.6; }
         .legend-title { font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
         .legend-item { display: flex; align-items: center; margin-bottom: 5px; cursor: pointer; }
         .legend-item input { margin-right: 8px; cursor: pointer; }
         .legend-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; }
         .legend-line { width: 14px; height: 3px; border-radius: 2px; margin-right: 8px; flex-shrink: 0; }
-        .loc-btn { position: absolute; bottom: 20px; right: 10px; z-index: 1000; background: rgba(255, 255, 255, 0.95); border: none; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.2); width: 44px; height: 44px; font-size: 1.2rem; color: #4a5568; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .loc-btn { position: absolute; bottom: 20px; right: 10px; z-index: 1000; background: rgba(255, 255, 255, 0.95); border: none; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.2); width: 44px; height: 44px; font-size: 1.2rem; color: #4a5568; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+        .loc-btn:hover { background: #f8fafc; color: #3182ce; }
         .my-location-marker { background: #2196F3; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; position: relative; }
         .my-location-marker::after { content: ""; width: 14px; height: 14px; border-radius: 50%; background: #2196F3; position: absolute; top: -2px; left: -2px; animation: pulse 2s infinite; border: 2px solid #2196F3; }
         @keyframes pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(3.5); opacity: 0; } }
         #stats-badge { position: absolute; top: 10px; left: 50px; z-index: 1000; background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; color: #666; border: 1px solid #ddd; pointer-events: none; }
         .popup-btn { display: inline-block; margin-top: 10px; padding: 10px 15px; background: #4285F4; color: white !important; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem; text-align: center; width: 100%; box-sizing: border-box; }
 
-        /* 元のCSS維持 */
+        /* --- 以下、元のCSSを完全維持 --- */
         .content-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; }
         .content-card h2 { margin-top: 0; font-size: 1.1rem; border-left: 5px solid #3182ce; padding-left: 10px; margin-bottom: 15px; }
         .weather-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
@@ -49,16 +50,22 @@
         .search-box { display: flex; flex-direction: column; gap: 8px; }
         .search-box input { padding: 12px; border: 2px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }
         .btn-full { width: 100%; padding: 12px; background: #3182ce; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; box-sizing: border-box; font-size: 1rem; display: block; }
+        .btn-full:hover { background: #2b6cb0; }
+        .btn-orange { background: #ed8936; }
         .nearby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-nearby { padding: 10px; background: #4a5568; color: white; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; }
+        .btn-nearby:hover { background: #2d3748; }
         .link-category { margin-bottom: 20px; }
         .link-category h3 { font-size: 0.95rem; color: #4a5568; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dashed #cbd5e1; }
         .link-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
-        .link-card { display: flex; align-items: center; justify-content: center; padding: 12px; background: #edf2f7; color: #2d3748; text-decoration: none; border-radius: 8px; font-weight: bold; border: 1px solid #cbd5e1; font-size: 0.85rem; text-align: center; }
+        .link-card { display: flex; align-items: center; justify-content: center; padding: 12px; background: #edf2f7; color: #2d3748; text-decoration: none; border-radius: 8px; font-weight: bold; border: 1px solid #cbd5e1; font-size: 0.85rem; text-align: center; transition: all 0.2s; }
+        .link-card:hover { background: #3182ce; color: white; transform: translateY(-2px); }
         .update-history { font-size: 0.85rem; color: #4a5568; }
         .update-list { list-style: none; padding: 0; margin: 0; max-height: 180px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: #fafafa; }
         .update-list li { margin-bottom: 10px; display: flex; align-items: flex-start; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .update-list li:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
         .update-date { font-family: monospace; font-weight: bold; color: #2d3748; min-width: 100px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; margin-right: 12px; font-size: 0.8rem; }
+        .update-content { line-height: 1.5; }
     </style>
 </head>
 <body>
@@ -110,7 +117,7 @@
             <h2>地名で天気検索</h2>
             <div class="search-box">
                 <input type="text" id="weather-input" placeholder="例：阿蘇山、道の駅箱根">
-                <button class="btn-full" style="background:#ed8936;" onclick="searchWeather()">tenki.jpで検索</button>
+                <button class="btn-full btn-orange" onclick="searchWeather()">tenki.jpで検索</button>
             </div>
         </div>
     </div>
@@ -131,7 +138,8 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 <script>
-    const map = L.map('map', { tap: false }).setView([35.6895, 139.6917], 8);
+    // --- 地図制御ロジック ---
+    const map = L.map('map', { doubleClickZoom: false }).setView([35.6895, 139.6917], 8);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(map);
 
     let tempMarker = null;
@@ -141,7 +149,7 @@
     function updateGuideText() {
         const guide = document.getElementById('guide-text');
         const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-        guide.innerText = isTouch ? "長押しでピン設置・ルート検索" : "右クリックでピン設置・ルート検索";
+        guide.innerText = isTouch ? "ダブルタップでピン設置・ルート検索" : "右クリックでピン設置・ルート検索";
     }
     updateGuideText();
 
@@ -161,21 +169,24 @@
         if (myLocMarker) map.flyTo(myLocMarker.getLatLng(), 14, { animate: true, duration: 0.5 });
     }
 
-    let pressTimer;
-    map.on('touchstart', (e) => {
-        if (e.originalEvent.touches && e.originalEvent.touches.length > 1) return;
-        pressTimer = setTimeout(() => { placeTempPin(e.latlng); }, 800);
+    // --- PC：右クリックでピンを刺す ---
+    map.on('contextmenu', (e) => {
+        placeTempPin(e.latlng);
     });
-    map.on('touchend touchmove', () => { clearTimeout(pressTimer); });
-    map.on('contextmenu', (e) => { placeTempPin(e.latlng); });
+
+    // --- スマホ：ダブルタップでピンを刺す ---
+    map.on('dblclick', (e) => {
+        placeTempPin(e.latlng);
+    });
 
     function placeTempPin(latlng) {
         const url = `https://www.google.com/maps/dir/?api=1&destination=${latlng.lat},${latlng.lng}`;
-        if (tempMarker) tempMarker.setLatLng(latlng);
-        else tempMarker = L.marker(latlng).addTo(map);
+        if (tempMarker) { tempMarker.setLatLng(latlng); }
+        else { tempMarker = L.marker(latlng).addTo(map); }
         tempMarker.bindPopup(`<div style="text-align:center;"><strong>指定した地点</strong><br><a href="${url}" target="_blank" class="popup-btn"><i class="fa-solid fa-route"></i> ここへのルートを検索</a></div>`).openPopup();
     }
 
+    // Umapデータ読み込み
     async function loadUmapData() {
         const badge = document.getElementById('stats-badge');
         const legendItems = document.getElementById('legend-items');
@@ -187,12 +198,15 @@
                 const color = layer.properties.color || "#3182ce";
                 const layerName = layer.properties.name || "未分類";
                 const hasLine = layer.features.some(f => f.geometry.type === "LineString");
+
                 const group = L.layerGroup().addTo(map);
                 layerGroups[layerName] = group;
+
                 const item = document.createElement('div');
                 item.className = 'legend-item';
                 item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${layerName}', this.checked)"><span class="${hasLine ? 'legend-line' : 'legend-dot'}" style="background:${color}"></span><span>${layerName}</span>`;
                 legendItems.appendChild(item);
+
                 layer.features.forEach(f => {
                     const coords = f.geometry.coordinates;
                     if (f.geometry.type === "Point") {
@@ -210,13 +224,14 @@
                 });
             });
             badge.innerText = `点: ${pCount} / 線: ${lCount}`;
-        } catch (e) { badge.innerText = "読込エラー"; }
+        } catch (e) { badge.innerText = "読み込みエラー"; }
     }
 
     function toggleLayer(name, checked) {
-        if (checked) map.addLayer(layerGroups[name]);
-        else map.removeLayer(layerGroups[name]);
+        if (checked) { map.addLayer(layerGroups[name]); } 
+        else { map.removeLayer(layerGroups[name]); }
     }
+
     loadUmapData();
 
     async function loadUpdateLog() {
@@ -239,6 +254,7 @@
     }
     loadUpdateLog();
 
+    // 元のスクリプト
     const weatherGrid = document.getElementById('weather-container');
     const weatherLocs = [{ name: "東京", lat: 35.68, lon: 139.69 }, { name: "伊勢崎", lat: 36.32, lon: 139.19 }, { name: "山中湖", lat: 35.42, lon: 138.87 }, { name: "茅野", lat: 35.99, lon: 138.15 }];
     function getWeatherIcon(code) {
