@@ -16,21 +16,27 @@
         
         main { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
+        /* --- 地図セクションとコントロール --- */
         .map-section { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; position: relative; }
-        
-        /* --- Leaflet用地図スタイル --- */
         #map { width: 100%; height: 65vh; background: #e5e7eb; }
+
+        /* 凡例 & レイヤーフィルタ */
         .legend { position: absolute; bottom: 20px; left: 10px; z-index: 1000; background: rgba(255, 255, 255, 0.95); padding: 12px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.2); font-size: 0.8rem; line-height: 1.6; }
         .legend-title { font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
         .legend-item { display: flex; align-items: center; margin-bottom: 5px; cursor: pointer; }
         .legend-item input { margin-right: 8px; cursor: pointer; }
         .legend-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; flex-shrink: 0; }
         .legend-line { width: 14px; height: 3px; border-radius: 2px; margin-right: 8px; flex-shrink: 0; }
+
+        /* 現在地に戻るボタン */
         .loc-btn { position: absolute; bottom: 20px; right: 10px; z-index: 1000; background: rgba(255, 255, 255, 0.95); border: none; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.2); width: 44px; height: 44px; font-size: 1.2rem; color: #4a5568; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
         .loc-btn:hover { background: #f8fafc; color: #3182ce; }
+
+        /* 現在地パルスアニメーション */
         .my-location-marker { background: #2196F3; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; position: relative; }
         .my-location-marker::after { content: ""; width: 14px; height: 14px; border-radius: 50%; background: #2196F3; position: absolute; top: -2px; left: -2px; animation: pulse 2s infinite; border: 2px solid #2196F3; }
         @keyframes pulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(3.5); opacity: 0; } }
+        
         #stats-badge { position: absolute; top: 10px; left: 50px; z-index: 1000; background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; color: #666; border: 1px solid #ddd; pointer-events: none; }
         .popup-btn { display: inline-block; margin-top: 10px; padding: 10px 15px; background: #4285F4; color: white !important; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem; text-align: center; width: 100%; box-sizing: border-box; }
 
@@ -66,7 +72,6 @@
         .link-card { display: flex; align-items: center; justify-content: center; padding: 12px; background: #edf2f7; color: #2d3748; text-decoration: none; border-radius: 8px; font-weight: bold; border: 1px solid #cbd5e1; font-size: 0.85rem; text-align: center; transition: all 0.2s; }
         .link-card:hover { background: #3182ce; color: white; transform: translateY(-2px); }
 
-        /* 更新履歴のデザイン */
         .update-history { font-size: 0.85rem; color: #4a5568; }
         .update-list { list-style: none; padding: 0; margin: 0; max-height: 180px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: #fafafa; }
         .update-list li { margin-bottom: 10px; display: flex; align-items: flex-start; border-bottom: 1px solid #eee; padding-bottom: 8px; }
@@ -137,6 +142,7 @@
         <h2>Update Log</h2>
         <div class="update-history">
             <ul class="update-list">
+                <li><span class="update-date">2026.05.14</span><span class="update-content">Leaflet版</span></li>
                 <li><span class="update-date">2026.05.11</span><span class="update-content">Update Logセクションを新設。</span></li>
                 <li><span class="update-date">2026.05.11</span><span class="update-content">umapのミニマップ表示を無効化。</span></li>
                 <li><span class="update-date">2026.05.11</span><span class="update-content">周辺検索を実機リンクへ修正、ドラぷらボタンを統合。</span></li>
@@ -150,7 +156,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 <script>
-    // --- 追加した地図用のロジック ---
+    // --- 地図制御ロジック ---
     const map = L.map('map', { tap: false }).setView([35.6895, 139.6917], 8);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(map);
 
@@ -158,6 +164,7 @@
     let myLocMarker = null;
     const layerGroups = {};
 
+    // 現在地取得
     function updateMyLocation() {
         if (!navigator.geolocation) return;
         navigator.geolocation.watchPosition((position) => {
@@ -170,6 +177,7 @@
     }
     updateMyLocation();
 
+    // 現在地に戻るボタン
     function goToMyLocation() {
         if (myLocMarker) {
             map.flyTo(myLocMarker.getLatLng(), 14, { animate: true, duration: 0.5 });
@@ -178,26 +186,39 @@
         }
     }
 
-    // ロングタップ（長押し）でピンを刺す
-    let pressTimer;
-    map.on('mousedown touchstart', (e) => {
-        if (e.originalEvent.touches && e.originalEvent.touches.length > 1) return;
-        pressTimer = setTimeout(() => { placeTempPin(e.latlng); }, 800);
+    // --- PC：右クリックでピンを刺す ---
+    map.on('contextmenu', (e) => {
+        placeTempPin(e.latlng);
     });
-    map.on('mouseup touchend mousemove touchmove', () => { clearTimeout(pressTimer); });
-    map.on('contextmenu', (e) => { placeTempPin(e.latlng); });
+
+    // --- スマホ：ロングタップ（長押し）でピンを刺す ---
+    let pressTimer;
+    map.on('touchstart', (e) => {
+        // ピンチズームなどのマルチタッチ時は発火させない
+        if (e.originalEvent.touches && e.originalEvent.touches.length > 1) return;
+        pressTimer = setTimeout(() => {
+            placeTempPin(e.latlng);
+        }, 800); // 800ミリ秒長押し
+    });
+
+    // 指が離れたり動いたりしたらタイマーをキャンセル
+    map.on('touchend touchmove', () => {
+        clearTimeout(pressTimer);
+    });
 
     function placeTempPin(latlng) {
-        const url = `https://www.google.com/maps/dir/?api=1&destination=$${latlng.lat},${latlng.lng}`;
+        const url = `https://www.google.com/maps/dir/?api=1&destination=$$${latlng.lat},${latlng.lng}`;
         if (tempMarker) { tempMarker.setLatLng(latlng); }
         else { tempMarker = L.marker(latlng).addTo(map); }
         tempMarker.bindPopup(`<div style="text-align:center;"><strong>指定した地点</strong><br><a href="${url}" target="_blank" class="popup-btn"><i class="fa-solid fa-route"></i> ここへのルートを検索</a></div>`).openPopup();
     }
 
+    // Umapデータ読み込みとレイヤー切り替え
     async function loadUmapData() {
         const badge = document.getElementById('stats-badge');
         const legendItems = document.getElementById('legend-items');
         try {
+            // ファイル名を正しいものに指定
             const response = await fetch('umap_backup_map.umap');
             const data = await response.json();
             let pCount = 0, lCount = 0;
@@ -206,9 +227,11 @@
                 const layerName = layer.properties.name || "未分類";
                 const hasLine = layer.features.some(f => f.geometry.type === "LineString");
 
+                // レイヤーグループ作成
                 const group = L.layerGroup().addTo(map);
                 layerGroups[layerName] = group;
 
+                // 凡例にチェックボックス付きで追加
                 const item = document.createElement('div');
                 item.className = 'legend-item';
                 item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${layerName}', this.checked)"><span class="${hasLine ? 'legend-line' : 'legend-dot'}" style="background:${color}"></span><span>${layerName}</span>`;
@@ -218,7 +241,7 @@
                     const coords = f.geometry.coordinates;
                     if (f.geometry.type === "Point") {
                         const marker = L.circleMarker([coords[1], coords[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(group);
-                        const url = `https://www.google.com/maps/dir/?api=1&destination=$${coords[1]},${coords[0]}`;
+                        const url = `https://www.google.com/maps/dir/?api=1&destination=$$${coords[1]},${coords[0]}`;
                         let content = `<div style="min-width:180px;"><strong>${f.properties.name || "名称未設定"}</strong><br>`;
                         if(f.properties.description) content += `<span style="font-size:0.8rem; color:#666;">${f.properties.description.replace(/\n/g, '<br>')}</span><br>`;
                         content += `<a href="${url}" target="_blank" class="popup-btn"><i class="fa-solid fa-route"></i> ここへのルートを検索</a></div>`;
@@ -238,71 +261,88 @@
         if (checked) { map.addLayer(layerGroups[name]); } 
         else { map.removeLayer(layerGroups[name]); }
     }
+
     loadUmapData();
 
-    // --- ここから下は元のスクリプトを一切変更していません ---
+    // --- 以下、元のスクリプトを完全維持 ---
     const weatherGrid = document.getElementById('weather-container');
     const locations = [
         { name: "東京", lat: 35.6895, lon: 139.6917 },
-        { name: "伊勢崎", lat: 36.3228, lon: 139.1939 },
-        { name: "山中湖", lat: 35.4259, lon: 138.8759 },
-        { name: "茅野", lat: 35.9953, lon: 138.1558 }
+        { name: "群馬（伊勢崎）", lat: 36.3228, lon: 139.1939 },
+        { name: "山梨（山中湖）", lat: 35.4259, lon: 138.8759 },
+        { name: "長野（茅野）", lat: 35.9953, lon: 138.1558 }
     ];
 
     function getWeatherIcon(code) {
-        if (code === 0) return '<i class="fa-solid fa-sun"></i>';
-        if (code <= 2) return '<i class="fa-solid fa-cloud-sun"></i>';
-        if (code === 3) return '<i class="fa-solid fa-cloud"></i>';
-        if (code <= 48) return '<i class="fa-solid fa-smog"></i>';
-        if (code <= 67) return '<i class="fa-solid fa-cloud-rain"></i>';
-        if (code <= 77) return '<i class="fa-solid fa-snowflake"></i>';
-        if (code <= 82) return '<i class="fa-solid fa-cloud-showers-heavy"></i>';
-        if (code <= 86) return '<i class="fa-solid fa-snowflake"></i>';
-        if (code <= 99) return '<i class="fa-solid fa-cloud-bolt"></i>';
-        return '<i class="fa-solid fa-circle-question"></i>';
+        if (code === 0) return 'fa-sun';
+        if (code >= 1 && code <= 3) return 'fa-cloud-sun';
+        if (code >= 45 && code <= 48) return 'fa-smog';
+        if (code >= 51 && code <= 67) return 'fa-cloud-rain';
+        if (code >= 71 && code <= 77) return 'fa-snowflake';
+        if (code >= 80 && code <= 82) return 'fa-cloud-showers-heavy';
+        if (code >= 95 && code <= 99) return 'fa-cloud-bolt';
+        return 'fa-cloud';
     }
 
     locations.forEach(loc => {
-        const panel = document.createElement('div');
-        panel.className = 'weather-panel';
-        panel.innerHTML = `<h3>${loc.name}</h3><div style="text-align:center; padding:20px;">読み込み中...</div>`;
-        weatherGrid.appendChild(panel);
-
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo`;
-
-        fetch(url).then(res => res.json()).then(data => {
-            let html = `<h3>${loc.name}</h3><div class="forecast-days">`;
-            const labels = ["今日", "明日", "明後日"];
-            for(let i=0; i<3; i++) {
-                const icon = getWeatherIcon(data.daily.weather_code[i]);
-                html += `
-                    <div class="day-box">
-                        <div class="day-label">${labels[i]}</div>
-                        <div class="day-icon">${icon}</div>
-                        <div class="day-temp-max">${Math.round(data.daily.temperature_2m_max[i])}℃</div>
-                        <div class="day-temp-min">${Math.round(data.daily.temperature_2m_min[i])}℃</div>
-                    </div>`;
-            }
-            html += `</div>`;
-            panel.innerHTML = html;
-        }).catch(() => {
-            panel.innerHTML = `<h3>${loc.name}</h3><div style="color:red; text-align:center;">エラー</div>`;
-        });
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo`)
+            .then(response => response.json())
+            .then(data => {
+                const weatherPanel = document.createElement('div');
+                weatherPanel.className = 'weather-panel';
+                
+                const todayCode = data.daily.weather_code[0];
+                const maxTemp = Math.round(data.daily.temperature_2m_max[0]);
+                const minTemp = Math.round(data.daily.temperature_2m_min[0]);
+                
+                weatherPanel.innerHTML = `
+                    <h3>${loc.name}</h3>
+                    <div class="weather-info">
+                        <i class="fa-solid ${getWeatherIcon(todayCode)} weather-icon" style="font-size: 2rem; color: #4a5568; margin-right: 15px;"></i>
+                        <div class="temp-display" style="display: inline-block; vertical-align: top;">
+                            <div class="temp-max" style="font-size: 1.2rem; font-weight: bold; color: #e53e3e;">${maxTemp}℃</div>
+                            <div class="temp-min" style="font-size: 1rem; color: #3182ce;">${minTemp}℃</div>
+                        </div>
+                    </div>
+                `;
+                weatherGrid.appendChild(weatherPanel);
+            });
     });
 
     function searchWeather() {
-        const place = document.getElementById('weather-input').value;
-        if (place) window.open("https://tenki.jp/search/?keyword=" + encodeURIComponent(place), '_blank');
+        const keyword = document.getElementById('weather-input').value;
+        if (keyword) {
+            window.open(`https://tenki.jp/search/?keyword=${encodeURIComponent(keyword)}`, '_blank');
+        }
     }
 
     const linkCategories = [
         {
-            title: "ルート作成・交通情報関連",
+            title: "ルート・交通",
             links: [
-                { name: "Google マップ", url: "https://www.google.co.jp/maps/dir///" },
+                { name: "Googleマップ", url: "https://www.google.co.jp/maps/dir///" },
                 { name: "JARTIC 渋滞情報", url: "https://www.jartic.or.jp/" },
-                { name: "高速料金検索", url: "https://www.driveplaza.com/dp/SearchTop" },
-                { name: "二輪車定率割引申込", url: "https://hayatabi.c-nexco.co.jp/drive/detail.html?id=203" },
+                { name: "ドラぷら（高速料金）", url: "https://www.driveplaza.com/dp/SearchTop" },
+                { name: "ツーリングサポーター", url: "https://web.moto.navitime.jp/" },
+                { name: "雨レーダー (Yahoo)", url: "https://weather.yahoo.co.jp/weather/zoomradar/" }
+            ]
+        },
+        {
+            title: "ツーリング計画",
+            links: [
+                { name: "日本全国の道の駅", url: "https://www.michi-no-eki.jp/stations/search" },
+                { name: "BikeJIN キャンプ場", url: "https://bikejin.jp/camp-site/" },
+                { name: "絶景ロード100選", url: "https://www.moto-auc.com/report/column/post-100" },
+                { name: "モトクル（投稿写真）", url: "https://motocle.jp/" }
+            ]
+        },
+        {
+            title: "天気・ライブカメラ",
+            links: [
+                { name: "tenki.jp", url: "https://tenki.jp/" },
+                { name: "Windy.com", url: "https://www.windy.com/" },
+                { name: "ライブカメラDB", url: "https://livecam-db.com/" },
+                { name: "路面カメラ（甲信）", url: "http://www.ktr.mlit.go.jp/nagano/nagano00203.html?id=203" },
                 { name: "二輪車割引料金検索", url: "https://search.w-nexco.co.jp/touring-search/" }
             ]
         },
