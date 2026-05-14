@@ -106,10 +106,10 @@
         <div class="content-card">
             <h2>周辺を一発検索</h2>
             <div class="nearby-grid">
-                <a href="https://www.google.com/maps/search/ガソリンスタンド" target="_blank" class="btn-nearby"><i class="fa-solid fa-gas-pump"></i> GS</a>
-                <a href="https://www.google.com/maps/search/コンビニ" target="_blank" class="btn-nearby"><i class="fa-solid fa-shop"></i> コンビニ</a>
-                <a href="https://www.google.com/maps/search/ファミリーレストラン" target="_blank" class="btn-nearby"><i class="fa-solid fa-utensils"></i> ファミレス</a>
-                <a href="https://www.google.com/maps/search/快活クラブ" target="_blank" class="btn-nearby"><i class="fa-solid fa-bed"></i> 快活Club</a>
+                <a href="https://www.google.com/maps/search/快活Club/9" target="_blank" class="btn-nearby"><i class="fa-solid fa-gas-pump"></i> GS</a>
+                <a href="https://www.google.com/maps/dir/?api=1&destination=緯度,経度`）にすべて統一しました。これで「見つかりません」エラーも完全に防げます。0" target="_blank" class="btn-nearby"><i class="fa-solid fa-shop"></i> コンビニ</a>
+                <a href="https://www.google.com/maps/dir/?api=1&destination=緯度,経度`）にすべて統一しました。これで「見つかりません」エラーも完全に防げます。1" target="_blank" class="btn-nearby"><i class="fa-solid fa-utensils"></i> ファミレス</a>
+                <a href="https://www.google.com/maps/dir/?api=1&destination=緯度,経度`）にすべて統一しました。これで「見つかりません」エラーも完全に防げます。2" target="_blank" class="btn-nearby"><i class="fa-solid fa-bed"></i> 快活Club</a>
             </div>
         </div>
         <div class="content-card">
@@ -177,12 +177,13 @@
     });
     map.on('touchend touchmove dblclick', () => { clearTimeout(pressTimer); });
 
+    // --- ここが修正ポイント：正しい公式URL形式への変更 ---
     function createPopupContent(name, lat, lng, description = "") {
-        // 正しいGoogleマップ公式URL
+        // 変数展開 `${lat}` の形式に修正
         const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
-        const localUrl = baseUrl + `&avoid=tolls|highways`;
+        const localUrl = `${baseUrl}&avoid=tolls,highways`;
         
-        console.log(`ルート検索: ${name} (${lat}, ${lng})`);
+        console.log(`■ ${name} へのルート`);
         console.log(`高速使用: ${baseUrl}`);
         console.log(`下道のみ: ${localUrl}`);
 
