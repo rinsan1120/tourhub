@@ -16,14 +16,8 @@
 
         .map-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 25px; }
         .map-section { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; width: 100%; }
-        
-        #map { 
-            width: 100%; height: 65vh; background: #e5e7eb; 
-            -webkit-touch-callout: none; 
-            user-select: none;
-        }
+        #map { width: 100%; height: 65vh; background: #e5e7eb; -webkit-touch-callout: none; user-select: none; }
 
-        /* レイヤー切り替え */
         .legend { background: white; padding: 12px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 0.85rem; line-height: 1.6; }
         .legend-title { font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px; display: flex; align-items: center; gap: 5px; }
         #legend-items { display: flex; flex-wrap: wrap; gap: 12px; }
@@ -34,23 +28,14 @@
 
         @media (min-width: 768px) {
             .map-container { position: relative; }
-            .legend { 
-                position: absolute; 
-                bottom: 20px; 
-                left: 10px; 
-                z-index: 1000; 
-                width: auto; 
-                max-width: 250px; 
-                box-shadow: 0 0 15px rgba(0,0,0,0.2);
-            }
+            .legend { position: absolute; bottom: 20px; left: 10px; z-index: 1000; width: auto; max-width: 250px; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
             #legend-items { flex-direction: column; gap: 5px; }
             .legend-item { background: transparent; border: none; padding: 0; }
         }
 
         .loc-btn { position: absolute; bottom: 20px; right: 10px; z-index: 1000; background: rgba(255, 255, 255, 0.95); border: none; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.2); width: 44px; height: 44px; font-size: 1.2rem; color: #4a5568; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         #stats-badge { position: absolute; top: 10px; left: 50px; z-index: 1000; background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; color: #666; border: 1px solid #ddd; pointer-events: none; }
-
-        /* ポップアップ内ボタン */
+        
         .popup-container { text-align: center; min-width: 180px; }
         .popup-title { font-weight: bold; margin-bottom: 10px; display: block; border-bottom: 1px solid #eee; padding-bottom: 5px; }
         .popup-label { font-size: 0.8rem; color: #666; margin-bottom: 8px; display: block; }
@@ -121,10 +106,10 @@
         <div class="content-card">
             <h2>周辺を一発検索</h2>
             <div class="nearby-grid">
-                <a href="https://www.google.com/maps/search/?api=1&query=gas+station" target="_blank" class="btn-nearby"><i class="fa-solid fa-gas-pump"></i> GS</a>
-                <a href="https://www.google.com/maps/search/?api=1&query=convenience+store" target="_blank" class="btn-nearby"><i class="fa-solid fa-shop"></i> コンビニ</a>
-                <a href="https://www.google.com/maps/search/?api=1&query=restaurant" target="_blank" class="btn-nearby"><i class="fa-solid fa-utensils"></i> ファミレス</a>
-                <a href="https://www.google.com/maps/search/?api=1&query=kaikatsu+club" target="_blank" class="btn-nearby"><i class="fa-solid fa-bed"></i> 快活Club</a>
+                <a href="https://www.google.com/maps/search/?api=1&query=ガソリンスタンド" target="_blank" class="btn-nearby"><i class="fa-solid fa-gas-pump"></i> GS</a>
+                <a href="https://www.google.com/maps/search/?api=1&query=コンビニ" target="_blank" class="btn-nearby"><i class="fa-solid fa-shop"></i> コンビニ</a>
+                <a href="https://www.google.com/maps/search/?api=1&query=ファミリーレストラン" target="_blank" class="btn-nearby"><i class="fa-solid fa-utensils"></i> ファミレス</a>
+                <a href="https://www.google.com/maps/search/?api=1&query=快活CLUB" target="_blank" class="btn-nearby"><i class="fa-solid fa-bed"></i> 快活Club</a>
             </div>
         </div>
         <div class="content-card">
@@ -192,10 +177,10 @@
     });
     map.on('touchend touchmove dblclick', () => { clearTimeout(pressTimer); });
 
-    // --- ここが修正ポイント：Googleマップ公式URLを正しく組み立てる ---
     function createPopupContent(name, lat, lng, description = "") {
+        // 変数展開を ${lat} の形式に修正
         const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
-        const localUrl = baseUrl + `&avoid=tolls|highways`;
+        const localUrl = `${baseUrl}&avoid=tolls,highways`;
         
         let html = `<div class="popup-container">`;
         html += `<span class="popup-title">${name}</span>`;
@@ -271,7 +256,6 @@
     }
     loadUpdateLog();
 
-    // 天気
     const weatherGrid = document.getElementById('weather-container');
     const weatherLocs = [{ name: "東京", lat: 35.68, lon: 139.69 }, { name: "伊勢崎", lat: 36.32, lon: 139.19 }, { name: "山中湖", lat: 35.42, lon: 138.87 }, { name: "茅野", lat: 35.99, lon: 138.15 }];
     function getWeatherIcon(code) {
