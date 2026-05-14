@@ -75,6 +75,9 @@
     <div class="map-section">
         <div id="map"></div>
         <div id="stats-badge">読み込み中...</div>
+        <div id="operation-guide" style="position: absolute; top: 10px; right: 10px; z-index: 1000; background: rgba(0,0,0,0.6); color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; pointer-events: none;">
+            <i class="fa-solid fa-circle-info"></i> <span id="guide-text">読み込み中...</span>
+        </div>
         <button id="current-location-btn" class="loc-btn" onclick="goToMyLocation()" title="現在地に戻る">
             <i class="fa-solid fa-crosshairs"></i>
         </button>
@@ -212,18 +215,27 @@
     }
     loadUmapData();
 
-    // 外部ファイルからUpdate Logを読み込む処理
+// --- 操作ガイドの表示切り替え ---
+    function updateGuideText() {
+        const guide = document.getElementById('guide-text');
+        const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        guide.innerText = isTouch ? "長押しでピン設置・ルート検索" : "右クリックでピン設置・ルート検索";
+    }
+    updateGuideText();
+
+    // --- 外部ファイルからUpdate Logを読み込む処理（キャッシュ対策版） ---
     async function loadUpdateLog() {
         const updateList = document.getElementById('dynamic-update-list');
         try {
-            const response = await fetch('updates.txt');
+            // 末尾に時間を付けてキャッシュを回避
+            const response = await fetch('updates.txt?t=' + new Date().getTime());
             if (!response.ok) throw new Error();
             const text = await response.text();
             const lines = text.trim().split('\n');
             
             updateList.innerHTML = '';
             lines.forEach(line => {
-                const parts = line.split('|'); // 「日付 | 内容」の形式を想定
+                const parts = line.split('|');
                 if (parts.length === 2) {
                     const li = document.createElement('li');
                     li.innerHTML = `<span class="update-date">${parts[0].trim()}</span><span class="update-content">${parts[1].trim()}</span>`;
