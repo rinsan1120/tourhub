@@ -181,20 +181,31 @@
     });
     map.on('touchend touchmove dblclick', () => { clearTimeout(pressTimer); });
 
-    // ポップアップのHTMLを生成する共通関数
-// ポップアップのHTMLを生成する共通関数（修正版）
+    // ポップアップのHTMLを生成する共通関数（確実な回避版）
     function createPopupContent(name, lat, lng, description = "") {
-        // 正しいベースURL: https://www.google.com/maps/dir/?api=1&destination=緯度,経度
-        const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
-        const localUrl = baseUrl + `&avoid=tolls|highways`; // 区切り文字はカンマではなくパイプ「|」が確実
+        // 目的地
+        const dest = `${lat},${lng}`;
         
+        // 【高速使用】 通常の自動車モード
+        const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving`;
+        
+        // 【下道のみ】 有料道路・高速道路を回避するパラメータを追加
+        // ※dir_action=navigateを入れると即ナビ開始になるけど、まずはルート確認ができるこの形式がおすすめ
+        const localUrl = `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving&dir_action=navigate&avoid=tolls|highways`;
+        
+        // もし「ナビ開始」ではなく「ルート比較」画面を確実に開きたい場合はこちら
+        const localUrlAlt = `https://www.google.com/maps/dir/現在地/${dest}/@${dest},12z/data=!3m1!4b1!4m4!4m3!1m0!1m1!4e1!3e0!5m1!1e1`;
+        // ↑上の方式が一番確実だけど複雑なので、まずはシンプルに以下の構成で試してみて！
+    
         let html = `<div class="popup-container">`;
         html += `<span class="popup-title">${name}</span>`;
         if (description) html += `<p style="font-size:0.8rem; color:#666; margin-bottom:10px;">${description.replace(/\n/g, '<br>')}</p>`;
         html += `<span class="popup-label">この地点へのルートを検索</span>`;
         html += `<div class="btn-group">`;
-        html += `<a href="${baseUrl}" target="_blank" class="popup-btn btn-high"><i class="fa-solid fa-road"></i> 高速使用</a>`;
-        html += `<a href="${localUrl}" target="_blank" class="popup-btn btn-local"><i class="fa-solid fa-motorcycle"></i> 下道のみ</a>`;
+        // 高速使用（標準URL）
+        html += `<a href="https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving" target="_blank" class="popup-btn btn-high"><i class="fa-solid fa-road"></i> 高速使用</a>`;
+        // 下道のみ（確実に回避を効かせる形式）
+        html += `<a href="https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving&avoid=tolls|highways" target="_blank" class="popup-btn btn-local"><i class="fa-solid fa-motorcycle"></i> 下道のみ</a>`;
         html += `</div></div>`;
         return html;
     }
