@@ -13,23 +13,38 @@
         .header-logo { height: 50px; width: auto; border-radius: 4px; background: #2d3748; }
         header h1 { margin: 0; font-size: 1.6rem; letter-spacing: 1px; flex-grow: 1; text-align: left; }
         main { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
         .map-section { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; position: relative; }
         #map { width: 100%; height: 65vh; background: #e5e7eb; cursor: crosshair; }
-        #stats-badge { position: absolute; bottom: 40px; left: 10px; z-index: 1000; background: rgba(255,255,255,0.9); padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; border: 1px solid #ccc; pointer-events: none; }
-        .popup-btn { display: inline-block; margin-top: 10px; padding: 8px 12px; background: #4285F4; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 0.85rem; }
-        .popup-btn:hover { background: #357ae8; }
-        /* その他デザイン継承 */
-        .weather-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
-        .weather-panel { background: #ffffff; border-radius: 10px; padding: 15px; border: 1px solid #e2e8f0; }
-        .weather-panel h3 { margin: 0 0 12px 0; font-size: 1.1rem; text-align: center; color: #2d3748; border-bottom: 1px solid #edf2f7; padding-bottom: 8px; }
-        .forecast-days { display: flex; justify-content: space-between; gap: 8px; }
-        .day-box { flex: 1; text-align: center; padding: 10px 4px; border-radius: 8px; background: #f8fafc; border: 1px solid #f1f5f9; }
-        .day-label { font-size: 0.8rem; font-weight: bold; color: #64748b; margin-bottom: 6px; }
-        .day-icon { font-size: 1.8rem; margin: 8px 0; display: block; min-height: 35px; color: #4a5568; }
-        .day-temp-max { font-size: 1rem; font-weight: bold; color: #2d3748; margin-bottom: 2px; }
-        .day-temp-min { font-size: 0.85rem; font-weight: bold; color: #718096; }
+        
+        /* 凡例（レジェンド）のスタイル */
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 10px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            font-size: 0.8rem;
+            line-height: 1.5;
+            max-width: 150px;
+        }
+        .legend-title { font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #ccc; padding-bottom: 3px; }
+        .legend-item { display: flex; align-items: center; margin-bottom: 3px; }
+        .legend-color { width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; border: 1px solid #fff; box-shadow: 0 0 2px rgba(0,0,0,0.3); }
+
+        #stats-badge { position: absolute; bottom: 10px; left: 10px; z-index: 1000; background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; color: #666; border: 1px solid #ddd; pointer-events: none; }
+        
+        .popup-btn { display: inline-block; margin-top: 10px; padding: 8px 12px; background: #4285F4; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 0.85rem; text-align: center; }
         .content-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; }
         .content-card h2 { margin-top: 0; font-size: 1.1rem; border-left: 5px solid #3182ce; padding-left: 10px; margin-bottom: 15px; }
+        
+        /* 天気パネル */
+        .weather-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+        .weather-panel { background: #ffffff; border-radius: 10px; padding: 15px; border: 1px solid #e2e8f0; }
+        .weather-panel h3 { margin: 0 0 12px 0; font-size: 1.1rem; text-align: center; }
     </style>
 </head>
 <body>
@@ -45,6 +60,10 @@
     <div class="map-section">
         <div id="map"></div>
         <div id="stats-badge">読み込み中...</div>
+        <div id="legend" class="legend">
+            <div class="legend-title">凡例</div>
+            <div id="legend-items"></div>
+        </div>
     </div>
 
     <div class="content-card">
@@ -61,28 +80,23 @@
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    let tempMarker = null; // 一時的なピンを保持する変数
+    let tempMarker = null;
 
-    // --- 地図クリックイベント ---
+    // --- 地図タップで任意地点ナビ ---
     map.on('click', function(e) {
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
         const gmapUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
 
-        // すでに一時ピンがあれば移動、なければ新規作成
         if (tempMarker) {
             tempMarker.setLatLng(e.latlng);
         } else {
-            tempMarker = L.marker(e.latlng, {
-                draggable: false,
-                opacity: 0.8
-            }).addTo(map);
+            tempMarker = L.marker(e.latlng).addTo(map);
         }
 
         const popupContent = `
             <div style="min-width:160px; text-align:center;">
                 <strong>指定した地点</strong><br>
-                <span style="font-size:0.7rem; color:#666;">${lat.toFixed(5)}, ${lng.toFixed(5)}</span><br>
                 <a href="${gmapUrl}" target="_blank" class="popup-btn">
                     <i class="fa-solid fa-location-arrow"></i> ここへのナビを開始
                 </a>
@@ -91,11 +105,12 @@
         tempMarker.bindPopup(popupContent).openPopup();
     });
 
-    // --- 既存のデータ読み込みロジック ---
+    // --- Umapデータ & 凡例の自動生成 ---
     async function loadUmapData() {
         let pointCount = 0;
         let lineCount = 0;
         const statsBadge = document.getElementById('stats-badge');
+        const legendItems = document.getElementById('legend-items');
 
         try {
             const response = await fetch('umap_backup_map.umap');
@@ -103,6 +118,14 @@
             
             data.layers.forEach(layer => {
                 const layerColor = layer.properties.color || "#3182ce";
+                const layerName = layer.properties.name || "未分類";
+
+                // 凡例に項目を追加
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+                item.innerHTML = `<span class="legend-color" style="background:${layerColor}"></span><span>${layerName}</span>`;
+                legendItems.appendChild(item);
+                
                 layer.features.forEach(feature => {
                     const type = feature.geometry.type;
                     const props = feature.properties || {};
@@ -114,16 +137,21 @@
                         }).addTo(map);
 
                         const gmapUrl = `https://www.google.com/maps/dir/?api=1&destination=${coords[1]},${coords[0]}`;
-                        marker.bindPopup(`<strong>${props.name || "スポット"}</strong><br><br><a href="${gmapUrl}" target="_blank" class="popup-btn">Googleマップでナビ</a>`);
+                        let content = `<strong>${props.name || "スポット"}</strong><br><br>`;
+                        if(props.description) content += props.description.replace(/\n/g, '<br>') + `<br>`;
+                        content += `<a href="${gmapUrl}" target="_blank" class="popup-btn">Googleマップでナビ</a>`;
+                        marker.bindPopup(content);
                         pointCount++;
                     } else if (type === "LineString") {
                         const latlngs = feature.geometry.coordinates.map(c => [c[1], c[0]]);
-                        L.polyline(latlngs, {color: layerColor, weight: 6, opacity: 0.8}).addTo(map).bindPopup(`<strong>${props.name}</strong>`);
+                        L.polyline(latlngs, {color: layerColor, weight: 6, opacity: 0.8})
+                         .addTo(map)
+                         .bindPopup(`<strong>${props.name}</strong><br>カテゴリ: ${layerName}`);
                         lineCount++;
                     }
                 });
             });
-            statsBadge.innerText = `点: ${pointCount}件 / 線: ${lineCount}件`;
+            statsBadge.innerText = `点: ${pointCount} / 線: ${lineCount}`;
         } catch (err) {
             statsBadge.innerText = "読み込みエラー";
         }
@@ -131,7 +159,7 @@
 
     loadUmapData();
 
-    // 天気予報（略：既存と同じ）
+    // 天気予報
     const weatherGrid = document.getElementById('weather-container');
     const locations = [{ name: "東京", lat: 35.6895, lon: 139.6917 }, { name: "山中湖", lat: 35.4259, lon: 138.8759 }];
     locations.forEach(loc => {
@@ -140,7 +168,7 @@
         weatherGrid.appendChild(panel);
         fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTokyo`)
             .then(res => res.json()).then(data => {
-                panel.innerHTML = `<h3>${loc.name}</h3><div class="forecast-days"><div class="day-box">最高 ${Math.round(data.daily.temperature_2m_max[0])}℃</div></div>`;
+                panel.innerHTML = `<h3>${loc.name}</h3><div style="text-align:center;">最高 ${Math.round(data.daily.temperature_2m_max[0])}℃</div>`;
             });
     });
 </script>
