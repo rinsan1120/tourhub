@@ -182,9 +182,11 @@
     map.on('touchend touchmove dblclick', () => { clearTimeout(pressTimer); });
 
     // ポップアップのHTMLを生成する共通関数
+// ポップアップのHTMLを生成する共通関数（修正版）
     function createPopupContent(name, lat, lng, description = "") {
-        const baseUrl = `http://googleusercontent.com/maps.google.com/9${lat},${lng}&travelmode=driving`;
-        const localUrl = baseUrl + `&avoid=tolls`; // 有料道路と高速道路を避ける
+        // 正しいベースURL: https://www.google.com/maps/dir/?api=1&destination=緯度,経度
+        const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+        const localUrl = baseUrl + `&avoid=tolls|highways`; // 区切り文字はカンマではなくパイプ「|」が確実
         
         let html = `<div class="popup-container">`;
         html += `<span class="popup-title">${name}</span>`;
