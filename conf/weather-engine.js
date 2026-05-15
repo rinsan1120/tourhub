@@ -64,6 +64,16 @@ function initWeatherDisplay() {
     }
     document.getElementById('weather-header-row').innerHTML = hHtml;
 
+    // パネルコンテナの取得と警告メッセージの挿入
+    const panelsContainer = document.getElementById('weather-panels-container');
+    if (!document.getElementById('weather-warning')) {
+        const warningNote = document.createElement('div');
+        warningNote.id = 'weather-warning';
+        warningNote.style = "padding: 8px; font-size: 0.75rem; color: #e53e3e; background: #fff5f5; border-bottom: 1px solid #fed7d7; text-align: center;";
+        warningNote.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> 海外データにつき精度が不安定です。出発前は必ず地点名から詳細予報を再確認してください。`;
+        panelsContainer.before(warningNote);
+    }
+
     const regions = Object.keys(weatherData);
     regions.forEach((region, rIdx) => {
         const tab = document.createElement('button');
@@ -87,9 +97,22 @@ function initWeatherDisplay() {
         
         weatherData[region].forEach((loc, cIdx) => {
             const row = document.createElement('div'); row.className = 'weather-row';
-row.innerHTML = `<span class="city-name">${loc.name}<span class="pref-name">(${loc.pref})</span></span>` + [0,1,2].map(i => `<div class="forecast-unit" id="w-${rIdx}-${cIdx}-${i}"><i class="fa-solid fa-spinner fa-spin" style="font-size:0.8rem; color:#cbd5e1;"></i><div style="font-size:0.5rem; color:#94a3b8;">取得中...</div></div>`).join('');            panel.appendChild(row);
+            
+            // 地点名を tenki.jp への検索リンクにする
+            const searchUrl = `https://tenki.jp/search/?keyword=${encodeURIComponent(loc.name)}`;
+            const nameHtml = `
+                <span class="city-name">
+                    <a href="${searchUrl}" target="_blank" style="text-decoration: none; color: #1a202c; border-bottom: 1px dashed #cbd5e1;">
+                        ${loc.name} <i class="fa-solid fa-up-right-from-square" style="font-size: 0.6rem; color: #94a3b8;"></i>
+                    </a>
+                    <span class="pref-name">(${loc.pref})</span>
+                </span>`;
+            
+            // 取得中のアニメーション表示
+            row.innerHTML = nameHtml + [0,1,2].map(i => `<div class="forecast-unit" id="w-${rIdx}-${cIdx}-${i}"><i class="fa-solid fa-spinner fa-spin" style="font-size:0.8rem; color:#cbd5e1;"></i><div style="font-size:0.5rem; color:#94a3b8;">取得中...</div></div>`).join('');
+            panel.appendChild(row);
         });
-        document.getElementById('weather-panels-container').appendChild(panel);
+        panelsContainer.appendChild(panel);
         
         if (rIdx === 0) fetchWeatherForRegion(region, rIdx);
     });
