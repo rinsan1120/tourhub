@@ -86,18 +86,20 @@ async function loadUmapData() {
                 const line = L.polyline(c.map(p => [p[1], p[0]]), { 
                     color: color, 
                     weight: 6,
-                    bubblingMouseEvents: false, // ① Androidのタップ漏れ防止
-                    interactive: true           // ② タップイベントの対象であることを明示
+                    bubblingMouseEvents: false,
+                    interactive: true
                 }).addTo(group);
-    
-    // ③ スマホの指でもタップしやすくなるよう判定幅を広げる
-    if (L.Browser.mobile) {
-        line.setStyle({ weight: 15, opacity: 0.6 }); 
-    }
-
-    line.bindPopup(createPopupContent(f.properties.name || "名称未設定の道", c[0][0], c[0][1], f.properties.description, n));
-    lC++;
-}
+                
+                if (L.Browser.mobile) {
+                    line.setStyle({ weight: 15, opacity: 0.6 }); 
+                }
+            
+                // 【追加】スマホでのタッチ時に、地図側の干渉イベントを完全に止める処理
+                line.on('touchstart mousedown', (e) => { L.DomEvent.stopPropagation(e); });
+            
+                line.bindPopup(createPopupContent(f.properties.name || "名称未設定の道", c[0][1], c[0][0], f.properties.description, n));
+                lC++;
+            }
             });
         });
         badge.innerText = `点: ${pC} / 線: ${lC}`;
