@@ -118,4 +118,4 @@ function goToMyLocation() {
 }
 
 // 起動
-window.onload = initMap;
+// window.onload = initMap;
