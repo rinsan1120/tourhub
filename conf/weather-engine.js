@@ -87,8 +87,7 @@ function initWeatherDisplay() {
         
         weatherData[region].forEach((loc, cIdx) => {
             const row = document.createElement('div'); row.className = 'weather-row';
-            row.innerHTML = `<span class="city-name">${loc.name}<span class="pref-name">(${loc.pref})</span></span>` + [0,1,2].map(i => `<div class="forecast-unit" id="w-${rIdx}-${cIdx}-${i}">...</div>`).join('');
-            panel.appendChild(row);
+row.innerHTML = `<span class="city-name">${loc.name}<span class="pref-name">(${loc.pref})</span></span>` + [0,1,2].map(i => `<div class="forecast-unit" id="w-${rIdx}-${cIdx}-${i}"><i class="fa-solid fa-spinner fa-spin" style="font-size:0.8rem; color:#cbd5e1;"></i><div style="font-size:0.5rem; color:#94a3b8;">取得中...</div></div>`).join('');            panel.appendChild(row);
         });
         document.getElementById('weather-panels-container').appendChild(panel);
         
