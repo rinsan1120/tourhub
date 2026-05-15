@@ -16,12 +16,18 @@ function getWeatherIcon(code) {
 function toggleWeather() {
     const h = document.querySelector('.weather-card-header'), c = document.querySelector('.weather-collapsible-content');
     h.classList.toggle('collapsed');
-    // 開くときは maxHeight を一旦十分に大きくし、少し遅れて none にすることで制限をなくす
+    
     if (h.classList.contains('collapsed')) {
         c.style.maxHeight = "0px";
+        c.style.overflow = "hidden"; // 閉じるときは隠す
     } else {
-        c.style.maxHeight = "2000px"; // 十分な高さ
-        setTimeout(() => { if(!h.classList.contains('collapsed')) c.style.maxHeight = "none"; }, 300);
+        c.style.maxHeight = "3000px"; // 十分すぎる高さ
+        setTimeout(() => { 
+            if(!h.classList.contains('collapsed')) {
+                c.style.maxHeight = "none";
+                c.style.overflow = "visible"; // 開ききったら制限を完全に解除
+            }
+        }, 350);
     }
 }
 
@@ -92,7 +98,10 @@ function initWeatherDisplay() {
             document.getElementById(`panel-${rIdx}`).style.display = 'block';
             fetchWeatherForRegion(region, rIdx);
             const c = document.querySelector('.weather-collapsible-content'); 
-            if(!document.querySelector('.weather-card-header').classList.contains('collapsed')) c.style.maxHeight = c.scrollHeight + "px";
+            if(!document.querySelector('.weather-card-header').classList.contains('collapsed')) {
+                c.style.maxHeight = "none";
+                c.style.overflow = "visible";
+            }
         };
         document.getElementById('weather-tabs-container').appendChild(tab);
 
