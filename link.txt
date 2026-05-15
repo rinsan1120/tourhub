@@ -1,0 +1,18 @@
+※ルート作成・交通情報関連
+Google マップ,https://www.google.co.jp/maps/
+JARTIC 渋滞情報,https://www.jartic.or.jp/
+高速料金検索,https://www.driveplaza.com/dp/SearchTop
+二輪車定率割引申込,https://hayatabi.c-nexco.co.jp/drive/detail.html?id=203
+二輪車割引料金検索,https://search.w-nexco.co.jp/touring-search/
+
+※車両管理・その他
+Honda Total Care,https://htc.honda.co.jp/member/
+Starlink ログイン,https://www.starlink.com/account/home
+
+※宿泊・温泉
+じゃらん,https://www.jalan.net/
+楽天トラベル,https://travel.rakuten.co.jp/
+ゆる～と,https://yuru-to.net/
+
+※交通その他
+航路マップ,https://searoute.info/
