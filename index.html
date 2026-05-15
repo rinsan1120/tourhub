@@ -121,15 +121,17 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<script src="./conf/map-engine.js"></script>
-<script src="./conf/weather-engine.js"></script>
+<script src="conf/map-engine.js"></script>
+<script src="conf/weather-engine.js"></script>
 
 <script>
-    // link.txt / nearby.txt / updates.txt の読み込みなど、残りの軽い処理のみ記述
+    // ヘルパー：weather-engine.jsにあるものと同じだが、このファイルでも使うため定義
+    function cleanLine(line) { return line.split('//')[0].trim(); }
+
     async function loadNearbyConfig() {
         const container = document.getElementById('nearby-container');
         try {
-            const res = await fetch('./conf/nearby.txt?t=' + Date.now()), text = await res.text();
+            const res = await fetch('conf/nearby.txt?t=' + Date.now()), text = await res.text();
             container.innerHTML = '';
             text.split('\n').forEach(rawLine => {
                 const line = cleanLine(rawLine);
@@ -150,7 +152,7 @@
     async function loadLinks() {
         const container = document.getElementById('category-container');
         try {
-            const res = await fetch('./conf/link.txt?t=' + Date.now()), text = await res.text();
+            const res = await fetch('conf/link.txt?t=' + Date.now()), text = await res.text();
             container.innerHTML = ''; let currentGrid = null;
             text.split('\n').forEach(rawLine => {
                 const line = cleanLine(rawLine);
@@ -171,7 +173,7 @@
 
     async function loadUpdateLog() {
         try {
-            const res = await fetch('./conf/updates.txt?t=' + Date.now()), text = await res.text();
+            const res = await fetch('conf/updates.txt?t=' + Date.now()), text = await res.text();
             const list = document.getElementById('dynamic-update-list'); list.innerHTML = '';
             text.trim().split('\n').reverse().forEach(rawLine => {
                 const line = cleanLine(rawLine);
@@ -184,11 +186,15 @@
         } catch (e) {}
     }
 
-    // 各初期化実行
-    loadWeatherConfig(); // weather-engine.js 内の関数
-    loadNearbyConfig();
-    loadLinks();
-    loadUpdateLog();
+    // 起動：JSエンジンの読み込み完了後に実行
+    window.addEventListener('load', () => {
+        if (typeof loadWeatherConfig === 'function') {
+            loadWeatherConfig();
+        }
+        loadNearbyConfig();
+        loadLinks();
+        loadUpdateLog();
+    });
 </script>
 </body>
 </html>
