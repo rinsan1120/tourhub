@@ -129,15 +129,15 @@
             <div class="nearby-grid">
                 <a href="https://www.google.com/maps/search/ガソリンスタンド/" target="_blank" class="btn-nearby"><i class="fa-solid fa-gas-pump"></i> GS</a>
                 <a href="https://www.google.com/maps/search/コンビニ/" target="_blank" class="btn-nearby"><i class="fa-solid fa-shop"></i> コンビニ</a>
-                <a href="https://www.google.com/maps/search/レストラン/" target="_blank" class="btn-nearby"><i class="fa-solid fa-utensils"></i> 飲食店</a>
-                <a href="https://www.google.com/maps/search/快活クラブ/" target="_blank" class="btn-nearby"><i class="fa-solid fa-bed"></i> 快活Club</a>
+                <a href="https://www.google.com/maps/search/飲食店/" target="_blank" class="btn-nearby"><i class="fa-solid fa-utensils"></i> 飲食店</a>
+                <a href="https://www.google.com/maps/search/快活CLUB/" target="_blank" class="btn-nearby"><i class="fa-solid fa-bed"></i> 快活Club</a>
             </div>
         </div>
         <div class="content-card">
             <h2>地名で天気検索</h2>
             <div class="search-box">
                 <input type="text" id="weather-input" placeholder="例：阿蘇山、道の駅箱根">
-                <button class="btn-full" style="background:#ed8936;" onclick="searchWeather()">tenki.jpで検索</button>
+                <button class="btn-full" onclick="searchWeather()">tenki.jpで検索</button>
             </div>
         </div>
     </div>
@@ -198,7 +198,6 @@
     });
     map.on('touchend touchmove dblclick', () => { clearTimeout(pressTimer); });
 
-    // --- ここを修正：カテゴリー表示機能を追加 ---
     function createPopupContent(name, lat, lng, description = "", category = "") {
         const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
         const localUrl = `${baseUrl}&avoid=tolls,highways`;
@@ -219,7 +218,6 @@
     function placeTempPin(latlng) {
         if (tempMarker) tempMarker.setLatLng(latlng);
         else tempMarker = L.marker(latlng).addTo(map);
-        // 新しく刺したピンはカテゴリーなし
         tempMarker.bindPopup(createPopupContent("指定した地点", latlng.lat, latlng.lng)).openPopup();
     }
 
@@ -245,16 +243,12 @@
                     const coords = f.geometry.coordinates;
                     if (f.geometry.type === "Point") {
                         const marker = L.circleMarker([coords[1], coords[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(group);
-                        // レイヤー名をカテゴリーとして渡す
                         marker.bindPopup(createPopupContent(f.properties.name || "名称未設定", coords[1], coords[0], f.properties.description, layerName));
                         pCount++;
-                } else if (f.geometry.type === "LineString") {
-                    L.polyline(coords.map(c => [c[1], c[0]]), { color: color, weight: 6, opacity: 0.8 })
-                     .addTo(group)
-                     // 点（Point）と同じポップアップ生成関数を使うように変更
-                     .bindPopup(createPopupContent(f.properties.name || "名称未設定", coords[0][1], coords[0][0], f.properties.description, layerName));
-                    lCount++;
-                }        
+                    } else if (f.geometry.type === "LineString") {
+                        L.polyline(coords.map(c => [c[1], c[0]]), { color: color, weight: 6, opacity: 0.8 }).addTo(group).bindPopup(`<strong>${f.properties.name}</strong><br>カテゴリー: ${layerName}`);
+                        lCount++;
+                    }
                 });
             });
             badge.innerText = `点: ${pCount} / 線: ${lCount}`;
