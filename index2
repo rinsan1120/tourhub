@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rin’s Touring Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <style>
+        body { margin: 0; padding: 0; font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; background: #f0f2f5; color: #333; }
+        header { background: #1a202c; color: white; padding: 15px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .header-content { display: flex; align-items: center; gap: 15px; max-width: 1200px; margin: 0 auto; }
+        .header-logo { height: 50px; width: auto; border-radius: 4px; background: #2d3748; }
+        header h1 { margin: 0; font-size: 1.6rem; letter-spacing: 1px; flex-grow: 1; text-align: left; }
+        main { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        .map-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 25px; }
+        .map-section { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; width: 100%; }
+        #map { width: 100%; height: 65vh; background: #e5e7eb; -webkit-touch-callout: none; user-select: none; }
+
+        /* 現在地マーカー */
+        .my-location-marker { width: 14px; height: 14px; background-color: #2196F3; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.3); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(33, 150, 243, 0); } 100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); } }
+        .my-loc-con { background: none !important; border: none !important; }
+
+        /* 天気タブUI */
+        .weather-tabs { display: flex; overflow-x: auto; gap: 5px; margin-bottom: 15px; padding-bottom: 5px; -webkit-overflow-scrolling: touch; border-bottom: 2px solid #e2e8f0; }
+        .weather-tab { padding: 8px 16px; background: #e2e8f0; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 0.9rem; font-weight: bold; color: #4a5568; white-space: nowrap; border: none; transition: 0.2s; }
+        .weather-tab.active { background: #3182ce; color: white; }
+        .weather-content-panel { display: none; }
+        .weather-content-panel.active { display: block; }
+
+        /* 天気カード（1行スリム版） */
+        .weather-list { display: flex; flex-direction: column; gap: 8px; }
+        .weather-row { display: grid; grid-template-columns: 80px 1fr 1fr 1fr; align-items: center; background: #fff; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem; }
+        .city-name { font-weight: bold; color: #2d3748; }
+        .forecast-unit { text-align: center; border-left: 1px solid #f1f5f9; padding: 0 4px; }
+        .forecast-icon { font-size: 1.2rem; display: block; margin-bottom: 2px; }
+        .forecast-pop { font-size: 0.7rem; color: #3182ce; font-weight: bold; }
+        .forecast-temp { font-size: 0.75rem; font-family: monospace; }
+        .t-min { color: #3182ce; } .t-sep { color: #ccc; margin: 0 2px; } .t-max { color: #e53e3e; }
+
+        /* ポップアップ、その他のスタイル（以前と同様） */
+        .legend { background: white; padding: 12px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 0.85rem; line-height: 1.6; }
+        @media (min-width: 768px) { .map-container { position: relative; } .legend { position: absolute; bottom: 20px; left: 10px; z-index: 1000; width: auto; max-width: 250px; } }
+        .popup-container { text-align: center; min-width: 180px; }
+        .popup-category { font-size: 0.75rem; color: #3182ce; background: #ebf8ff; padding: 2px 8px; border-radius: 4px; margin-bottom: 10px; display: inline-block; }
+        .btn-group { display: flex; flex-direction: column; gap: 8px; }
+        .popup-btn { display: block; padding: 12px; color: white !important; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 0.9rem; text-align: center; }
+        .btn-high { background: #4285F4; } .btn-local { background: #34A853; }
+        .content-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        .content-card h2 { margin-top: 0; font-size: 1.1rem; border-left: 5px solid #3182ce; padding-left: 10px; margin-bottom: 15px; }
+        .tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .btn-full { width: 100%; padding: 12px; background: #3182ce; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        .nearby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-nearby { padding: 10px; background: #4a5568; color: white; border-radius: 8px; font-size: 0.85rem; font-weight: bold; text-align: center; text-decoration: none; }
+        .update-list { list-style: none; padding: 0; max-height: 180px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; background: #fafafa; }
+        .update-list li { margin-bottom: 10px; display: flex; align-items: flex-start; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .update-date { font-family: monospace; font-weight: bold; color: #2d3748; min-width: 100px; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; margin-right: 12px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+<header><div class="header-content"><img src="logo.jpg" alt="Logo" class="header-logo"><h1>Rin’s Touring Hub</h1></div></header>
+<main>
+    <div class="map-container">
+        <div class="map-section">
+            <div id="map"></div>
+            <div id="stats-badge">読み込み中...</div>
+            <button id="current-location-btn" class="loc-btn" onclick="goToMyLocation()"><i class="fa-solid fa-crosshairs"></i></button>
+        </div>
+        <div id="legend" class="legend">
+            <div class="legend-title"><i class="fa-solid fa-layer-group"></i> 表示レイヤー</div>
+            <div id="legend-items"></div>
+        </div>
+    </div>
+
+    <div class="content-card">
+        <h2>全国エリア別天気（3日間）</h2>
+        <div id="weather-tabs-container" class="weather-tabs"></div>
+        <div id="weather-panels-container"></div>
+    </div>
+
+    <div class="tool-grid">
+        <div class="content-card">
+            <h2>周辺を一発検索</h2>
+            <div class="nearby-grid">
+                <a href="https://www.google.com/maps/search/ガソリンスタンド/" target="_blank" class="btn-nearby"><i class="fa-solid fa-gas-pump"></i> GS</a>
+                <a href="https://www.google.com/maps/search/コンビニ/" target="_blank" class="btn-nearby"><i class="fa-solid fa-shop"></i> コンビニ</a>
+                <a href="https://www.google.com/maps/search/飲食店/" target="_blank" class="btn-nearby"><i class="fa-solid fa-utensils"></i> 飲食店</a>
+                <a href="https://www.google.com/maps/search/快活CLUB/" target="_blank" class="btn-nearby"><i class="fa-solid fa-bed"></i> 快活Club</a>
+            </div>
+        </div>
+        <div class="content-card">
+            <h2>地名で天気検索</h2>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <input type="text" id="weather-input" style="padding:12px; border:2px solid #cbd5e1; border-radius:8px;" placeholder="例：阿蘇山">
+                <button class="btn-full" onclick="searchWeather()">tenki.jpで検索</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-card"><h2>Update Log</h2><ul id="dynamic-update-list" class="update-list"></ul></div>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // --- 天気予報の設定（ここを書き換えるだけで増やせます） ---
+    const weatherConfig = {
+        "関東・甲信": [
+            { name: "東京", lat: 35.68, lon: 139.69 },
+            { name: "伊勢崎", lat: 36.32, lon: 139.19 },
+            { name: "山中湖", lat: 35.42, lon: 138.87 },
+            { name: "茅野", lat: 35.99, lon: 138.15 },
+            { name: "水上", lat: 36.78, lon: 138.97 }
+        ],
+        "中部・東海": [
+            { name: "名古屋", lat: 35.18, lon: 136.91 },
+            { name: "金沢", lat: 36.56, lon: 136.66 },
+            { name: "松本", lat: 36.23, lon: 137.97 },
+            { name: "浜松", lat: 34.70, lon: 137.73 }
+        ],
+        "近畿・中国": [
+            { name: "大阪", lat: 34.69, lon: 135.50 },
+            { name: "舞鶴", lat: 35.47, lon: 135.33 },
+            { name: "広島", lat: 34.38, lon: 132.45 },
+            { name: "出雲", lat: 35.36, lon: 132.75 }
+        ],
+        "四国・九州": [
+            { name: "高知", lat: 33.56, lon: 133.53 },
+            { name: "阿蘇", lat: 32.93, lon: 131.07 },
+            { name: "指宿", lat: 31.23, lon: 130.64 }
+        ]
+    };
+
+    const map = L.map('map', { tap: false }).setView([35.6895, 139.6917], 8);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    let myLocMarker = null;
+    const layerGroups = {};
+
+    function updateMyLocation() {
+        if (!navigator.geolocation) return;
+        navigator.geolocation.watchPosition((pos) => {
+            const latlng = [pos.coords.latitude, pos.coords.longitude];
+            if (!myLocMarker) {
+                myLocMarker = L.marker(latlng, { icon: L.divIcon({ className: 'my-loc-con', html: '<div class="my-location-marker"></div>', iconSize: [14,14] }) }).addTo(map);
+            } else { myLocMarker.setLatLng(latlng); }
+        }, null, { enableHighAccuracy: true });
+    }
+    updateMyLocation();
+    function goToMyLocation() { if (myLocMarker) map.flyTo(myLocMarker.getLatLng(), 14); }
+
+    function createPopupContent(name, lat, lng, description = "", category = "") {
+        const dest = `${lat},${lng}`;
+        const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving`;
+        const localUrl = `${baseUrl}&avoid=tolls|highways`;
+        let html = `<div class="popup-container"><span class="popup-title">${name}</span>`;
+        if (category) html += `<span class="popup-category">${category}</span>`;
+        if (description) html += `<p style="font-size:0.8rem; color:#666; margin-bottom:10px;">${description.replace(/\n/g, '<br>')}</p>`;
+        html += `<div class="btn-group"><a href="${baseUrl}" target="_blank" class="popup-btn btn-high">高速使用</a><a href="${localUrl}" target="_blank" class="popup-btn btn-local">下道のみ</a></div></div>`;
+        return html;
+    }
+
+    async function loadUmapData() {
+        try {
+            const res = await fetch('umap_backup_map.umap');
+            const data = await res.json();
+            data.layers.forEach(layer => {
+                const color = layer.properties.color || "#3182ce";
+                const name = layer.properties.name || "未分類";
+                const group = L.layerGroup().addTo(map);
+                layerGroups[name] = group;
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+                item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${name}', this.checked)"><span class="legend-dot" style="background:${color}"></span><span>${name}</span>`;
+                document.getElementById('legend-items').appendChild(item);
+                layer.features.forEach(f => {
+                    if (f.geometry.type === "Point") {
+                        L.circleMarker([f.geometry.coordinates[1], f.geometry.coordinates[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 })
+                        .addTo(group).bindPopup(createPopupContent(f.properties.name, f.geometry.coordinates[1], f.geometry.coordinates[0], f.properties.description, name));
+                    } else if (f.geometry.type === "LineString") {
+                        L.polyline(f.geometry.coordinates.map(c => [c[1], c[0]]), { color: color, weight: 6, opacity: 0.8 })
+                        .addTo(group).bindPopup(createPopupContent(f.properties.name, f.geometry.coordinates[0][1], f.geometry.coordinates[0][0], f.properties.description, name));
+                    }
+                });
+            });
+        } catch (e) { console.error(e); }
+    }
+    function toggleLayer(n, c) { if (c) map.addLayer(layerGroups[n]); else map.removeLayer(layerGroups[n]); }
+    loadUmapData();
+
+    // --- 天気タブシステム ---
+    const weatherTabsBox = document.getElementById('weather-tabs-container');
+    const weatherPanelsBox = document.getElementById('weather-panels-container');
+
+    function getWeatherIcon(code) {
+        if (code === 0) return 'fa-sun'; if (code <= 3) return 'fa-cloud-sun'; if (code <= 67) return 'fa-cloud-rain'; if (code <= 82) return 'fa-cloud-showers-heavy'; return 'fa-cloud';
+    }
+
+    Object.keys(weatherConfig).forEach((region, index) => {
+        const tab = document.createElement('button');
+        tab.className = `weather-tab ${index === 0 ? 'active' : ''}`;
+        tab.innerText = region;
+        tab.onclick = () => {
+            document.querySelectorAll('.weather-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.weather-content-panel').forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(`panel-${index}`).classList.add('active');
+        };
+        weatherTabsBox.appendChild(tab);
+
+        const panel = document.createElement('div');
+        panel.id = `panel-${index}`;
+        panel.className = `weather-content-panel ${index === 0 ? 'active' : ''}`;
+        const list = document.createElement('div');
+        list.className = 'weather-list';
+        
+        weatherConfig[region].forEach(loc => {
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo`)
+            .then(r => r.json()).then(d => {
+                const row = document.createElement('div');
+                row.className = 'weather-row';
+                let html = `<span class="city-name">${loc.name}</span>`;
+                for(let i=0; i<3; i++) {
+                    html += `<div class="forecast-unit">
+                        <i class="fa-solid ${getWeatherIcon(d.daily.weather_code[i])} forecast-icon"></i>
+                        <span class="forecast-pop">${d.daily.precipitation_probability_max[i]}%</span>
+                        <div class="forecast-temp"><span class="t-min">${Math.round(d.daily.temperature_2m_min[i])}</span><span class="t-sep">/</span><span class="t-max">${Math.round(d.daily.temperature_2m_max[i])}</span></div>
+                    </div>`;
+                }
+                row.innerHTML = html;
+                list.appendChild(row);
+            });
+        });
+        panel.appendChild(list);
+        weatherPanelsBox.appendChild(panel);
+    });
+
+    function searchWeather() {
+        const v = document.getElementById('weather-input').value;
+        if (v) window.open(`https://tenki.jp/search/?keyword=${encodeURIComponent(v)}`, '_blank');
+    }
+
+    async function loadUpdateLog() {
+        try {
+            const res = await fetch('updates.txt?t=' + Date.now());
+            const text = await res.text();
+            const list = document.getElementById('dynamic-update-list');
+            text.trim().split('\n').forEach(line => {
+                const p = line.split('|');
+                if (p.length === 2) {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span class="update-date">${p[0].trim()}</span><span>${p[1].trim()}</span>`;
+                    list.appendChild(li);
+                }
+            });
+        } catch (e) { }
+    }
+    loadUpdateLog();
+</script>
+</body>
+</html>
