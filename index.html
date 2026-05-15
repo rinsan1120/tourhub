@@ -59,6 +59,12 @@
         .btn-full { width: 100%; padding: 12px; background: #3182ce; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .nearby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-nearby { padding: 10px; background: #4a5568; color: white; border-radius: 8px; font-size: 0.85rem; font-weight: bold; text-align: center; text-decoration: none; }
+        
+        .link-category { margin-bottom: 20px; }
+        .link-category h3 { font-size: 0.95rem; color: #4a5568; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dashed #cbd5e1; }
+        .link-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+        .link-card { display: flex; align-items: center; justify-content: center; padding: 12px; background: #edf2f7; color: #2d3748; text-decoration: none; border-radius: 8px; font-weight: bold; border: 1px solid #cbd5e1; font-size: 0.85rem; text-align: center; }
+
         .update-list { list-style: none; padding: 0; max-height: 180px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 0.8rem; }
         .update-date { font-family: monospace; font-weight: bold; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; margin-right: 10px; }
     </style>
@@ -102,12 +108,18 @@
             </div>
         </div>
     </div>
+
+    <div class="content-card">
+        <h2>旅の計画</h2>
+        <div id="category-container"></div>
+    </div>
+
     <div class="content-card"><h2>Update Log</h2><ul id="dynamic-update-list" class="update-list"></ul></div>
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // --- 天気設定（東京起点の並び順） ---
+    // --- 天気設定 ---
     const weatherConfig = {
         "関東・甲": [
             { name: "東京", lat: 35.68, lon: 139.69, pref: "東京都" },
@@ -236,7 +248,7 @@
                 document.getElementById('legend-items').appendChild(item);
                 layer.features.forEach(f => {
                     const c = f.geometry.coordinates;
-                    const pop = `<div style="text-align:center;"><strong>${f.properties.name}</strong><br><span style="font-size:0.75rem;color:#666;">${(f.properties.description || "").replace(/\n/g,'<br>')}</span><br><a href="http://googleusercontent.com/maps.google.com/8{f.geometry.type === "Point" ? c[1]+','+c[0] : c[0][1]+','+c[0][0]}&travelmode=driving" target="_blank" style="display:block;margin-top:5px;padding:8px;background:#4285F4;color:white;border-radius:4px;text-decoration:none;font-weight:bold;">Googleマップ</a></div>`;
+                    const pop = `<div style="text-align:center;"><strong>${f.properties.name}</strong><br><span style="font-size:0.75rem;color:#666;">${(f.properties.description || "").replace(/\n/g,'<br>')}</span><br><a href="http://googleusercontent.com/maps.google.com/9{f.geometry.type === "Point" ? c[1]+','+c[0] : c[0][1]+','+c[0][0]}&travelmode=driving" target="_blank" style="display:block;margin-top:5px;padding:8px;background:#4285F4;color:white;border-radius:4px;text-decoration:none;font-weight:bold;">Googleマップ</a></div>`;
                     if (f.geometry.type === "Point") {
                         L.circleMarker([c[1], c[0]], { radius: 8, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(group).bindPopup(pop);
                         pC++;
@@ -261,7 +273,6 @@
     const weatherPanelsBox = document.getElementById('weather-panels-container');
     const weatherHeaderRow = document.getElementById('weather-header-row');
 
-    // 日付ヘッダー
     const days = ["日","月","火","水","木","金","土"];
     let headerHtml = `<div class="header-cell">エリア名</div>`;
     for(let i=0; i<3; i++) {
@@ -328,6 +339,22 @@
         const v = document.getElementById('weather-input').value;
         if (v) window.open(`https://tenki.jp/search/?keyword=${encodeURIComponent(v)}`, '_blank');
     }
+
+    // --- リンク集の復活 ---
+    const linkCategories = [
+        { title: "ルート作成・交通情報関連", links: [{ name: "Google マップ", url: "https://www.google.co.jp/maps/dir///" },{ name: "JARTIC 渋滞情報", url: "https://www.jartic.or.jp/" },{ name: "高速料金検索", url: "https://www.driveplaza.com/dp/SearchTop" },{ name: "二輪車定率割引申込", url: "https://hayatabi.c-nexco.co.jp/drive/detail.html?id=203" },{ name: "二輪車割引料金検索", url: "https://search.w-nexco.co.jp/touring-search/" }] },
+        { title: "車両管理・その他", links: [{ name: "Honda Total Care", url: "https://htc.honda.co.jp/member/" },{ name: "Starlink ログイン", url: "https://www.starlink.com/account/home" }] },
+        { title: "宿泊・温泉", links: [{ name: "じゃらん", url: "https://www.jalan.net/" },{ name: "楽天トラベル", url: "https://travel.rakuten.co.jp/" },{ name: "ゆる～と", url: "https://yuru-to.net/" }] },
+        { title: "交通その他", links: [{ name: "航路マップ", url: "https://searoute.info/" }] }
+    ];
+    const categoryContainer = document.getElementById('category-container');
+    linkCategories.forEach(cat => {
+        const div = document.createElement('div'); div.className = 'link-category';
+        let html = `<h3><i class="fa-solid fa-chevron-right" style="font-size:0.8rem; margin-right:5px;"></i>${cat.title}</h3><div class="link-grid">`;
+        cat.links.forEach(l => { html += `<a href="${l.url}" class="link-card" target="_blank">${l.name}</a>`; });
+        div.innerHTML = html + `</div>`;
+        categoryContainer.appendChild(div);
+    });
 
     async function loadUpdateLog() {
         try {
