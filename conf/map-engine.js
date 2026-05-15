@@ -53,41 +53,47 @@ async function loadUMapData() {
         const legendItems = document.getElementById('legend-items');
         legendItems.innerHTML = '';
 
-        // レイヤーごとに処理
+        if (!data.layers) return;
+
         data.layers.forEach(layerData => {
             const categoryName = layerData.name;
-            const color = layerData.settings.color || "#718096";
             
-            // 各カテゴリ用のレイヤーグループ作成
+            // 【修正】色の取得を安全にする（settingsがない場合やcolorがない場合に対応）
+            let color = "#718096"; // デフォルト色
+            if (layerData.settings && layerData.settings.color) {
+                color = layerData.settings.color;
+            } else if (layerData.color) {
+                color = layerData.color;
+            }
+            
             markerLayers[categoryName] = L.layerGroup().addTo(map);
 
-            // 凡例の追加
             const item = document.createElement('div');
             item.className = 'legend-item';
             item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${categoryName}', this.checked)"><span class="legend-dot" style="background:${color}"></span>${categoryName}`;
             legendItems.appendChild(item);
 
-            // 地点（features）の追加
-            layerData.features.forEach(feature => {
-                const [lon, lat] = feature.geometry.coordinates;
-                const name = feature.properties.name || "名称未設定";
-                const description = feature.properties.description || "";
+            if (layerData.features) {
+                layerData.features.forEach(feature => {
+                    const [lon, lat] = feature.geometry.coordinates;
+                    const name = feature.properties.name || "名称未設定";
+                    const description = feature.properties.description || "";
 
-                const customIcon = L.divIcon({
-                    className: 'custom-div-icon',
-                    html: `<div style="background-color:${color}; width:12px; height:12px; border:2px solid white; border-radius:50%; box-shadow:0 0 3px rgba(0,0,0,0.4);"></div>`,
-                    iconSize: [12, 12],
-                    iconAnchor: [6, 6]
+                    const customIcon = L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div style="background-color:${color}; width:12px; height:12px; border:2px solid white; border-radius:50%; box-shadow:0 0 3px rgba(0,0,0,0.4);"></div>`,
+                        iconSize: [12, 12],
+                        iconAnchor: [6, 6]
+                    });
+
+                    L.marker([lat, lon], { 
+                        icon: customIcon,
+                        bubblingMouseEvents: false 
+                    })
+                    .bindPopup(createPopupContent(name, lat, lon, description, categoryName))
+                    .addTo(markerLayers[categoryName]);
                 });
-
-                // 【重要】Androidでのタップ吸い込み防止を追加
-                L.marker([lat, lon], { 
-                    icon: customIcon,
-                    bubblingMouseEvents: false 
-                })
-                .bindPopup(createPopupContent(name, lat, lon, description, categoryName))
-                .addTo(markerLayers[categoryName]);
-            });
+            }
         });
         updateStats();
     } catch (e) {
