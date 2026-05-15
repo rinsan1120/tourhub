@@ -1,4 +1,15 @@
-GS,gas station,fa-gas-pump // ガソリンスタンド検索
-コンビニ,convenience store,fa-shop // 主要コンビニ検索
-飲食店,restaurant,fa-utensils // 近くのレストラン・食事処
+// ==========================================
+// 【記述ルール】
+// 表示名, 検索キーワード, FontAwesomeアイコン名 // 補足メモ
+//
+// ・各項目はカンマ「,」で区切ってください。
+// ・「//」以降はコメントとして無視されるので、メモとして使えます。
+// ・アイコン名は FontAwesome (Free版) のクラス名を指定してください。Freeで絞るのを忘れずに
+//https://fontawesome.com/search?ic=free-collection
+// 例：道の駅,道の駅,fa-map-location-dot
+// ==========================================
+ガソスタ,ガソリンスタンド,fa-gas-pump // ガソリンスタンド検索
+コンビニ,コンビニエンスストア,fa-shop // 主要コンビニ検索
+ファミレス,ファミレス,fa-utensils // 近くのレストラン・食事処
+道の駅,道の駅,fa-shop
 快活Club,快活Club,fa-bed // 休憩・仮眠用
