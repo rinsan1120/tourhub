@@ -98,7 +98,7 @@ function initWeatherDisplay() {
         weatherData[region].forEach((loc, cIdx) => {
             const row = document.createElement('div'); row.className = 'weather-row';
             
-            // 地点名を tenki.jp への検索リンクにする
+            // 地点名を tenki.jp への検索リンクにする 
             const searchUrl = `https://tenki.jp/search/?keyword=${encodeURIComponent(loc.name)}`;
             const nameHtml = `
                 <span class="city-name">
