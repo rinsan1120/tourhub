@@ -286,8 +286,11 @@
         const regions = Object.keys(weatherConfig);
         for(let rIdx = 0; rIdx < regions.length; rIdx++) {
             const region = regions[rIdx];
-            const sortedCities = [...weatherConfig[region]].sort((a, b) => a.pref.localeCompare(b.pref, 'ja'));
-
+            const sortedCities = [...weatherConfig[region]].sort((a, b) => {
+                if (a.pref === "東京都") return -1; // 東京なら上へ
+                if (b.pref === "東京都") return 1;  // 東京なら上へ
+                return a.pref.localeCompare(b.pref, 'ja'); // それ以外は都道府県順
+            });
             const tab = document.createElement('button');
             tab.className = `weather-tab ${rIdx === 0 ? 'active' : ''}`;
             tab.innerText = region;
@@ -361,7 +364,7 @@
             const res = await fetch('updates.txt?t=' + Date.now());
             const text = await res.text();
             const list = document.getElementById('dynamic-update-list');
-            text.trim().split('\n').reverse().forEach(line => {
+            text.trim().split('\n').forEach(line => {
                 const p = line.split('|');
                 if (p.length === 2) {
                     const li = document.createElement('li');
