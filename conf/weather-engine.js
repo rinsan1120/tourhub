@@ -99,7 +99,7 @@ function initWeatherDisplay() {
             const row = document.createElement('div'); row.className = 'weather-row';
             
             // 地点名を tenki.jp への検索リンクにする 
-            const searchUrl = `https://tenki.jp/search/?keyword=${encodeURIComponent(loc.name)}`;
+            const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(loc.name + ' 天気')}`;
             const nameHtml = `
                 <span class="city-name">
                     <a href="${searchUrl}" target="_blank" style="text-decoration: none; color: #1a202c; border-bottom: 1px dashed #cbd5e1;">
