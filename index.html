@@ -22,11 +22,27 @@
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(33, 150, 243, 0); } 100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); } }
         .my-loc-con { background: none !important; border: none !important; }
 
-        .weather-tabs-wrapper { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 0; }
+        /* 天気セクション：折りたたみ対応 */
+        .weather-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; cursor: pointer; border-left: 5px solid #3182ce; padding-left: 10px; }
+        .weather-card-header h2 { margin: 0; font-size: 1.1rem; }
+        .toggle-icon { transition: transform 0.3s; }
+        .collapsed .toggle-icon { transform: rotate(-90deg); }
+        .weather-collapsible-content { transition: max-height 0.3s ease-out; overflow: hidden; }
+        .collapsed + .weather-collapsible-content { max-height: 0 !important; }
+
+        .weather-tabs-wrapper { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 0; position: relative; }
         .weather-tabs { display: flex; overflow-x: auto; gap: 5px; -webkit-overflow-scrolling: touch; flex-grow: 1; }
         .weather-tab { padding: 10px 18px; background: #e2e8f0; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 0.85rem; font-weight: bold; color: #4a5568; border: none; white-space: nowrap; }
         .weather-tab.active { background: #3182ce; color: white; }
         
+        .refresh-area { text-align: right; margin-bottom: 10px; }
+        .refresh-msg { font-size: 0.7rem; color: #64748b; margin-right: 8px; vertical-align: middle; }
+        #refresh-weather-btn { 
+            padding: 8px 12px; background: #4a5568; color: white; 
+            border-radius: 6px; border: none; font-size: 0.75rem; 
+            font-weight: bold; cursor: pointer;
+        }
+
         .weather-table-container { background: white; border: 1px solid #e2e8f0; border-radius: 0 12px 12px 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .weather-content-panel { display: none; }
         .weather-content-panel.active { display: block; }
@@ -56,7 +72,7 @@
         @media (min-width: 768px) { .map-container { position: relative; } .legend { position: absolute; bottom: 20px; left: 10px; z-index: 1000; } }
         .loc-btn { position: absolute; bottom: 20px; right: 10px; z-index: 1000; background: white; border: none; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.2); width: 44px; height: 44px; cursor: pointer; }
         .content-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 25px; }
-        .content-card h2 { margin: 0 0 15px 0; font-size: 1.1rem; border-left: 5px solid #3182ce; padding-left: 10px; }
+        .content-card h2:not(.weather-title) { margin: 0 0 15px 0; font-size: 1.1rem; border-left: 5px solid #3182ce; padding-left: 10px; }
         .btn-full { width: 100%; padding: 12px; background: #3182ce; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .nearby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-nearby { padding: 10px; background: #4a5568; color: white; border-radius: 8px; font-size: 0.85rem; font-weight: bold; text-align: center; text-decoration: none; }
@@ -68,12 +84,6 @@
 
         .update-list { list-style: none; padding: 0; max-height: 180px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 0.8rem; }
         .update-date { font-family: monospace; font-weight: bold; background: #e2e8f0; padding: 2px 6px; border-radius: 4px; margin-right: 10px; }
-
-        #refresh-weather-btn { 
-            padding: 8px 12px; background: #4a5568; color: white; 
-            border-radius: 8px 8px 0 0; border: none; font-size: 0.75rem; 
-            font-weight: bold; cursor: pointer; margin-bottom: 0;
-        }
     </style>
 </head>
 <body>
@@ -89,14 +99,22 @@
     </div>
 
     <div class="content-card">
-        <h2>全国エリア別天気（3日間）</h2>
-        <div class="weather-tabs-wrapper">
-            <div id="weather-tabs-container" class="weather-tabs"></div>
-            <button id="refresh-weather-btn" onclick="refreshCurrentTabWeather()"><i class="fa-solid fa-sync"></i> 再取得</button>
+        <div class="weather-card-header" onclick="toggleWeather()">
+            <h2>全国エリア別天気（3日間）</h2>
+            <i class="fa-solid fa-chevron-down toggle-icon"></i>
         </div>
-        <div class="weather-table-container">
-            <div id="weather-header-row" class="weather-header"></div>
-            <div id="weather-panels-container"></div>
+        <div class="weather-collapsible-content">
+            <div class="refresh-area">
+                <span class="refresh-msg">※予報が表示されない場合はこちら</span>
+                <button id="refresh-weather-btn" onclick="refreshCurrentTabWeather()"><i class="fa-solid fa-sync"></i> 予報を再取得</button>
+            </div>
+            <div class="weather-tabs-wrapper">
+                <div id="weather-tabs-container" class="weather-tabs"></div>
+            </div>
+            <div class="weather-table-container">
+                <div id="weather-header-row" class="weather-header"></div>
+                <div id="weather-panels-container"></div>
+            </div>
         </div>
     </div>
 
@@ -268,7 +286,7 @@
                 document.getElementById('legend-items').appendChild(item);
                 layer.features.forEach(f => {
                     const c = f.geometry.coordinates;
-                    const pop = `<div style="text-align:center;"><strong>${f.properties.name}</strong><br><span style="font-size:0.75rem;color:#666;">${(f.properties.description || "").replace(/\n/g,'<br>')}</span><br><a href="https://www.google.com/maps/search/コンビニ/0{f.geometry.type === "Point" ? c[1]+','+c[0] : c[0][1]+','+c[0][0]}&travelmode=driving" target="_blank" style="display:block;margin-top:5px;padding:8px;background:#4285F4;color:white;border-radius:4px;text-decoration:none;font-weight:bold;">Googleマップ</a></div>`;
+                    const pop = `<div style="text-align:center;"><strong>${f.properties.name}</strong><br><span style="font-size:0.75rem;color:#666;">${(f.properties.description || "").replace(/\n/g,'<br>')}</span><br><a href="http://googleusercontent.com/maps.google.com/9{f.geometry.type === "Point" ? c[1]+','+c[0] : c[0][1]+','+c[0][0]}&travelmode=driving" target="_blank" style="display:block;margin-top:5px;padding:8px;background:#4285F4;color:white;border-radius:4px;text-decoration:none;font-weight:bold;">Googleマップ</a></div>`;
                     if (f.geometry.type === "Point") {
                         L.circleMarker([c[1], c[0]], { radius: 8, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(group).bindPopup(pop);
                         pC++;
@@ -302,7 +320,12 @@
     }
     weatherHeaderRow.innerHTML = headerHtml;
 
-    // 地方ごとの天気取得用関数
+    // 天気エリアの折りたたみ
+    function toggleWeather() {
+        const header = document.querySelector('.weather-card-header');
+        header.classList.toggle('collapsed');
+    }
+
     async function fetchWeatherForRegion(region, rIdx) {
         const sortedCities = [...weatherConfig[region]].sort((a, b) => {
             if (a.pref === "東京都") return -1;
@@ -351,7 +374,8 @@
             const tab = document.createElement('button');
             tab.className = `weather-tab ${rIdx === 0 ? 'active' : ''}`;
             tab.innerText = region;
-            tab.onclick = () => {
+            tab.onclick = (e) => {
+                e.stopPropagation(); // 折りたたみ発動を防ぐ
                 document.querySelectorAll('.weather-tab').forEach(t => t.classList.remove('active'));
                 document.querySelectorAll('.weather-content-panel').forEach(p => p.classList.remove('active'));
                 tab.classList.add('active');
@@ -371,8 +395,6 @@
                 panel.appendChild(row);
             });
             weatherPanelsBox.appendChild(panel);
-
-            // 初回読み込み実行
             fetchWeatherForRegion(region, rIdx);
         }
     }
