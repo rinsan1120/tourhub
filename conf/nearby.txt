@@ -1,0 +1,4 @@
+GS,gas station,fa-gas-pump // ガソリンスタンド検索
+コンビニ,convenience store,fa-shop // 主要コンビニ検索
+飲食店,restaurant,fa-utensils // 近くのレストラン・食事処
+快活Club,快活Club,fa-bed // 休憩・仮眠用
