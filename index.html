@@ -22,7 +22,7 @@
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(33, 150, 243, 0); } 100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); } }
         .my-loc-con { background: none !important; border: none !important; }
 
-        /* 天気セクション */
+        /* 天気セクション：デフォルト折りたたみ */
         .weather-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; cursor: pointer; padding-left: 0; }
         .weather-card-header h2 { margin: 0; font-size: 1.1rem; }
         .toggle-icon { transition: transform 0.3s; }
@@ -63,7 +63,7 @@
         .nearby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-nearby { padding: 10px; background: #4a5568; color: white; border-radius: 8px; font-size: 0.85rem; font-weight: bold; text-align: center; text-decoration: none; }
         
-        /* 旅の計画（外部ファイル読み込み用） */
+        /* 旅の計画：レスポンシブ・グリッド */
         .link-category { margin-bottom: 20px; }
         .link-category h3 { font-size: 0.95rem; color: #4a5568; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dashed #cbd5e1; }
         .link-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -134,7 +134,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // --- 天気設定 ---
+    // --- 天気設定（都道府県順・東京優先） ---
     const weatherConfig = {
         "関東・甲": [
             { name: "東京", lat: 35.68, lon: 139.69, pref: "東京都" },
@@ -169,12 +169,18 @@
             { name: "新潟市", lat: 37.91, lon: 139.04, pref: "新潟県" },
             { name: "湯沢", lat: 36.93, lon: 138.81, pref: "新潟県" },
             { name: "上越", lat: 37.11, lon: 138.24, pref: "新潟県" },
+            { name: "沼津", lat: 35.10, lon: 138.86, pref: "静岡県" },
+            { name: "下田", lat: 34.68, lon: 138.94, pref: "静岡県" },
             { name: "富山市", lat: 36.69, lon: 137.21, pref: "富山県" },
+            { name: "高岡", lat: 36.74, lon: 137.01, pref: "富山県" },
             { name: "金沢", lat: 36.56, lon: 136.66, pref: "石川県" },
+            { name: "輪島", lat: 37.39, lon: 136.89, pref: "石川県" },
+            { name: "千里浜", lat: 36.82, lon: 136.75, pref: "石川県" },
             { name: "福井", lat: 36.06, lon: 136.22, pref: "福井県" }
         ],
         "東北": [
             { name: "青森", lat: 40.82, lon: 140.75, pref: "青森県" },
+            { name: "八戸", lat: 40.51, lon: 141.49, pref: "青森県" },
             { name: "盛岡", lat: 39.70, lon: 141.15, pref: "岩手県" },
             { name: "仙台", lat: 38.27, lon: 140.87, pref: "宮城県" },
             { name: "秋田", lat: 39.72, lon: 140.10, pref: "秋田県" },
@@ -184,27 +190,37 @@
         "近畿": [
             { name: "大阪", lat: 34.69, lon: 135.50, pref: "大阪府" },
             { name: "神戸", lat: 34.69, lon: 135.18, pref: "兵庫県" },
+            { name: "淡路島", lat: 34.34, lon: 134.89, pref: "兵庫県" },
             { name: "京都", lat: 35.01, lon: 135.76, pref: "京都府" },
+            { name: "舞鶴", lat: 35.47, lon: 135.33, pref: "京都府" },
             { name: "奈良", lat: 34.68, lon: 135.83, pref: "奈良県" },
+            { name: "和歌山", lat: 34.23, lon: 135.17, pref: "和歌山県" },
             { name: "大津", lat: 35.01, lon: 135.86, pref: "滋賀県" }
         ],
         "中国": [
             { name: "鳥取", lat: 35.50, lon: 134.23, pref: "鳥取県" },
             { name: "松江", lat: 35.46, lon: 133.04, pref: "島根県" },
+            { name: "出雲", lat: 35.36, lon: 132.75, pref: "島根県" },
             { name: "岡山", lat: 34.66, lon: 133.91, pref: "岡山県" },
             { name: "広島", lat: 34.38, lon: 132.45, pref: "広島県" },
+            { name: "山口", lat: 34.17, lon: 131.47, pref: "山口県" },
             { name: "下関", lat: 33.95, lon: 130.93, pref: "山口県" }
         ],
         "四国": [
             { name: "徳島", lat: 34.07, lon: 134.55, pref: "徳島県" },
             { name: "高松", lat: 34.34, lon: 134.04, pref: "香川県" },
             { name: "松山", lat: 33.84, lon: 132.76, pref: "愛媛県" },
-            { name: "高知", lat: 33.56, lon: 133.53, pref: "高知県" }
+            { name: "高知", lat: 33.56, lon: 133.53, pref: "高知県" },
+            { name: "天狗高原", lat: 33.48, lon: 133.00, pref: "高知県" },
+            { name: "柏島", lat: 32.76, lon: 132.62, pref: "高知県" },
+            { name: "四万十町", lat: 33.21, lon: 133.13, pref: "高知県" }
         ],
         "九州": [
             { name: "福岡", lat: 33.59, lon: 130.40, pref: "福岡県" },
+            { name: "佐賀", lat: 33.26, lon: 130.30, pref: "佐賀県" },
             { name: "長崎", lat: 32.75, lon: 129.87, pref: "長崎県" },
             { name: "熊本", lat: 32.80, lon: 130.70, pref: "熊本県" },
+            { name: "阿蘇", lat: 32.93, lon: 131.07, pref: "熊本県" },
             { name: "大分", lat: 33.23, lon: 131.60, pref: "大分県" },
             { name: "宮崎", lat: 31.91, lon: 131.42, pref: "宮崎県" },
             { name: "鹿児島", lat: 31.56, lon: 130.55, pref: "鹿児島県" }
@@ -212,6 +228,8 @@
         "北海道": [
             { name: "札幌", lat: 43.06, lon: 141.35, pref: "北海道" },
             { name: "旭川", lat: 43.77, lon: 142.36, pref: "北海道" },
+            { name: "網走", lat: 44.02, lon: 144.27, pref: "北海道" },
+            { name: "釧路", lat: 42.98, lon: 144.38, pref: "北海道" },
             { name: "函館", lat: 41.77, lon: 140.73, pref: "北海道" }
         ]
     };
@@ -250,7 +268,10 @@
                 document.getElementById('legend-items').appendChild(item);
                 layer.features.forEach(f => {
                     const c = f.geometry.coordinates;
-                    const pop = `<div style="text-align:center;"><strong>${f.properties.name}</strong><br><a href="https://www.google.com/maps/dir/?api=1&destination=${f.geometry.type === "Point" ? c[1]+','+c[0] : c[0][1]+','+c[0][0]}" target="_blank" style="display:block;margin-top:5px;padding:8px;background:#4285F4;color:white;border-radius:4px;text-decoration:none;font-weight:bold;">ルート案内</a></div>`;
+                    // --- 説明文表示を復活 ---
+                    const desc = f.properties.description ? `<br><span style="font-size:0.75rem;color:#666;">${f.properties.description.replace(/\n/g,'<br>')}</span>` : '';
+                    const pop = `<div style="text-align:center;"><strong>${f.properties.name}</strong>${desc}<br><a href="https://www.google.com/maps/dir/?api=1&destination=${f.geometry.type === "Point" ? c[1]+','+c[0] : c[0][1]+','+c[0][0]}" target="_blank" style="display:block;margin-top:5px;padding:8px;background:#4285F4;color:white;border-radius:4px;text-decoration:none;font-weight:bold;">ルート案内</a></div>`;
+                    
                     if (f.geometry.type === "Point") {
                         L.circleMarker([c[1], c[0]], { radius: 8, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(group).bindPopup(pop);
                         pC++;
@@ -266,7 +287,7 @@
     function toggleLayer(n, c) { if (c) map.addLayer(layerGroups[n]); else map.removeLayer(layerGroups[n]); }
     loadUmapData();
 
-    // --- 天気機能 ---
+    // --- 天気制御 ---
     function getWeatherIcon(code) {
         if (code === 0) return 'fa-sun'; if (code <= 3) return 'fa-cloud-sun'; if (code <= 67) return 'fa-cloud-rain'; if (code <= 82) return 'fa-cloud-showers-heavy'; return 'fa-cloud';
     }
@@ -279,15 +300,21 @@
     }
 
     async function fetchWeatherForRegion(region, rIdx) {
-        const cities = weatherConfig[region];
-        const lats = cities.map(c => c.lat).join(',');
-        const lons = cities.map(c => c.lon).join(',');
+        const sortedCities = [...weatherConfig[region]].sort((a, b) => {
+            if (a.pref === "東京都") return -1;
+            if (b.pref === "東京都") return 1;
+            const pOrder = ["北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県","茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県","新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県","三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県","鳥取県","島根県","岡山県","広島県","山口県","徳島県","香川県","愛媛県","高知県","福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"];
+            return pOrder.indexOf(a.pref) - pOrder.indexOf(b.pref);
+        });
+        const lats = sortedCities.map(c => c.lat).join(',');
+        const lons = sortedCities.map(c => c.lon).join(',');
         try {
             const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo`);
             const data = await res.json();
-            const forecastArray = Array.isArray(data) ? data : [data];
-            cities.forEach((loc, cIdx) => {
-                const d = forecastArray[cIdx].daily;
+            const fArray = Array.isArray(data) ? data : [data];
+            sortedCities.forEach((loc, cIdx) => {
+                const d = fArray[cIdx].daily;
+                if (!d) return;
                 for(let i=0; i<3; i++) {
                     const el = document.getElementById(`w-${rIdx}-${cIdx}-${i}`);
                     if(el) el.innerHTML = `<i class="fa-solid ${getWeatherIcon(d.weather_code[i])} forecast-icon"></i><span class="forecast-pop">${d.precipitation_probability_max[i]}%</span><div class="forecast-temp"><span class="t-min">${Math.round(d.temperature_2m_min[i])}</span>/<span class="t-max">${Math.round(d.temperature_2m_max[i])}</span></div>`;
@@ -313,7 +340,8 @@
             const tab = document.createElement('button');
             tab.className = `weather-tab ${rIdx === 0 ? 'active' : ''}`;
             tab.innerText = region;
-            tab.onclick = () => {
+            tab.onclick = (e) => {
+                e.stopPropagation();
                 document.querySelectorAll('.weather-tab').forEach(t => t.classList.remove('active'));
                 document.querySelectorAll('.weather-content-panel').forEach(p => p.classList.remove('active'));
                 tab.classList.add('active');
@@ -326,7 +354,15 @@
             const panel = document.createElement('div');
             panel.id = `panel-${rIdx}`;
             panel.className = `weather-content-panel ${rIdx === 0 ? 'active' : ''}`;
-            weatherConfig[region].forEach((loc, cIdx) => {
+            
+            const sortedCities = [...weatherConfig[region]].sort((a, b) => {
+                if (a.pref === "東京都") return -1;
+                if (b.pref === "東京都") return 1;
+                const pOrder = ["北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県","茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県","新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県","三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県","鳥取県","島根県","岡山県","広島県","山口県","徳島県","香川県","愛媛県","高知県","福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"];
+                return pOrder.indexOf(a.pref) - pOrder.indexOf(b.pref);
+            });
+
+            sortedCities.forEach((loc, cIdx) => {
                 const row = document.createElement('div');
                 row.className = 'weather-row';
                 row.innerHTML = `<span class="city-name">${loc.name}<span class="pref-name">(${loc.pref})</span></span>` + [0,1,2].map(i => `<div class="forecast-unit" id="w-${rIdx}-${cIdx}-${i}">...</div>`).join('');
@@ -337,12 +373,30 @@
         });
     }
 
+    async function refreshCurrentTabWeather() {
+        const btn = document.getElementById('refresh-weather-btn');
+        if (btn.disabled) return;
+        const activeTab = document.querySelector('.weather-tab.active');
+        if (!activeTab) return;
+        const region = activeTab.innerText;
+        const rIdx = Array.from(document.querySelectorAll('.weather-tab')).indexOf(activeTab);
+        btn.disabled = true; btn.style.opacity = '0.5';
+        const originalText = btn.innerHTML;
+        await fetchWeatherForRegion(region, rIdx);
+        let timeLeft = 60;
+        const timer = setInterval(() => {
+            timeLeft--;
+            btn.innerHTML = `<i class="fa-solid fa-hourglass-half"></i> ${timeLeft}s`;
+            if (timeLeft <= 0) { clearInterval(timer); btn.disabled = false; btn.style.opacity = '1'; btn.innerHTML = originalText; }
+        }, 1000);
+    }
+
     function searchWeather() {
         const v = document.getElementById('weather-input').value;
         if (v) window.open(`https://tenki.jp/search/?keyword=${encodeURIComponent(v)}`, '_blank');
     }
 
-    // --- 旅の計画（外部ファイル読み込み） ---
+    // --- 旅の計画（link.txt 読み込み） ---
     async function loadLinks() {
         const container = document.getElementById('category-container');
         try {
@@ -350,22 +404,19 @@
             if (!res.ok) throw new Error();
             const text = await res.text();
             container.innerHTML = '';
-            
-            let currentCatDiv = null;
             let currentGrid = null;
 
             text.split('\n').forEach(line => {
                 line = line.trim();
                 if (!line) return;
-
                 if (line.startsWith('※')) {
-                    currentCatDiv = document.createElement('div');
-                    currentCatDiv.className = 'link-category';
-                    currentCatDiv.innerHTML = `<h3><i class="fa-solid fa-chevron-right" style="font-size:0.8rem; margin-right:5px;"></i>${line.substring(1)}</h3>`;
+                    const catDiv = document.createElement('div');
+                    catDiv.className = 'link-category';
+                    catDiv.innerHTML = `<h3><i class="fa-solid fa-chevron-right" style="font-size:0.8rem; margin-right:5px;"></i>${line.substring(1)}</h3>`;
                     currentGrid = document.createElement('div');
                     currentGrid.className = 'link-grid';
-                    currentCatDiv.appendChild(currentGrid);
-                    container.appendChild(currentCatDiv);
+                    catDiv.appendChild(currentGrid);
+                    container.appendChild(catDiv);
                 } else if (line.includes(',') && currentGrid) {
                     const [name, url] = line.split(',');
                     const a = document.createElement('a');
@@ -396,7 +447,7 @@
         } catch (e) { }
     }
 
-    // 初期化実行
+    // 初期化
     initWeather();
     loadLinks();
     loadUpdateLog();
