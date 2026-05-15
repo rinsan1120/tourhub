@@ -1,31 +1,24 @@
 let weatherData = {};
 let loadedRegions = new Set();
 
-// コメント「//」を削除してトリミングする汎用関数
-function cleanLine(line) {
-    return line.split('//')[0].trim();
-}
+function cleanLine(line) { return line.split('//')[0].trim(); }
 
 function getWeatherIcon(code) {
-    if (code === 0) return 'fa-sun'; 
-    if (code <= 3) return 'fa-cloud-sun'; 
-    if (code <= 67) return 'fa-cloud-rain'; 
-    return 'fa-cloud';
+    if (code === 0) return 'fa-sun'; if (code <= 3) return 'fa-cloud-sun'; if (code <= 67) return 'fa-cloud-rain'; return 'fa-cloud';
 }
 
 function toggleWeather() {
     const h = document.querySelector('.weather-card-header'), c = document.querySelector('.weather-collapsible-content');
     h.classList.toggle('collapsed');
-    
     if (h.classList.contains('collapsed')) {
         c.style.maxHeight = "0px";
-        c.style.overflow = "hidden"; // 閉じるときは隠す
+        c.style.overflow = "hidden";
     } else {
-        c.style.maxHeight = "3000px"; // 十分すぎる高さ
+        c.style.maxHeight = "3000px";
         setTimeout(() => { 
             if(!h.classList.contains('collapsed')) {
                 c.style.maxHeight = "none";
-                c.style.overflow = "visible"; // 開ききったら制限を完全に解除
+                c.style.overflow = "visible";
             }
         }, 350);
     }
@@ -33,7 +26,7 @@ function toggleWeather() {
 
 async function loadWeatherConfig() {
     try {
-        const res = await fetch('./conf/weather.txt?t=' + Date.now()), text = await res.text();
+        const res = await fetch('conf/weather.txt?t=' + Date.now()), text = await res.text();
         let currentRegion = "";
         text.split('\n').forEach(rawLine => {
             const line = cleanLine(rawLine);
@@ -76,12 +69,11 @@ function initWeatherDisplay() {
     }
     document.getElementById('weather-header-row').innerHTML = hHtml;
 
-    // パネルコンテナの取得と警告メッセージの挿入
     const panelsContainer = document.getElementById('weather-panels-container');
     if (!document.getElementById('weather-warning')) {
         const warningNote = document.createElement('div');
         warningNote.id = 'weather-warning';
-        warningNote.style = "padding: 8px; font-size: 0.75rem; color: #e53e3e; background: #fff5f5; border-bottom: 1px solid #fed7d7; text-align: center;";
+        warningNote.style = "padding: 5px 8px; font-size: 0.7rem; color: #e53e3e; background: #fff5f5; border-bottom: 1px solid #fed7d7; text-align: center; line-height: 1.2;";
         warningNote.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> 海外データにつき精度が不安定です。出発前は必ず地点名から詳細予報を再確認してください。`;
         panelsContainer.before(warningNote);
     }
@@ -106,44 +98,31 @@ function initWeatherDisplay() {
         document.getElementById('weather-tabs-container').appendChild(tab);
 
         const panel = document.createElement('div'); 
-        panel.id = `panel-${rIdx}`; 
-        panel.className = 'weather-content-panel'; 
-        panel.style.display = rIdx === 0 ? 'block' : 'none';
+        panel.id = `panel-${rIdx}`; panel.className = 'weather-content-panel'; panel.style.display = rIdx === 0 ? 'block' : 'none';
         
         weatherData[region].forEach((loc, cIdx) => {
             const row = document.createElement('div'); row.className = 'weather-row';
-            
-            // 地点名を tenki.jp への検索リンクにする 
+            // 検索先をGoogleに変更
             const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(loc.name + ' 天気')}`;
-            const nameHtml = `
-                <span class="city-name">
-                    <a href="${searchUrl}" target="_blank" style="text-decoration: none; color: #1a202c; border-bottom: 1px dashed #cbd5e1;">
-                        ${loc.name} <i class="fa-solid fa-up-right-from-square" style="font-size: 0.6rem; color: #94a3b8;"></i>
-                    </a>
-                    <span class="pref-name">(${loc.pref})</span>
-                </span>`;
-            
-            // 取得中のアニメーション表示
-            row.innerHTML = nameHtml + [0,1,2].map(i => `<div class="forecast-unit" id="w-${rIdx}-${cIdx}-${i}"><i class="fa-solid fa-spinner fa-spin" style="font-size:0.8rem; color:#cbd5e1;"></i><div style="font-size:0.5rem; color:#94a3b8;">取得中...</div></div>`).join('');
+            const nameHtml = `<span class="city-name"><a href="${searchUrl}" target="_blank" style="text-decoration: none; color: #1a202c; border-bottom: 1px dashed #cbd5e1;">${loc.name} <i class="fa-solid fa-up-right-from-square" style="font-size: 0.6rem; color: #94a3b8;"></i></a><span class="pref-name">(${loc.pref})</span></span>`;
+            row.innerHTML = nameHtml + [0,1,2].map(i => `<div class="forecast-unit" id="w-${rIdx}-${cIdx}-${i}"><i class="fa-solid fa-spinner fa-spin" style="font-size:0.8rem; color:#cbd5e1;"></i></div>`).join('');
             panel.appendChild(row);
         });
         panelsContainer.appendChild(panel);
-        
         if (rIdx === 0) fetchWeatherForRegion(region, rIdx);
     });
+    // 最下部の見切れ防止用スペース
+    const spacer = document.createElement('div'); spacer.style.height = "30px"; panelsContainer.appendChild(spacer);
 }
 
 async function refreshCurrentTabWeather() {
     const active = document.querySelector('.weather-tab.active'); if(!active) return;
     const region = active.innerText, rIdx = Array.from(document.querySelectorAll('.weather-tab')).indexOf(active);
-    const btn = document.getElementById('refresh-weather-btn'); btn.disabled = true; btn.style.opacity = '0.5';
     loadedRegions.delete(region);
-    await fetchWeatherForRegion(region, rIdx);
-    setTimeout(() => { btn.disabled = false; btn.style.opacity = '1'; }, 60000);
+    fetchWeatherForRegion(region, rIdx);
 }
 
 function searchWeather() { 
     const v = document.getElementById('weather-input').value; 
-    // 入力された文字に「 天気」を足してGoogleで検索
     if(v) window.open(`https://www.google.com/search?q=${encodeURIComponent(v + ' 天気')}`, '_blank'); 
 }
