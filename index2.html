@@ -107,7 +107,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // --- 天気設定（Rin's 正解リスト） ---
+    // --- 天気設定（記述ミスを修正済みの正解リスト） ---
     const weatherConfig = {
         "関東・甲": [
             { name: "東京", lat: 35.68, lon: 139.69 },
@@ -145,7 +145,7 @@
             { name: "静岡", lat: 34.97, lon: 138.38 },
             { name: "飛騨高山", lat: 36.14, lon: 137.25 },
             { name: "高岡", lat: 36.74, lon: 137.01 },
-            { name: "輪島", lat: 37.39, lon: 136.90 },
+            { name: "輪島", lat: 37.39, lon: 136.89 },
             { name: "金沢", lat: 36.56, lon: 136.66 }
         ],
         "近畿": [
@@ -226,7 +226,7 @@
                 document.getElementById('legend-items').appendChild(item);
                 layer.features.forEach(f => {
                     const c = f.geometry.coordinates;
-                    const pop = `<div style="text-align:center;"><strong>${f.properties.name}</strong><br><span style="font-size:0.75rem;color:#666;">${(f.properties.description || "").replace(/\n/g,'<br>')}</span><br><a href="https://www.google.com/maps/dir/?api=1&destination=$${f.geometry.type === "Point" ? c[1]+','+c[0] : c[0][1]+','+c[0][0]}&travelmode=driving" target="_blank" style="display:block;margin-top:5px;padding:8px;background:#4285F4;color:white;border-radius:4px;text-decoration:none;font-weight:bold;">Googleマップ</a></div>`;
+                    const pop = `<div style="text-align:center;"><strong>${f.properties.name}</strong><br><span style="font-size:0.75rem;color:#666;">${(f.properties.description || "").replace(/\n/g,'<br>')}</span><br><a href="http://googleusercontent.com/maps.google.com/6{f.geometry.type === "Point" ? c[1]+','+c[0] : c[0][1]+','+c[0][0]}&travelmode=driving" target="_blank" style="display:block;margin-top:5px;padding:8px;background:#4285F4;color:white;border-radius:4px;text-decoration:none;font-weight:bold;">Googleマップ</a></div>`;
                     if (f.geometry.type === "Point") {
                         L.circleMarker([c[1], c[0]], { radius: 8, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(group).bindPopup(pop);
                         pC++;
@@ -242,7 +242,7 @@
     function toggleLayer(n, c) { if (c) map.addLayer(layerGroups[n]); else map.removeLayer(layerGroups[n]); }
     loadUmapData();
 
-    // --- バルク処理版 天気システム ---
+    // --- 天気システム（バルク・地方別取得版） ---
     function getWeatherIcon(code) {
         if (code === 0) return 'fa-sun'; if (code <= 3) return 'fa-cloud-sun'; if (code <= 67) return 'fa-cloud-rain'; if (code <= 82) return 'fa-cloud-showers-heavy'; return 'fa-cloud';
     }
@@ -261,8 +261,30 @@
     }
     weatherHeaderRow.innerHTML = headerHtml;
 
-    async function initWeather() {
-        const allCities = [];
+    async function fetchWeatherForRegion(region, rIdx) {
+        const cities = weatherConfig[region];
+        const lats = cities.map(c => c.lat).join(',');
+        const lons = cities.map(c => c.lon).join(',');
+        try {
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo`);
+            const data = await res.json();
+            const forecastArray = Array.isArray(data) ? data : [data];
+
+            cities.forEach((loc, cIdx) => {
+                const d = forecastArray[cIdx].daily;
+                for(let i=0; i<3; i++) {
+                    const el = document.getElementById(`w-${rIdx}-${cIdx}-${i}`);
+                    if(el && d) el.innerHTML = `
+                        <i class="fa-solid ${getWeatherIcon(d.weather_code[i])} forecast-icon"></i>
+                        <span class="forecast-pop">降水：${d.precipitation_probability_max[i]}%</span>
+                        <div class="forecast-temp"><span class="t-min">${Math.round(d.temperature_2m_min[i])}</span>/<span class="t-max">${Math.round(d.temperature_2m_max[i])}</span></div>
+                    `;
+                }
+            });
+        } catch (e) { console.error(`${region} Load Error`, e); }
+    }
+
+    function initWeather() {
         Object.keys(weatherConfig).forEach((region, rIdx) => {
             const tab = document.createElement('button');
             tab.className = `weather-tab ${rIdx === 0 ? 'active' : ''}`;
@@ -278,40 +300,19 @@
             const panel = document.createElement('div');
             panel.id = `panel-${rIdx}`;
             panel.className = `weather-content-panel ${rIdx === 0 ? 'active' : ''}`;
-            const list = document.createElement('div');
             
-            weatherConfig[region].forEach(loc => {
+            weatherConfig[region].forEach((loc, cIdx) => {
                 const row = document.createElement('div');
                 row.className = 'weather-row';
                 row.innerHTML = `<span class="city-name">${loc.name}</span>` + 
-                    [0,1,2].map(i => `<div class="forecast-unit" id="w-${loc.lat}-${loc.lon}-${i}">...</div>`).join('');
-                list.appendChild(row);
-                allCities.push(loc);
+                    [0,1,2].map(i => `<div class="forecast-unit" id="w-${rIdx}-${cIdx}-${i}">...</div>`).join('');
+                panel.appendChild(row);
             });
-            panel.appendChild(list);
             weatherPanelsBox.appendChild(panel);
+            
+            // 各地方のデータを順番に取得
+            fetchWeatherForRegion(region, rIdx);
         });
-
-        // バルク・リクエスト
-        const lats = allCities.map(c => c.lat).join(',');
-        const lons = allCities.map(c => c.lon).join(',');
-        try {
-            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo`);
-            const data = await res.json();
-            const forecastArray = Array.isArray(data) ? data : [data];
-
-            allCities.forEach((loc, index) => {
-                const d = forecastArray[index].daily;
-                for(let i=0; i<3; i++) {
-                    const el = document.getElementById(`w-${loc.lat}-${loc.lon}-${i}`);
-                    if(el) el.innerHTML = `
-                        <i class="fa-solid ${getWeatherIcon(d.weather_code[i])} forecast-icon"></i>
-                        <span class="forecast-pop">降水：${d.precipitation_probability_max[i]}%</span>
-                        <div class="forecast-temp"><span class="t-min">${Math.round(d.temperature_2m_min[i])}</span>/<span class="t-max">${Math.round(d.temperature_2m_max[i])}</span></div>
-                    `;
-                }
-            });
-        } catch (e) { console.error("Weather Load Error", e); }
     }
     initWeather();
 
