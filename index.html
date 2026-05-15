@@ -125,9 +125,10 @@
 <script src="conf/weather-engine.js"></script>
 
 <script>
-    // ヘルパー：weather-engine.jsにあるものと同じだが、このファイルでも使うため定義
+    // ヘルパー関数（nearbyやlinkでも使うため維持）
     function cleanLine(line) { return line.split('//')[0].trim(); }
 
+    // 周辺検索の読み込み
     async function loadNearbyConfig() {
         const container = document.getElementById('nearby-container');
         try {
@@ -140,7 +141,7 @@
                 if (parts.length >= 3) {
                     const label = parts[0].trim(), keyword = parts[1].trim(), icon = parts[2].trim();
                     const a = document.createElement('a');
-                    a.href = `https://www.google.com/maps/search/${encodeURIComponent(keyword)}`;
+                    a.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(keyword)}`;
                     a.className = 'btn-nearby'; a.target = '_blank';
                     a.innerHTML = `<i class="fa-solid ${icon}"></i> ${label}`;
                     container.appendChild(a);
@@ -149,6 +150,7 @@
         } catch (e) { container.innerHTML = 'nearby.txt 読込失敗'; }
     }
 
+    // リンク集の読み込み
     async function loadLinks() {
         const container = document.getElementById('category-container');
         try {
@@ -171,6 +173,7 @@
         } catch (e) { container.innerHTML = 'link.txt 読込失敗'; }
     }
 
+    // 更新ログの読み込み
     async function loadUpdateLog() {
         try {
             const res = await fetch('conf/updates.txt?t=' + Date.now()), text = await res.text();
@@ -186,11 +189,19 @@
         } catch (e) {}
     }
 
-    // 起動：JSエンジンの読み込み完了後に実行
+    // すべてを起動するメイン処理
     window.addEventListener('load', () => {
+        // 1. 地図を初期化（土台を作ってからマーカーを呼ぶ）
+        if (typeof initMap === 'function') {
+            initMap();
+        }
+        
+        // 2. 天気を読み込み
         if (typeof loadWeatherConfig === 'function') {
             loadWeatherConfig();
         }
+        
+        // 3. その他パーツを読み込み
         loadNearbyConfig();
         loadLinks();
         loadUpdateLog();
