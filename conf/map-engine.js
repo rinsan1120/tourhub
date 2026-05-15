@@ -32,17 +32,23 @@ function createPopupContent(name, lat, lng, description = "", category = "") {
 
 // 地図の初期化
 function initMap() {
-    // Androidでのタップ干渉を防ぐ設定を追加
+    // 1. 地図オブジェクトの作成
     map = L.map('map', {
         tap: false,
-        tapTolerance: 20
+        tapTolerance: 20,
+        dragging: true,
+        touchZoom: true
     }).setView([35.6812, 139.7671], 10);
     
+    // 2. タイルレイヤーの追加
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
+        attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    loadMapConfig();
+    // 3. 地図の準備が完全に整ってからマーカーを読み込む（少しだけ猶予を持たせる）
+    setTimeout(() => {
+        loadMapConfig();
+    }, 100);
 }
 
 async function loadMapConfig() {
