@@ -2,7 +2,7 @@ let map;
 let markerLayers = {};
 let userLocationMarker = null;
 
-// ポップアップ内容の生成
+// ポップアップ内容の生成（Android/iOS/PC共通）
 function createPopupContent(name, lat, lng, description = "", category = "") {
     const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
     const localUrl = `${baseUrl}&avoid=tolls,highways`;
@@ -32,53 +32,47 @@ function createPopupContent(name, lat, lng, description = "", category = "") {
 
 // 地図の初期化
 function initMap() {
-    // 1. 地図オブジェクトの作成
+    // 【重要】Androidでのタップ干渉を防ぐ設定を追加
     map = L.map('map', {
         tap: false,
-        tapTolerance: 20,
-        dragging: true,
-        touchZoom: true
+        tapTolerance: 20
     }).setView([35.6812, 139.7671], 10);
     
-    // 2. タイルレイヤーの追加
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // 3. 地図の準備が完全に整ってからマーカーを読み込む（少しだけ猶予を持たせる）
-    setTimeout(() => {
-        loadMapConfig();
-    }, 100);
+    loadUMapData();
 }
 
-async function loadMapConfig() {
+// uMap (umap_backup_map.umap) のデータを読み込んで表示
+async function loadUMapData() {
     try {
-        const res = await fetch('conf/map.txt?t=' + Date.now());
-        const text = await res.text();
+        const res = await fetch('./umap_backup_map.umap?t=' + Date.now());
+        const data = await res.json();
         const legendItems = document.getElementById('legend-items');
         legendItems.innerHTML = '';
 
-        let currentCategory = "";
-        let colorMap = { "絶景道": "#e53e3e", "キャンプ場": "#38a169", "道の駅": "#3182ce", "その他": "#718096" };
+        // レイヤーごとに処理
+        data.layers.forEach(layerData => {
+            const categoryName = layerData.name;
+            const color = layerData.settings.color || "#718096";
+            
+            // 各カテゴリ用のレイヤーグループ作成
+            markerLayers[categoryName] = L.layerGroup().addTo(map);
 
-        const lines = text.split('\n');
-        for (const rawLine of lines) {
-            const line = rawLine.split('//')[0].trim();
-            if (!line) continue;
+            // 凡例の追加
+            const item = document.createElement('div');
+            item.className = 'legend-item';
+            item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${categoryName}', this.checked)"><span class="legend-dot" style="background:${color}"></span>${categoryName}`;
+            legendItems.appendChild(item);
 
-            if (line.startsWith('※')) {
-                currentCategory = line.substring(1);
-                markerLayers[currentCategory] = L.layerGroup().addTo(map);
-                
-                const color = colorMap[currentCategory] || "#718096";
-                const item = document.createElement('div');
-                item.className = 'legend-item';
-                item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${currentCategory}', this.checked)"><span class="legend-dot" style="background:${color}"></span>${currentCategory}`;
-                legendItems.appendChild(item);
-            } else if (line.includes(',') && currentCategory) {
-                const [name, lat, lon, desc] = line.split(',');
-                const color = colorMap[currentCategory] || "#718096";
-                
+            // 地点（features）の追加
+            layerData.features.forEach(feature => {
+                const [lon, lat] = feature.geometry.coordinates;
+                const name = feature.properties.name || "名称未設定";
+                const description = feature.properties.description || "";
+
                 const customIcon = L.divIcon({
                     className: 'custom-div-icon',
                     html: `<div style="background-color:${color}; width:12px; height:12px; border:2px solid white; border-radius:50%; box-shadow:0 0 3px rgba(0,0,0,0.4);"></div>`,
@@ -86,17 +80,20 @@ async function loadMapConfig() {
                     iconAnchor: [6, 6]
                 });
 
-                // マーカー生成：Androidでのタップ吸い込み防止を追加
-                L.marker([parseFloat(lat), parseFloat(lon)], { 
+                // 【重要】Androidでのタップ吸い込み防止を追加
+                L.marker([lat, lon], { 
                     icon: customIcon,
                     bubblingMouseEvents: false 
                 })
-                .bindPopup(createPopupContent(name.trim(), lat.trim(), lon.trim(), desc ? desc.trim() : "", currentCategory))
-                .addTo(markerLayers[currentCategory]);
-            }
-        }
+                .bindPopup(createPopupContent(name, lat, lon, description, categoryName))
+                .addTo(markerLayers[categoryName]);
+            });
+        });
         updateStats();
-    } catch (e) { console.error('map.txt 読込失敗', e); }
+    } catch (e) {
+        console.error('umap読み込み失敗', e);
+        document.getElementById('stats-badge').innerText = 'データ読み込み失敗';
+    }
 }
 
 function toggleLayer(cat, checked) {
@@ -122,6 +119,3 @@ function goToMyLocation() {
         map.setView([latitude, longitude], 13);
     }, () => alert("位置情報の取得に失敗しました"));
 }
-
-// 起動
-// window.onload = initMap;
