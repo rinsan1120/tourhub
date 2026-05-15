@@ -140,7 +140,6 @@
         c.style.maxHeight = h.classList.contains('collapsed') ? "0px" : c.scrollHeight + "px";
     }
 
-    // 各 fetch のパスを ./conf/ 配下へ変更
     async function loadWeatherConfig() {
         try {
             const res = await fetch('./conf/weather.txt?t=' + Date.now()), text = await res.text();
@@ -228,12 +227,19 @@
             text.split('\n').forEach(rawLine => {
                 const line = cleanLine(rawLine);
                 if(!line) return;
-                const [label, keyword, icon] = line.split(',');
-                const a = document.createElement('a');
-                a.href = `https://www.google.com/maps/search/飲食店/2{encodeURIComponent(keyword.trim())}`;
-                a.className = 'btn-nearby'; a.target = '_blank';
-                a.innerHTML = `<i class="fa-solid ${icon.trim()}"></i> ${label.trim()}`;
-                container.appendChild(a);
+                const parts = line.split(',');
+                if (parts.length >= 3) {
+                    const label = parts[0].trim();
+                    const keyword = parts[1].trim();
+                    const icon = parts[2].trim();
+                    
+                    const a = document.createElement('a');
+                    // Google Maps 検索 URL を修正
+                    a.href = `https://www.google.com/maps/search/${encodeURIComponent(keyword)}`;
+                    a.className = 'btn-nearby'; a.target = '_blank';
+                    a.innerHTML = `<i class="fa-solid ${icon}"></i> ${label}`;
+                    container.appendChild(a);
+                }
             });
         } catch (e) { container.innerHTML = 'nearby.txt 読込失敗'; }
     }
