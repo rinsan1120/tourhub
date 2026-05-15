@@ -16,7 +16,13 @@ function getWeatherIcon(code) {
 function toggleWeather() {
     const h = document.querySelector('.weather-card-header'), c = document.querySelector('.weather-collapsible-content');
     h.classList.toggle('collapsed');
-    c.style.maxHeight = h.classList.contains('collapsed') ? "0px" : c.scrollHeight + "px";
+    // 開くときは maxHeight を一旦十分に大きくし、少し遅れて none にすることで制限をなくす
+    if (h.classList.contains('collapsed')) {
+        c.style.maxHeight = "0px";
+    } else {
+        c.style.maxHeight = "2000px"; // 十分な高さ
+        setTimeout(() => { if(!h.classList.contains('collapsed')) c.style.maxHeight = "none"; }, 300);
+    }
 }
 
 async function loadWeatherConfig() {
