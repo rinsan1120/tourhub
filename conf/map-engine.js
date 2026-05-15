@@ -82,10 +82,11 @@ async function loadUmapData() {
                     const marker = L.circleMarker([c[1], c[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(group);
                     marker.bindPopup(createPopupContent(f.properties.name || "名称未設定", c[1], c[0], f.properties.description, n));
                     pC++;
-                } else if (f.geometry.type === "LineString") {
-                    L.polyline(c.map(p => [p[1], p[0]]), { color: color, weight: 6 }).addTo(group);
-                    lC++;
-                }
+            } else if (f.geometry.type === "LineString") {
+                const line = L.polyline(c.map(p => [p[1], p[0]]), { color: color, weight: 6 }).addTo(group);
+                line.bindPopup(createPopupContent(f.properties.name || "名称未設定の道", c[0][1], c[0][0], f.properties.description, n)); // ← これを足す
+                lC++;
+            }
             });
         });
         badge.innerText = `点: ${pC} / 線: ${lC}`;
