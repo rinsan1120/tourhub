@@ -22,7 +22,7 @@
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(33, 150, 243, 0); } 100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); } }
         .my-loc-con { background: none !important; border: none !important; }
         
-        /* 凡例・バッジ */
+        /* 凡例 */
         .legend { background: white; padding: 12px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 0.85rem; line-height: 1.6; }
         .legend-title { font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px; display: flex; align-items: center; gap: 5px; }
         #legend-items { display: flex; flex-wrap: wrap; gap: 12px; }
@@ -38,18 +38,8 @@
         .loc-btn { position: absolute; bottom: 20px; right: 10px; z-index: 1000; background: rgba(255, 255, 255, 0.95); border: none; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.2); width: 44px; height: 44px; font-size: 1.2rem; color: #4a5568; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         #stats-badge { position: absolute; top: 10px; left: 50px; z-index: 1000; background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; color: #666; border: 1px solid #ddd; pointer-events: none; }
 
-        /* ルート検索ポップアップ用CSS */
-        .popup-container { text-align: center; min-width: 180px; }
-        .popup-title { font-weight: bold; margin-bottom: 5px; display: block; }
-        .popup-category { font-size: 0.75rem; color: #3182ce; background: #ebf8ff; padding: 2px 8px; border-radius: 4px; margin-bottom: 10px; display: inline-block; }
-        .popup-label { font-size: 0.8rem; color: #666; margin-bottom: 8px; display: block; border-top: 1px solid #eee; padding-top: 10px; }
-        .btn-group { display: flex; flex-direction: column; gap: 8px; }
-        .popup-btn { display: block; padding: 12px; color: white !important; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 0.9rem; text-align: center; }
-        .btn-high { background: #4285F4; }
-        .btn-local { background: #34A853; }
-
         /* 天気セクション */
-        .weather-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; cursor: pointer; padding-left: 0; }
+        .weather-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; cursor: pointer; }
         .weather-card-header h2 { margin: 0; font-size: 1.1rem; border-left: 5px solid #3182ce; padding-left: 10px; }
         .toggle-icon { transition: transform 0.3s; }
         .collapsed .toggle-icon { transform: rotate(-90deg); }
@@ -76,11 +66,13 @@
         .nearby-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-nearby { padding: 10px; background: #4a5568; color: white; border: none; border-radius: 8px; font-size: 0.85rem; font-weight: bold; text-align: center; text-decoration: none; }
         
-        /* 旅の計画（link.txt 用） */
+        /* 旅の計画セクション */
         .link-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         @media (min-width: 768px) { .link-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); } }
         .link-card { display: flex; align-items: center; justify-content: center; padding: 12px; background: #edf2f7; color: #2d3748; text-decoration: none; border-radius: 8px; font-weight: bold; border: 1px solid #cbd5e1; font-size: 0.85rem; text-align: center; }
-        .update-list { list-style: none; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fafafa; }
+        .update-list { list-style: none; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fafafa; margin: 0; }
+        .update-list li { margin-bottom: 8px; line-height: 1.4; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+        .update-list li:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -139,45 +131,11 @@
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script src="map-engine.js"></script>
 
 <script>
-    // --- 天気設定（HTML側に残すが、ロジックとは分離） ---
-    const weatherConfig = {
-        "関東・甲": [
-            { name: "東京", lat: 35.68, lon: 139.69, pref: "東京都" },
-            { name: "相模原", lat: 35.57, lon: 139.37, pref: "神奈川県" },
-            { name: "山中湖", lat: 35.42, lon: 138.87, pref: "山梨県" },
-            { name: "甲府", lat: 35.66, lon: 138.56, pref: "山梨県" },
-            { name: "北杜市", lat: 35.83, lon: 138.37, pref: "山梨県" },
-            { name: "伊勢崎", lat: 36.32, lon: 139.19, pref: "群馬県" },
-            { name: "水上", lat: 36.78, lon: 138.97, pref: "群馬県" },
-            { name: "水戸", lat: 36.37, lon: 140.47, pref: "茨城県" },
-            { name: "大洗", lat: 36.31, lon: 140.57, pref: "茨城県" },
-            { name: "沼津", lat: 35.10, lon: 138.86, pref: "静岡県" },
-            { name: "下田", lat: 34.68, lon: 138.94, pref: "静岡県" }
-        ],
-        "長野・信州": [
-            { name: "長野市", lat: 36.65, lon: 138.18, pref: "長野県" },
-            { name: "白馬村", lat: 36.70, lon: 137.86, pref: "長野県" },
-            { name: "松本", lat: 36.23, lon: 137.97, pref: "長野県" },
-            { name: "諏訪", lat: 36.04, lon: 138.11, pref: "長野県" }
-        ],
-        "東海・北陸": [
-            { name: "名古屋", lat: 35.18, lon: 136.91, pref: "愛知県" },
-            { name: "静岡", lat: 34.97, lon: 138.38, pref: "静岡県" },
-            { name: "砺波", lat: 36.63, lon: 136.94, pref: "富山県" },
-            { name: "白川村", lat: 36.27, lon: 136.90, pref: "岐阜県" }
-        ],
-        "北海道": [
-            { name: "札幌", lat: 43.06, lon: 141.35, pref: "北海道" },
-            { name: "旭川", lat: 43.77, lon: 142.36, pref: "北海道" },
-            { name: "函館", lat: 41.77, lon: 140.73, pref: "北海道" }
-        ]
-    };
+    let weatherData = {};
 
-    // --- 天気表示制御 ---
     function getWeatherIcon(code) {
         if (code === 0) return 'fa-sun'; if (code <= 3) return 'fa-cloud-sun'; if (code <= 67) return 'fa-cloud-rain'; return 'fa-cloud';
     }
@@ -188,8 +146,26 @@
         c.style.maxHeight = h.classList.contains('collapsed') ? "0px" : c.scrollHeight + "px";
     }
 
+    // weather.txt から地点データを読み込む
+    async function loadWeatherConfig() {
+        try {
+            const res = await fetch('weather.txt?t=' + Date.now()), text = await res.text();
+            let currentRegion = "";
+            text.split('\n').forEach(line => {
+                line = line.trim(); if(!line) return;
+                if(line.startsWith('※')) {
+                    currentRegion = line.substring(1); weatherData[currentRegion] = [];
+                } else if(line.includes(',') && currentRegion) {
+                    const [n, lat, lon, pref] = line.split(',');
+                    weatherData[currentRegion].push({ name: n.trim(), lat: parseFloat(lat), lon: parseFloat(lon), pref: pref.trim() });
+                }
+            });
+            initWeatherDisplay();
+        } catch (e) { document.getElementById('weather-panels-container').innerText = 'weather.txt 読込失敗'; }
+    }
+
     async function fetchWeatherForRegion(region, rIdx) {
-        const cities = weatherConfig[region];
+        const cities = weatherData[region];
         const lats = cities.map(c => c.lat).join(','), lons = cities.map(c => c.lon).join(',');
         try {
             const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo`);
@@ -204,7 +180,7 @@
         } catch (e) { console.error(e); }
     }
 
-    async function initWeather() {
+    function initWeatherDisplay() {
         const days = ["日","月","火","水","木","金","土"];
         let hHtml = `<div class="header-cell">エリア名</div>`;
         for(let i=0; i<3; i++) {
@@ -212,18 +188,18 @@
             hHtml += `<div class="header-cell ${d.getDay()===0?'sun':(d.getDay()===6?'sat':'')}">${d.getMonth()+1}/${d.getDate()}(${days[d.getDay()]})</div>`;
         }
         document.getElementById('weather-header-row').innerHTML = hHtml;
-        Object.keys(weatherConfig).forEach((region, rIdx) => {
+        Object.keys(weatherData).forEach((region, rIdx) => {
             const tab = document.createElement('button');
             tab.className = `weather-tab ${rIdx === 0 ? 'active' : ''}`; tab.innerText = region;
             tab.onclick = (e) => {
                 e.stopPropagation(); document.querySelectorAll('.weather-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.weather-content-panel').forEach(p => p.classList.remove('active'));
-                tab.classList.add('active'); document.getElementById(`panel-${rIdx}`).classList.add('active');
+                document.querySelectorAll('.weather-content-panel').forEach(p => p.style.display = 'none');
+                tab.classList.add('active'); document.getElementById(`panel-${rIdx}`).style.display = 'block';
                 const c = document.querySelector('.weather-collapsible-content'); if(!document.querySelector('.weather-card-header').classList.contains('collapsed')) c.style.maxHeight = c.scrollHeight + "px";
             };
             document.getElementById('weather-tabs-container').appendChild(tab);
-            const panel = document.createElement('div'); panel.id = `panel-${rIdx}`; panel.className = `weather-content-panel ${rIdx === 0 ? 'active' : ''}`; panel.style.display = rIdx === 0 ? 'block' : 'none';
-            weatherConfig[region].forEach((loc, cIdx) => {
+            const panel = document.createElement('div'); panel.id = `panel-${rIdx}`; panel.className = 'weather-content-panel'; panel.style.display = rIdx === 0 ? 'block' : 'none';
+            weatherData[region].forEach((loc, cIdx) => {
                 const row = document.createElement('div'); row.className = 'weather-row';
                 row.innerHTML = `<span class="city-name">${loc.name}<span class="pref-name">(${loc.pref})</span></span>` + [0,1,2].map(i => `<div class="forecast-unit" id="w-${rIdx}-${cIdx}-${i}">...</div>`).join('');
                 panel.appendChild(row);
@@ -243,7 +219,7 @@
 
     function searchWeather() { const v = document.getElementById('weather-input').value; if(v) window.open(`https://tenki.jp/search/?keyword=${encodeURIComponent(v)}`, '_blank'); }
 
-    // --- 旅の計画（link.txt 読み込み） ---
+    // link.txt から旅の計画を読み込む
     async function loadLinks() {
         const container = document.getElementById('category-container');
         try {
@@ -265,11 +241,12 @@
         } catch (e) { container.innerHTML = 'link.txt 読込失敗'; }
     }
 
+    // updates.txt からログを読み込む（最新が上に来るように反転）
     async function loadUpdateLog() {
         try {
             const res = await fetch('updates.txt?t=' + Date.now()), text = await res.text();
             const list = document.getElementById('dynamic-update-list'); list.innerHTML = '';
-            text.trim().split('\n').forEach(line => {
+            text.trim().split('\n').reverse().forEach(line => {
                 const p = line.split('|'); if(p.length === 2) {
                     const li = document.createElement('li'); li.innerHTML = `<span style="font-family:monospace; font-weight:bold; background:#e2e8f0; padding:2px 6px; border-radius:4px; margin-right:10px; font-size:0.8rem;">${p[0].trim()}</span><span>${p[1].trim()}</span>`;
                     list.appendChild(li);
@@ -278,8 +255,8 @@
         } catch (e) {}
     }
 
-    // 各初期化実行
-    initWeather();
+    // 全初期化の実行
+    loadWeatherConfig();
     loadLinks();
     loadUpdateLog();
 </script>
