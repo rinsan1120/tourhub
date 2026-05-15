@@ -129,5 +129,6 @@ async function refreshCurrentTabWeather() {
 
 function searchWeather() { 
     const v = document.getElementById('weather-input').value; 
-    if(v) window.open(`https://tenki.jp/search/?keyword=${encodeURIComponent(v)}`, '_blank'); 
+    // 入力された文字に「 天気」を足してGoogleで検索
+    if(v) window.open(`https://www.google.com/search?q=${encodeURIComponent(v + ' 天気')}`, '_blank'); 
 }
