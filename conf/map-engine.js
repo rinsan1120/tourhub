@@ -95,7 +95,7 @@ async function loadUmapData() {
         line.setStyle({ weight: 15, opacity: 0.6 }); 
     }
 
-    line.bindPopup(createPopupContent(f.properties.name || "名称未設定の道", c[0][1], c[0][0], f.properties.description, n));
+    line.bindPopup(createPopupContent(f.properties.name || "名称未設定の道", c[0][0], c[0][1], f.properties.description, n));
     lC++;
 }
             });
