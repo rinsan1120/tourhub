@@ -83,10 +83,21 @@ async function loadUmapData() {
                     marker.bindPopup(createPopupContent(f.properties.name || "名称未設定", c[1], c[0], f.properties.description, n));
                     pC++;
             } else if (f.geometry.type === "LineString") {
-                const line = L.polyline(c.map(p => [p[1], p[0]]), { color: color, weight: 6 }).addTo(group);
-                line.bindPopup(createPopupContent(f.properties.name || "名称未設定の道", c[0][1], c[0][0], f.properties.description, n)); // ← これを足す
-                lC++;
-            }
+                const line = L.polyline(c.map(p => [p[1], p[0]]), { 
+                    color: color, 
+                    weight: 6,
+                    bubblingMouseEvents: false, // ① Androidのタップ漏れ防止
+                    interactive: true           // ② タップイベントの対象であることを明示
+                }).addTo(group);
+    
+    // ③ スマホの指でもタップしやすくなるよう判定幅を広げる
+    if (L.Browser.mobile) {
+        line.setStyle({ weight: 15, opacity: 0.6 }); 
+    }
+
+    line.bindPopup(createPopupContent(f.properties.name || "名称未設定の道", c[0][1], c[0][0], f.properties.description, n));
+    lC++;
+}
             });
         });
         badge.innerText = `点: ${pC} / 線: ${lC}`;
