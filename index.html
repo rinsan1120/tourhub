@@ -23,12 +23,12 @@
         .my-loc-con { background: none !important; border: none !important; }
 
         /* 天気セクション：折りたたみ対応 */
-        .weather-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; cursor: pointer; padding-left: 10px; }
+        .weather-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; cursor: pointer; padding-left: 0; }
         .weather-card-header h2 { margin: 0; font-size: 1.1rem; }
         .toggle-icon { transition: transform 0.3s; }
         .collapsed .toggle-icon { transform: rotate(-90deg); }
         .weather-collapsible-content { transition: max-height 0.3s ease-out; overflow: hidden; max-height: 0; }
-        .collapsed + .weather-collapsible-content { max-height: 0 !important; }
+        
         .weather-tabs-wrapper { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 0; position: relative; }
         .weather-tabs { display: flex; overflow-x: auto; gap: 5px; -webkit-overflow-scrolling: touch; flex-grow: 1; }
         .weather-tab { padding: 10px 18px; background: #e2e8f0; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 0.85rem; font-weight: bold; color: #4a5568; border: none; white-space: nowrap; }
@@ -99,7 +99,7 @@
 
     <div class="content-card">
         <div class="weather-card-header collapsed" onclick="toggleWeather()">
-            <h2>全国エリア別天気（3日間）</h2>
+            <h2 class="weather-title">全国エリア別天気（3日間）</h2>
             <i class="fa-solid fa-chevron-down toggle-icon"></i>
         </div>
         <div class="weather-collapsible-content">
@@ -146,7 +146,6 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // --- 天気設定 ---
     const weatherConfig = {
         "関東・甲": [
             { name: "東京", lat: 35.68, lon: 139.69, pref: "東京都" },
@@ -287,7 +286,7 @@
                 document.getElementById('legend-items').appendChild(item);
                 layer.features.forEach(f => {
                     const c = f.geometry.coordinates;
-                    const pop = `<div style="text-align:center;"><strong>${f.properties.name}</strong><br><span style="font-size:0.75rem;color:#666;">${(f.properties.description || "").replace(/\n/g,'<br>')}</span><br><a href="http://googleusercontent.com/maps.google.com/9{f.geometry.type === "Point" ? c[1]+','+c[0] : c[0][1]+','+c[0][0]}&travelmode=driving" target="_blank" style="display:block;margin-top:5px;padding:8px;background:#4285F4;color:white;border-radius:4px;text-decoration:none;font-weight:bold;">Googleマップ</a></div>`;
+                    const pop = `<div style="text-align:center;"><strong>${f.properties.name}</strong><br><span style="font-size:0.75rem;color:#666;">${(f.properties.description || "").replace(/\n/g,'<br>')}</span><br><a href="https://www.google.com/maps/search/コンビニ/0{f.geometry.type === "Point" ? c[1]+','+c[0] : c[0][1]+','+c[0][0]}&travelmode=driving" target="_blank" style="display:block;margin-top:5px;padding:8px;background:#4285F4;color:white;border-radius:4px;text-decoration:none;font-weight:bold;">Googleマップ</a></div>`;
                     if (f.geometry.type === "Point") {
                         L.circleMarker([c[1], c[0]], { radius: 8, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(group).bindPopup(pop);
                         pC++;
@@ -303,7 +302,6 @@
     function toggleLayer(n, c) { if (c) map.addLayer(layerGroups[n]); else map.removeLayer(layerGroups[n]); }
     loadUmapData();
 
-    // --- 天気システム ---
     function getWeatherIcon(code) {
         if (code === 0) return 'fa-sun'; if (code <= 3) return 'fa-cloud-sun'; if (code <= 67) return 'fa-cloud-rain'; if (code <= 82) return 'fa-cloud-showers-heavy'; return 'fa-cloud';
     }
@@ -321,10 +319,15 @@
     }
     weatherHeaderRow.innerHTML = headerHtml;
 
-    // 天気エリアの折りたたみ
     function toggleWeather() {
         const header = document.querySelector('.weather-card-header');
+        const content = document.querySelector('.weather-collapsible-content');
         header.classList.toggle('collapsed');
+        if (header.classList.contains('collapsed')) {
+            content.style.maxHeight = "0px";
+        } else {
+            content.style.maxHeight = content.scrollHeight + "px";
+        }
     }
 
     async function fetchWeatherForRegion(region, rIdx) {
@@ -334,31 +337,22 @@
             const prefOrder = ["北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県","茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県","新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県","三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県","鳥取県","島根県","岡山県","広島県","山口県","徳島県","香川県","愛媛県","高知県","福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"];
             return prefOrder.indexOf(a.pref) - prefOrder.indexOf(b.pref);
         });
-
         const lats = sortedCities.map(c => c.lat).join(',');
         const lons = sortedCities.map(c => c.lon).join(',');
-        
         try {
             const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=Asia%2FTokyo`);
             const data = await res.json();
             const forecastArray = Array.isArray(data) ? data : [data];
-
             sortedCities.forEach((loc, cIdx) => {
                 const forecast = forecastArray[cIdx];
                 if (!forecast || !forecast.daily) return;
                 const d = forecast.daily;
                 for(let i=0; i<3; i++) {
                     const el = document.getElementById(`w-${rIdx}-${cIdx}-${i}`);
-                    if(el) el.innerHTML = `
-                        <i class="fa-solid ${getWeatherIcon(d.weather_code[i])} forecast-icon"></i>
-                        <span class="forecast-pop">降水：${d.precipitation_probability_max[i]}%</span>
-                        <div class="forecast-temp"><span class="t-min">${Math.round(d.temperature_2m_min[i])}</span>/<span class="t-max">${Math.round(d.temperature_2m_max[i])}</span></div>
-                    `;
+                    if(el) el.innerHTML = `<i class="fa-solid ${getWeatherIcon(d.weather_code[i])} forecast-icon"></i><span class="forecast-pop">降水：${d.precipitation_probability_max[i]}%</span><div class="forecast-temp"><span class="t-min">${Math.round(d.temperature_2m_min[i])}</span>/<span class="t-max">${Math.round(d.temperature_2m_max[i])}</span></div>`;
                 }
             });
-        } catch (e) {
-            console.error(`${region} の天気取得失敗:`, e);
-        }
+        } catch (e) { console.error(`${region} の天気取得失敗:`, e); }
     }
 
     async function initWeather() {
@@ -371,28 +365,29 @@
                 const prefOrder = ["北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県","茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県","新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県","三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県","鳥取県","島根県","岡山県","広島県","山口県","徳島県","香川県","愛媛県","高知県","福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"];
                 return prefOrder.indexOf(a.pref) - prefOrder.indexOf(b.pref);
             });
-
             const tab = document.createElement('button');
             tab.className = `weather-tab ${rIdx === 0 ? 'active' : ''}`;
             tab.innerText = region;
             tab.onclick = (e) => {
-                e.stopPropagation(); // 折りたたみ発動を防ぐ
+                e.stopPropagation();
                 document.querySelectorAll('.weather-tab').forEach(t => t.classList.remove('active'));
                 document.querySelectorAll('.weather-content-panel').forEach(p => p.classList.remove('active'));
                 tab.classList.add('active');
                 document.getElementById(`panel-${rIdx}`).classList.add('active');
+                // 切り替え時に高さを再計算
+                const content = document.querySelector('.weather-collapsible-content');
+                if (!document.querySelector('.weather-card-header').classList.contains('collapsed')) {
+                    content.style.maxHeight = content.scrollHeight + "px";
+                }
             };
             weatherTabsBox.appendChild(tab);
-
             const panel = document.createElement('div');
             panel.id = `panel-${rIdx}`;
             panel.className = `weather-content-panel ${rIdx === 0 ? 'active' : ''}`;
-            
             sortedCities.forEach((loc, cIdx) => {
                 const row = document.createElement('div');
                 row.className = 'weather-row';
-                row.innerHTML = `<span class="city-name">${loc.name}<span class="pref-name">(${loc.pref})</span></span>` + 
-                    [0,1,2].map(i => `<div class="forecast-unit" id="w-${rIdx}-${cIdx}-${i}">...</div>`).join('');
+                row.innerHTML = `<span class="city-name">${loc.name}<span class="pref-name">(${loc.pref})</span></span>` + [0,1,2].map(i => `<div class="forecast-unit" id="w-${rIdx}-${cIdx}-${i}">...</div>`).join('');
                 panel.appendChild(row);
             });
             weatherPanelsBox.appendChild(panel);
@@ -404,29 +399,18 @@
     async function refreshCurrentTabWeather() {
         const btn = document.getElementById('refresh-weather-btn');
         if (btn.disabled) return;
-
         const activeTab = document.querySelector('.weather-tab.active');
         if (!activeTab) return;
-        
         const region = activeTab.innerText;
         const rIdx = Array.from(document.querySelectorAll('.weather-tab')).indexOf(activeTab);
-
-        btn.disabled = true;
-        btn.style.opacity = '0.5';
+        btn.disabled = true; btn.style.opacity = '0.5';
         const originalText = btn.innerHTML;
-        
         await fetchWeatherForRegion(region, rIdx);
-
         let timeLeft = 60;
         const timer = setInterval(() => {
             timeLeft--;
             btn.innerHTML = `<i class="fa-solid fa-hourglass-half"></i> ${timeLeft}s`;
-            if (timeLeft <= 0) {
-                clearInterval(timer);
-                btn.disabled = false;
-                btn.style.opacity = '1';
-                btn.innerHTML = originalText;
-            }
+            if (timeLeft <= 0) { clearInterval(timer); btn.disabled = false; btn.style.opacity = '1'; btn.innerHTML = originalText; }
         }, 1000);
     }
 
@@ -435,7 +419,6 @@
         if (v) window.open(`https://tenki.jp/search/?keyword=${encodeURIComponent(v)}`, '_blank');
     }
 
-    // --- リンク集 ---
     const linkCategories = [
         { title: "ルート作成・交通情報関連", links: [{ name: "Google マップ", url: "https://www.google.co.jp/maps/dir///" },{ name: "JARTIC 渋滞情報", url: "https://www.jartic.or.jp/" },{ name: "高速料金検索", url: "https://www.driveplaza.com/dp/SearchTop" },{ name: "二輪車定率割引申込", url: "https://hayatabi.c-nexco.co.jp/drive/detail.html?id=203" },{ name: "二輪車割引料金検索", url: "https://search.w-nexco.co.jp/touring-search/" }] },
         { title: "車両管理・その他", links: [{ name: "Honda Total Care", url: "https://htc.honda.co.jp/member/" },{ name: "Starlink ログイン", url: "https://www.starlink.com/account/home" }] },
