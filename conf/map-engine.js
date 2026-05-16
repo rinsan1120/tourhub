@@ -72,10 +72,8 @@ async function loadUmapData() {
         data.layers.forEach(layer => {
             const color = layer.properties.color || "#3182ce", n = layer.properties.name || "未分類";
             const group = L.layerGroup().addTo(map); layerGroups[n] = group;
-            const item = document.createElement('div');
-            item.className = 'legend-item';
-            item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${n}', this.checked)"><span class="legend-dot" style="background:${color}"></span><span>${n}</span>`;
-            legend.appendChild(item);
+            
+            // ループ処理開始（前半の重複部分を削除したため、ここから安全にデータが読み込まれます）
             layer.features.forEach(f => {
                 const c = f.geometry.coordinates;
                 if (f.geometry.type === "Point") {
@@ -85,8 +83,7 @@ async function loadUmapData() {
                 } else if (f.geometry.type === "LineString") {
                     const latlngs = c.map(p => [p[1], p[0]]);
 
-                    // 1. 【見た目用】シャープで細い実線（PC・スマホ共通でスタイリッシュに）
-                    // interactive: false にすることでタップイベントの対象から外し、裏方に徹する
+                    // 1. 【見た目用】シャープで細い実線
                     const visibleLine = L.polyline(latlngs, { 
                         color: color, 
                         weight: 4,         // ★ 線の見た目の細さ。大きいほど見た目の線が太くなる。
@@ -95,7 +92,6 @@ async function loadUmapData() {
                     }).addTo(group);
 
                     // 2. 【タップ判定用】完全に透明な極太線
-                    // スマホ・PCを問わず、グローブをはめていても確実に反応する判定エリアを生成
                     const touchLine = L.polyline(latlngs, { 
                         color: 'transparent', 
                         weight: 24,        // ★ 見えないタップ判定の太さ（24pxあれば押し損ねがほぼゼロに）
@@ -104,7 +100,7 @@ async function loadUmapData() {
                         interactive: true
                     }).addTo(group);
                     
-                    // 【追加】スマホでのタッチ時に、地図側の干渉イベントを完全に止める処理（判定用の太い線に適用）
+                    // スマホでのタッチ時に、地図側の干渉イベントを完全に止める処理（判定用の太い線に適用）
                     touchLine.on('touchstart mousedown', (e) => { L.DomEvent.stopPropagation(e); });
                 
                     // ポップアップは「判定用の太い線」に紐付ける
@@ -113,7 +109,7 @@ async function loadUmapData() {
                 }
             });
 
-            // 【ここから追加】レイヤー内に「線」が1本でも含まれているか自動判定する処理
+            // レイヤー内に「線」が1本でも含まれているか自動判定する処理
             let hasLine = false;
             group.eachLayer((layer) => {
                 if (layer instanceof L.Polyline) {
@@ -121,7 +117,7 @@ async function loadUmapData() {
                 }
             });
 
-            // 【ここから差し替え】凡例アイテムの作成（線の場合は横長の線デザインにする）
+            // 凡例アイテムの作成（線の場合は横長の線デザインにする）
             const item = document.createElement('div');
             item.className = 'legend-item';
             
@@ -132,9 +128,8 @@ async function loadUmapData() {
 
             item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${n}', this.checked)"><span style="background:${color}; ${badgeStyle}"></span><span>${n}</span>`;
             legend.appendChild(item);
-            // 【差し替えここまで】
 
-        }); // layer.features.forEach の閉じカッコではなく、data.layers.forEach の閉じカッコ
+        }); // data.layers.forEach の閉じカッコ
         badge.innerText = `点: ${pC} / 線: ${lC}`;
     } catch (e) { badge.innerText = "読込エラー"; }
 }
