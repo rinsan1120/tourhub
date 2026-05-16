@@ -6,6 +6,7 @@ Google マップ,https://www.google.co.jp/maps/
 NEXCOツーリングプラン,https://www.driveplaza.com/etc/drawari/2026_touring/
 
 ※車両管理・その他
+ETCマイレージ,https://www2.smile-etc.jp/NASApp/etcmlg/MlgReq?gvlddpef=1013000000&mdwsetmb=1013000000
 Honda Total Care,https://htc.honda.co.jp/member/
 Starlink ログイン,https://www.starlink.com/account/home
 
@@ -16,3 +17,6 @@ Starlink ログイン,https://www.starlink.com/account/home
 
 ※交通その他
 フェリー航路,https://searoute.info/
+
+※買い物
+Amazon,https://www.amazon.co.jp/ref=nav_logo
