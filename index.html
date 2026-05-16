@@ -170,8 +170,16 @@
                     currentGrid = document.createElement('div'); currentGrid.className = 'link-grid';
                     catDiv.appendChild(currentGrid); container.appendChild(catDiv);
                 } else if(line.includes(',') && currentGrid) {
-                    const [n, u] = line.split(','); const a = document.createElement('a');
-                    a.href = u.trim(); a.className = 'link-card'; a.target = '_blank'; a.innerText = n.trim();
+                    // 最初のカンマだけで分割するように変更
+                    const firstCommaIdx = line.indexOf(',');
+                    const n = line.substring(0, firstCommaIdx).trim();
+                    const u = line.substring(firstCommaIdx + 1).trim();
+                    
+                    const a = document.createElement('a');
+                    a.href = u; 
+                    a.className = 'link-card'; 
+                    a.target = '_blank'; 
+                    a.innerText = n;
                     currentGrid.appendChild(a);
                 }
             });
