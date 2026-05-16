@@ -82,24 +82,35 @@ async function loadUmapData() {
                     const marker = L.circleMarker([c[1], c[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(group);
                     marker.bindPopup(createPopupContent(f.properties.name || "名称未設定", c[1], c[0], f.properties.description, n));
                     pC++;
-            } else if (f.geometry.type === "LineString") {
-                const line = L.polyline(c.map(p => [p[1], p[0]]), { 
-                    color: color, 
-                    weight: 6,
-                    bubblingMouseEvents: false,
-                    interactive: true
-                }).addTo(group);
+                } else if (f.geometry.type === "LineString") {
+                    const latlngs = c.map(p => [p[1], p[0]]);
+
+                    // 1. 【見た目用】シャープで細い実線（PC・スマホ共通でスタイリッシュに）
+                    // interactive: false にすることでタップイベントの対象から外し、裏方に徹する
+                    const visibleLine = L.polyline(latlngs, { 
+                        color: color, 
+                        weight: 3,         // ★ 線の見た目の細さ（好みに応じて 2〜4 で調整してね）
+                        opacity: 0.8,
+                        interactive: false 
+                    }).addTo(group);
+
+                    // 2. 【タップ判定用】完全に透明な極太線
+                    // スマホ・PCを問わず、グローブをはめていても確実に反応する判定エリアを生成
+                    const touchLine = L.polyline(latlngs, { 
+                        color: 'transparent', 
+                        weight: 24,        // ★ 見えないタップ判定の太さ（24pxあれば押し損ねがほぼゼロに）
+                        opacity: 0,
+                        bubblingMouseEvents: false,
+                        interactive: true
+                    }).addTo(group);
+                    
+                    // 【追加】スマホでのタッチ時に、地図側の干渉イベントを完全に止める処理（判定用の太い線に適用）
+                    touchLine.on('touchstart mousedown', (e) => { L.DomEvent.stopPropagation(e); });
                 
-                if (L.Browser.mobile) {
-                    line.setStyle({ weight: 15, opacity: 0.6 }); 
+                    // ポップアップは「判定用の太い線」に紐付ける
+                    touchLine.bindPopup(createPopupContent(f.properties.name || "名称未設定の道", c[0][1], c[0][0], f.properties.description, n));
+                    lC++;
                 }
-            
-                // 【追加】スマホでのタッチ時に、地図側の干渉イベントを完全に止める処理
-                line.on('touchstart mousedown', (e) => { L.DomEvent.stopPropagation(e); });
-            
-                line.bindPopup(createPopupContent(f.properties.name || "名称未設定の道", c[0][1], c[0][0], f.properties.description, n));
-                lC++;
-            }
             });
         });
         badge.innerText = `点: ${pC} / 線: ${lC}`;
