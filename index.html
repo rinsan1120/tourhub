@@ -131,7 +131,10 @@
 
 <script>
     // ヘルパー関数（nearbyやlinkでも使うため維持）
-    function cleanLine(line) { return line.split('//')[0].trim(); }
+    function cleanLine(line) { 
+    // URLの「://」を切断しないよう保護してから、コメントの「//」だけを消す
+    return line.replace(/:\/\//g, '___URL___').split('//')[0].replace(/___URL___/g, '://').trim(); 
+    }
 
     // 周辺検索の読み込み
     async function loadNearbyConfig() {
