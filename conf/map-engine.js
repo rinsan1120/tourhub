@@ -89,7 +89,7 @@ async function loadUmapData() {
                     // interactive: false にすることでタップイベントの対象から外し、裏方に徹する
                     const visibleLine = L.polyline(latlngs, { 
                         color: color, 
-                        weight: 3,         // ★ 線の見た目の細さ（好みに応じて 2〜4 で調整してね）
+                        weight: 4,         // ★ 線の見た目の細さ（好みに応じて 2〜4 で調整してね）
                         opacity: 0.8,
                         interactive: false 
                     }).addTo(group);
