@@ -109,7 +109,6 @@ async function loadUmapData() {
                 
                     // ポップアップは「判定用の太い線」に紐付ける
                     touchLine.bindPopup(createPopupContent(f.properties.name || "名称未設定の道", c[0][1], c[0][0], f.properties.description, n));
-// （...中略：LineString の touchLine.bindPopup などがある部分）
                     lC++;
                 }
             });
