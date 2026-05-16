@@ -146,7 +146,7 @@
                 if (parts.length >= 3) {
                     const label = parts[0].trim(), keyword = parts[1].trim(), icon = parts[2].trim();
                     const a = document.createElement('a');
-                    a.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(keyword)}`;
+                    a.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(keyword)}`; 
                     a.className = 'btn-nearby'; a.target = '_blank';
                     a.innerHTML = `<i class="fa-solid ${icon}"></i> ${label}`;
                     container.appendChild(a);
