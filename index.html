@@ -16,7 +16,7 @@
 
         .map-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 25px; }
         .map-section { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; width: 100%; }
-        #map { width: 100%; height: 65vh; background: #e5e7eb; touch-action: manipulation; }
+        #map { width: 100%; height: 65vh; background: #e5e7eb; -webkit-touch-callout: none; user-select: none; }
         .my-location-marker { width: 14px; height: 14px; background-color: #2196F3; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 5px rgba(0,0,0,0.3); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(33, 150, 243, 0); } 100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); } }
         .my-loc-con { background: none !important; border: none !important; }
@@ -149,7 +149,7 @@
                 if (parts.length >= 3) {
                     const label = parts[0].trim(), keyword = parts[1].trim(), icon = parts[2].trim();
                     const a = document.createElement('a');
-                    a.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(keyword)}`; 
+                    a.href = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(keyword)}`; 
                     a.className = 'btn-nearby'; a.target = '_blank';
                     a.innerHTML = `<i class="fa-solid ${icon}"></i> ${label}`;
                     container.appendChild(a);
