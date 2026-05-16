@@ -89,7 +89,7 @@ async function loadUmapData() {
                     // interactive: false にすることでタップイベントの対象から外し、裏方に徹する
                     const visibleLine = L.polyline(latlngs, { 
                         color: color, 
-                        weight: 4,         // ★ 線の見た目の細さ（好みに応じて 2〜4 で調整してね）
+                        weight: 4,         // ★ 線の見た目の細さ。大きいほど見た目の線が太くなる。
                         opacity: 0.8,
                         interactive: false 
                     }).addTo(group);
@@ -109,10 +109,33 @@ async function loadUmapData() {
                 
                     // ポップアップは「判定用の太い線」に紐付ける
                     touchLine.bindPopup(createPopupContent(f.properties.name || "名称未設定の道", c[0][1], c[0][0], f.properties.description, n));
+// （...中略：LineString の touchLine.bindPopup などがある部分）
                     lC++;
                 }
             });
-        });
+
+            // 【ここから追加】レイヤー内に「線」が1本でも含まれているか自動判定する処理
+            let hasLine = false;
+            group.eachLayer((layer) => {
+                if (layer instanceof L.Polyline) {
+                    hasLine = true;
+                }
+            });
+
+            // 【ここから差し替え】凡例アイテムの作成（線の場合は横長の線デザインにする）
+            const item = document.createElement('div');
+            item.className = 'legend-item';
+            
+            // hasLine の状態（点か線か）によってアイコンの形状（CSS）を出し分ける
+            const badgeStyle = hasLine 
+                ? `width:16px; height:4px; border-radius:2px; margin-right:6px; flex-shrink:0; display:inline-block;` 
+                : `width:10px; height:10px; border-radius:50%; margin-right:6px; flex-shrink:0; display:inline-block;`;
+
+            item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${n}', this.checked)"><span style="background:${color}; ${badgeStyle}"></span><span>${n}</span>`;
+            legend.appendChild(item);
+            // 【差し替えここまで】
+
+        }); // layer.features.forEach の閉じカッコではなく、data.layers.forEach の閉じカッコ
         badge.innerText = `点: ${pC} / 線: ${lC}`;
     } catch (e) { badge.innerText = "読込エラー"; }
 }
