@@ -170,10 +170,10 @@
                     currentGrid = document.createElement('div'); currentGrid.className = 'link-grid';
                     catDiv.appendChild(currentGrid); container.appendChild(catDiv);
                 } else if(line.includes(',') && currentGrid) {
-                    // 最初のカンマだけで分割するように変更
                     const firstCommaIdx = line.indexOf(',');
                     const n = line.substring(0, firstCommaIdx).trim();
-                    const u = line.substring(firstCommaIdx + 1).trim();
+                    // URLの末尾にある目に見えない改行やゴミを完全に削ぎ落とす
+                    const u = line.substring(firstCommaIdx + 1).replace(/[\r\n]/g, '').trim();
                     
                     const a = document.createElement('a');
                     a.href = u; 
