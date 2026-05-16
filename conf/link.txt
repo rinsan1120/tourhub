@@ -9,6 +9,7 @@ NEXCOツーリングプラン,https://www.driveplaza.com/etc/drawari/2026_tourin
 ETCマイレージ,https://www2.smile-etc.jp/NASApp/etcmlg/MlgReq?gvlddpef=1013000000&mdwsetmb=1013000000
 Honda Total Care,https://htc.honda.co.jp/member/
 Starlink ログイン,https://www.starlink.com/account/home
+みんカラ,https://minkara.carview.co.jp/
 
 ※宿泊・温泉
 じゃらん,https://www.jalan.net/
@@ -22,3 +23,4 @@ CarStay,https://carstay.jp/ja/?utm_term=carstay&utm_campaign=&utm_source=adwords
 
 ※買い物
 Amazon,https://www.amazon.co.jp/ref=nav_logo
+Webike!,https://www.webike.net/?srsltid=AfmBOoohGF8sM2qUAn2sHBaoPbHloqeo2tMxGtWgylShFZtlHihduWaP
