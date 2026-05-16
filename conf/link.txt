@@ -13,6 +13,8 @@ Starlink ログイン,https://www.starlink.com/account/home
 ※宿泊・温泉
 じゃらん,https://www.jalan.net/
 楽天トラベル,https://travel.rakuten.co.jp/
+RVパーク情報(ロケスマ),https://www.locationsmart.org/?tag=_collabo_kurumatabi_all&lat=35.6841&lon=139.6808&z=11
+CarStay,https://carstay.jp/ja/?utm_term=carstay&utm_campaign=&utm_source=adwords&utm_medium=ppc&hsa_acc=1094657244&hsa_cam=23674664143&hsa_grp=193777855865&hsa_ad=800977137808&hsa_src=g&hsa_tgt=kwd-624251376227&hsa_kw=carstay&hsa_mt=b&hsa_net=adwords&hsa_ver=3&gad_source=1&gad_campaignid=23674664143&gbraid=0AAAAAoYusIJrv8PfBkhiZNxYQANP_jUzA&gclid=CjwKCAjwq6DQBhBVEiwA4ZD5XB9eh3EnBx_Wn5D0ZhZQlIoZqX94ElHwMqTDYlSSt72z3bMJw2UFGBoCGBMQAvD_BwE
 全国温泉情報,https://yuru-to.net/
 
 ※交通その他
