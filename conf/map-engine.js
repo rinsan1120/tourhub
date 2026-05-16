@@ -1,11 +1,6 @@
 // --- 地図制御（聖域：ロジック改変厳禁） ---
 const map = L.map('map', { tap: false, doubleClickZoom: true }).setView([35.6895, 139.6917], 8);
-L.tileLayer('https://{s}.tile.jawg.io/jawg-street/{z}/{x}/{y}{r}.png?access-token=ここに取得したトークンを入れる', {
-    attribution: '<a href="http://jawg.io" target="_blank">&copy; JawgMaps</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors',
-    minZoom: 0,
-    maxZoom: 22,
-    subdomains: 'abcd'
-}).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
 let myLocMarker = null, tempMarker = null;
 const layerGroups = {};
