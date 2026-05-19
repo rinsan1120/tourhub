@@ -11,7 +11,6 @@ NEXCO<br>ツーリングプラン,https://www.driveplaza.com/etc/drawari/2026_to
 ※車両管理・その他
 ETCマイレージ,https://www2.smile-etc.jp/NASApp/etcmlg/MlgReq?gvlddpef=1013000000&mdwsetmb=1013000000
 Honda Total Care,https://htc.honda.co.jp/member/
-Starlink ログイン,https://www.starlink.com/account/home
 みんカラ,https://minkara.carview.co.jp/
 
 ※宿泊関連・駐車
