@@ -67,10 +67,43 @@
         .link-card { display: flex; align-items: center; justify-content: center; padding: 12px; background: #edf2f7; color: #2d3748; text-decoration: none; border-radius: 8px; font-weight: bold; border: 1px solid #cbd5e1; font-size: 0.85rem; text-align: center; }
         .update-list { list-style: none; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fafafa; margin: 0; }
         .update-list li { margin-bottom: 8px; line-height: 1.4; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+        /* ▼追加：ドロワー用CSS▼ */
+        .drawer-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.5); z-index: 9998;
+            opacity: 0; visibility: hidden; transition: opacity 0.3s;
+        }
+        .drawer-overlay.open { opacity: 1; visibility: visible; }
+        .drawer-menu {
+            position: fixed; top: 0; right: -280px; width: 280px; height: 100vh;
+            background: white; z-index: 9999; box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+            transition: right 0.3s ease; overflow-y: auto; padding: 20px; box-sizing: border-box;
+        }
+        .drawer-menu.open { right: 0; }
+        .drawer-close { text-align: right; margin-bottom: 15px; font-size: 1.5rem; cursor: pointer; color: #4a5568; }
+        .drawer-link-card {
+            display: block; padding: 12px; margin-bottom: 10px; background: #edf2f7;
+            color: #2d3748; text-decoration: none; border-radius: 8px;
+            font-weight: bold; border: 1px solid #cbd5e1; font-size: 0.85rem; text-align: center;
+        }
+        /* ▲追加ここまで▲ */
     </style>
 </head>
 <body>
-<header><div class="header-content"><img src="./images/logo.jpg" alt="Logo" class="header-logo"><h1>Rin’s Touring Hub</h1></div></header>
+<header>
+    <div class="header-content">
+        <img src="./images/logo.jpg" alt="Logo" class="header-logo">
+        <h1>Rin’s Touring Hub</h1>
+        <i class="fa-solid fa-bars" onclick="toggleDrawer()" style="font-size: 1.5rem; cursor: pointer; padding: 5px;"></i>
+    </div>
+</header>
+<!-- ▼追加：ドロワー要素▼ -->
+<div id="drawer-overlay" class="drawer-overlay" onclick="toggleDrawer()"></div>
+<div id="drawer-menu" class="drawer-menu">
+    <div class="drawer-close" onclick="toggleDrawer()"><i class="fa-solid fa-xmark"></i></div>
+    <div id="drawer-content">読み込み中...</div>
+</div>
+<!-- ▲追加ここまで▲ -->
 <main>
     <div class="map-container">
         <div class="map-section">
@@ -204,6 +237,37 @@
             });
         } catch (e) {}
     }
+    function toggleDrawer() {
+        document.getElementById('drawer-menu').classList.toggle('open');
+        document.getElementById('drawer-overlay').classList.toggle('open');
+    }
+    async function loadDrawerLinks() {
+        const container = document.getElementById('drawer-content');
+        try {
+            const res = await fetch('conf/drawer-links.txt?t=' + Date.now()), text = await res.text();
+            container.innerHTML = '';
+            text.split('\n').forEach(rawLine => {
+                const line = cleanLine(rawLine);
+                if(!line) return;
+                if(line.startsWith('※')) {
+                    const h3 = document.createElement('h3');
+                    h3.style.cssText = "margin-top: 15px; margin-bottom: 10px; font-size: 1rem; border-left: 4px solid #3182ce; padding-left: 8px;";
+                    h3.innerHTML = line.substring(1);
+                    container.appendChild(h3);
+                } else if(line.includes(',')) {
+                    const firstCommaIdx = line.indexOf(',');
+                    const n = line.substring(0, firstCommaIdx).trim();
+                    const u = line.substring(firstCommaIdx + 1).replace(/[\r\n]/g, '').trim();
+                    
+                    const a = document.createElement('a');
+                    a.href = u; a.className = 'drawer-link-card'; a.target = '_blank';
+                    a.innerHTML = n;
+                    container.appendChild(a);
+                }
+            });
+        } catch (e) { container.innerHTML = 'drawer-links.txt 読込失敗'; }
+    }
+    // ▲追加ここまで▲
 
     // すべてを起動するメイン処理
     window.addEventListener('load', () => {
@@ -221,6 +285,7 @@
         loadNearbyConfig();
         loadLinks();
         loadUpdateLog();
+        loadDrawerLinks(); // ← 追加：ドロワーの読み込み
     });
 </script>
 <footer style="text-align: center; padding: 25px 20px; font-size: 0.75rem; color: #a0aec0; display: flex; align-items: center; justify-content: center; gap: 8px;">
