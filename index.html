@@ -182,7 +182,7 @@
                     a.href = u; 
                     a.className = 'link-card'; 
                     a.target = '_blank'; 
-                    a.innerText = n;
+                    a.innerHTML = n; // ← innerText を innerHTML に変更
                     currentGrid.appendChild(a);
                 }
             });
