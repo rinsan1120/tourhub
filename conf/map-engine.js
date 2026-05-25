@@ -23,23 +23,33 @@ function updateMyLocation() {
 function goToMyLocation() { if (myLocMarker) map.flyTo(myLocMarker.getLatLng(), 14); }
 
 // 【修正後】すべてのテンプレートリテラルを正しく記述
+// 【修正後】ボタン統一と表示順の変更
 function createPopupContent(name, lat, lng, description = "", category = "") {
     const coords = `${lat},${lng}`;
+    // Google Maps公式URL形式（maps.google.com/maps?q=...)
+    const gmapUrl = `https://www.google.com/maps/search/?api=1&query=${coords}`;
     const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=driving`;
     const localUrl = `${baseUrl}&avoid=tolls,highways`;
-    const gmapUrl = `https://www.google.com/maps/search/?api=1&query=${coords}`;
     
-    let html = `<div style="text-align: center; min-width: 180px;">`;
+    // ボタン共通スタイル
+    const btnStyle = "display: block; width: 100%; padding: 10px; margin-bottom: 8px; text-decoration: none; border-radius: 8px; font-weight: bold; text-align: center; font-size: 0.9rem; box-sizing: border-box;";
+
+    let html = `<div style="text-align: center; min-width: 200px;">`;
     html += `<span style="font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 5px;">${name}</span>`;
     
     if (category) html += `<span style="font-size: 0.75rem; color: #3182ce; background: #ebf8ff; padding: 2px 8px; border-radius: 4px; margin-bottom: 10px; display: inline-block;">${category}</span>`;
-    if (description) html += `<p style="font-size:0.85rem; color:#444; margin-bottom:10px; text-align: left; line-height: 1.4;">${description.replace(/\n/g, '<br>')}</p>`;
+    if (description) html += `<p style="font-size:0.85rem; color:#444; margin-bottom:12px; text-align: left; line-height: 1.4;">${description.replace(/\n/g, '<br>')}</p>`;
     
-    html += `<a href="${gmapUrl}" target="_blank" style="display:block; margin-bottom:10px; color:#555; text-decoration:underline; font-size:0.85rem;">Googleマップで見る</a>`;
+    html += `<div style="display: flex; flex-direction: column; gap: 4px;">`;
     
-    html += `<div style="display: flex; flex-direction: column; gap: 8px;">`;
-    html += `<a href="${baseUrl}" target="_blank" style="display: block; padding: 10px; background: #4285F4; color: white !important; text-decoration: none; border-radius: 8px; font-weight: bold;">高速使用</a>`;
-    html += `<a href="${localUrl}" target="_blank" style="display: block; padding: 10px; background: #34A853; color: white !important; text-decoration: none; border-radius: 8px; font-weight: bold;">下道のみ</a>`;
+    // 1. Googleマップで開く
+    html += `<a href="${gmapUrl}" target="_blank" style="${btnStyle} background: #edf2f7; color: #4a5568; border: 1px solid #cbd5e1;">Googleマップで開く</a>`;
+    
+    // 2. ルート検索（高速）
+    html += `<a href="${baseUrl}" target="_blank" style="${btnStyle} background: #4285F4; color: white;">ルート検索（高速）</a>`;
+    
+    // 3. ルート検索（下道）
+    html += `<a href="${localUrl}" target="_blank" style="${btnStyle} background: #34A853; color: white;">ルート検索（下道）</a>`;
     
     return html + `</div></div>`;
 }
