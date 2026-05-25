@@ -90,11 +90,15 @@ async function loadUmapData() {
                         const marker = L.circleMarker([c[1], c[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(group);
                         marker.bindPopup(createPopupContent(f.properties.name || "名称未設定", c[1], c[0], f.properties.description, n));
                         pC++;
-                    } else if (f.geometry.type === "LineString") {
-                        const latlngs = c.map(p => [p[1], p[0]]);
-                        L.polyline(latlngs, { color: color, weight: 4, opacity: 0.8 }).addTo(group);
-                        lC++;
-                    }
+                        } else if (f.geometry.type === "LineString") {
+                            const latlngs = c.map(p => [p[1], p[0]]);
+                            // 1. 見た目用の線
+                            L.polyline(latlngs, { color: color, weight: 4, opacity: 0.8, interactive: false }).addTo(group);
+                            // 2. 判定用の透明な太い線
+                            const touchLine = L.polyline(latlngs, { color: 'transparent', weight: 24, opacity: 0, interactive: true }).addTo(group);
+                            // 3. ポップアップのバインド
+                            touchLine.bindPopup(createPopupContent(f.properties.name || "名道", c[0][1], c[0][0], f.properties.description, n));
+                        }
                 });
             }
 
