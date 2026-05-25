@@ -25,9 +25,9 @@ function goToMyLocation() { if (myLocMarker) map.flyTo(myLocMarker.getLatLng(), 
 // 【修正後】すべてのテンプレートリテラルを正しく記述
 function createPopupContent(name, lat, lng, description = "", category = "") {
     const coords = `${lat},${lng}`;
-    const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=$$$${coords}&travelmode=driving`;
+    const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=driving`;
     const localUrl = `${baseUrl}&avoid=tolls,highways`;
-    const gmapUrl = `https://www.google.com/maps/search/?api=1&query=$$$$${coords}`;
+    const gmapUrl = `https://www.google.com/maps/search/?api=1&query=${coords}`;
     
     let html = `<div style="text-align: center; min-width: 180px;">`;
     html += `<span style="font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 5px;">${name}</span>`;
