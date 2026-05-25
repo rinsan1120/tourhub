@@ -80,7 +80,7 @@ async function loadUmapData() {
         const layerSettings = {
             "名道": { color: "#ff0000", type: "line" },
             "グルメ": { color: "#ff7f00", type: "point" },
-            "温泉": "#007fff", type: "point" },
+            "温泉": { color: "#007fff", type: "point" }, // 正しいオブジェクト形式に修正
             "観光": { color: "#ee827c", type: "point" },
             "キャンプ場": { color: "#006e54", type: "point" },
             "宿": { color: "#4299e1", type: "point" },
