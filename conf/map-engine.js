@@ -43,7 +43,7 @@ function createPopupContent(name, lat, lng, description = "", category = "") {
     html += `<div style="display: flex; flex-direction: column; gap: 4px;">`;
     
     // 1. Googleマップで開く
-    html += `<a href="${gmapUrl}" target="_blank" style="${btnStyle} background: #f6ad55; color: #4a5568; border: 1px solid #cbd5e1;">Googleマップで開く</a>`;
+    html += `<a href="${gmapUrl}" target="_blank" style="${btnStyle} background: #f6ad55; color: white;">Googleマップで開く</a>`;
     
     // 2. ルート検索（高速）
     html += `<a href="${baseUrl}" target="_blank" style="${btnStyle} background: #4285F4; color: white;">ルート検索（高速）</a>`;
