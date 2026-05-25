@@ -65,8 +65,16 @@
         .link-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         @media (min-width: 768px) { .link-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); } }
         .link-card { display: flex; align-items: center; justify-content: center; padding: 12px; background: #edf2f7; color: #2d3748; text-decoration: none; border-radius: 8px; font-weight: bold; border: 1px solid #cbd5e1; font-size: 0.85rem; text-align: center; }
-        .update-list { list-style: none; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fafafa; margin: 0; }
-        .update-list li { margin-bottom: 8px; line-height: 1.4; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+        .update-list { 
+            list-style: none; 
+            padding: 12px; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 8px; 
+            background: #fafafa; 
+            margin: 0;
+            max-height: 200px; /* 5件分くらいの高さ目安（約200px） */
+            overflow-y: auto;  /* あふれたら縦スクロール */
+}        .update-list li { margin-bottom: 8px; line-height: 1.4; border-bottom: 1px solid #eee; padding-bottom: 4px; }
         /* ▼追加：ドロワー用CSS▼ */
         .drawer-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
