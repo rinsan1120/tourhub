@@ -22,35 +22,33 @@ function updateMyLocation() {
 
 function goToMyLocation() { if (myLocMarker) map.flyTo(myLocMarker.getLatLng(), 14); }
 
-// 【重要機能】OS判定・高速/下道ルート検索ポップアップ
 function createPopupContent(name, lat, lng, description = "", category = "") {
-    // OSに関わらずGoogleマップアプリを優先起動するユニバーサルリンク
-    const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+    const coords = `${lat},${lng}`;
+    const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=$${coords}&travelmode=driving`;
     const localUrl = `${baseUrl}&avoid=tolls,highways`;
+    // ★追加：ピン位置を保持したまま開くGoogleマップURL
+    const gmapUrl = `https://www.google.com/maps/search/?api=1&query=$$${coords}`;
     
     let html = `<div style="text-align: center; min-width: 180px;">`;
     html += `<span style="font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 5px;">${name}</span>`;
     
-    if (category) {
-        html += `<span style="font-size: 0.75rem; color: #3182ce; background: #ebf8ff; padding: 2px 8px; border-radius: 4px; margin-bottom: 10px; display: inline-block;">${category}</span>`;
-    }
+    if (category) html += `<span style="font-size: 0.75rem; color: #3182ce; background: #ebf8ff; padding: 2px 8px; border-radius: 4px; margin-bottom: 10px; display: inline-block;">${category}</span>`;
+    if (description) html += `<p style="font-size:0.85rem; color:#444; margin-bottom:10px; text-align: left; line-height: 1.4;">${description.replace(/\n/g, '<br>')}</p>`;
     
-    if (description) {
-        html += `<p style="font-size:0.85rem; color:#444; margin-bottom:10px; text-align: left; line-height: 1.4;">${description.replace(/\n/g, '<br>')}</p>`;
-    }
+    // ★追加：Googleマップ遷移リンク
+    html += `<a href="${gmapUrl}" target="_blank" style="display:block; margin-bottom:10px; color:#555; text-decoration:underline; font-size:0.85rem;">Googleマップで見る</a>`;
     
-    html += `<span style="font-size: 0.8rem; color: #666; display: block; border-top: 1px solid #eee; padding-top: 10px; margin-bottom: 8px;">この地点へのルートを検索</span>`;
     html += `<div style="display: flex; flex-direction: column; gap: 8px;">`;
-    
-    // 高速使用ボタン
-    html += `<a href="${baseUrl}" target="_blank" style="display: block; padding: 10px; background: #4285F4; color: white !important; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 1rem; text-align: center;">`;
-    html += `<i class="fa-solid fa-route"></i> 高速使用</a>`;
-    
-    // 下道のみボタン
-    html += `<a href="${localUrl}" target="_blank" style="display: block; padding: 10px; background: #34A853; color: white !important; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 1rem; text-align: center;">`;
-    html += `<i class="fa-solid fa-road"></i> 下道のみ</a>`;
+    html += `<a href="${baseUrl}" target="_blank" style="display: block; padding: 10px; background: #4285F4; color: white !important; text-decoration: none; border-radius: 8px; font-weight: bold;">高速使用</a>`;
+    html += `<a href="${localUrl}" target="_blank" style="display: block; padding: 10px; background: #34A853; color: white !important; text-decoration: none; border-radius: 8px; font-weight: bold;">下道のみ</a>`;
     
     return html + `</div></div>`;
+}
+
+// ★追加：全画面機能関数
+function toggleFullScreen() {
+    if (!document.fullscreenElement) document.getElementById('map').requestFullscreen().catch(err => console.log(err));
+    else document.exitFullscreen();
 }
 
 map.on('contextmenu', (e) => { placeTempPin(e.latlng); return false; });
