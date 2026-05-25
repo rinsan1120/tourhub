@@ -4,7 +4,7 @@
  */
 (function() {
     // ★ここに後でGASのデプロイURLを入れる
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5FIQdlOOridwOtGnMmWtqTfaE1KtDc5RodUX0rtfKvbwF7BMxqxRHcA-x5s1mmN1Z4Q/exec";
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzUBQSI16ofrFHB9KoDQyAfZPqEwC3paiZAuCY9vl6WST1jLvlGqreCXwOa-Ws5qSXM_g/exec";
 
     window.addEventListener('DOMContentLoaded', () => {
         const inputUrl = document.getElementById('gmaps-url-input');
