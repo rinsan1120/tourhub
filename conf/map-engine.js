@@ -76,37 +76,29 @@ async function loadUmapData() {
     try {
         const res = await fetch('umap_backup_map.umap'), data = await res.json();
         let pC = 0, lC = 0;
+// --- レイヤー設定を一括管理 ---
+        const layerSettings = {
+            "名道": { color: "#ff0000", type: "line" },
+            "グルメ": { color: "#ff7f00", type: "point" },
+            "温泉": "#007fff", type: "point" },
+            "観光": { color: "#ee827c", type: "point" },
+            "キャンプ場": { color: "#006e54", type: "point" },
+            "宿": { color: "#4299e1", type: "point" },
+            "景勝地": { color: "#0000ff", type: "point" }
+        };
         data.layers.forEach(layer => {
-            const color = layer.properties.color || "#3182ce", n = layer.properties.name || "未分類";
-            const group = L.layerGroup().addTo(map); layerGroups[n] = group;
+            const n = layer.properties.name || "未分類";
+            const setting = layerSettings[n] || {};
+            const color = setting.color || layer.properties.color || "#3182ce";
+            const group = L.layerGroup().addTo(map); 
+            layerGroups[n] = group;
             
             layer.features.forEach(f => {
-                const c = f.geometry.coordinates;
-                if (f.geometry.type === "Point") {
-                    const marker = L.circleMarker([c[1], c[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(group);
-                    marker.bindPopup(createPopupContent(f.properties.name || "名称未設定", c[1], c[0], f.properties.description, n));
-                    pC++;
-                } else if (f.geometry.type === "LineString") {
-                    const latlngs = c.map(p => [p[1], p[0]]);
-                    const visibleLine = L.polyline(latlngs, { color: color, weight: 4, opacity: 0.8, interactive: false }).addTo(group);
-                    const touchLine = L.polyline(latlngs, { color: 'transparent', weight: 24, opacity: 0, bubblingMouseEvents: false, interactive: true }).addTo(group);
-                    touchLine.on('touchstart mousedown', (e) => { L.DomEvent.stopPropagation(e); });
-                    touchLine.bindPopup(createPopupContent(f.properties.name || "名称未設定の道", c[0][1], c[0][0], f.properties.description, n));
-                    lC++;
-                }
+                // ... (既存の処理: Point/LineStringの追加) ...
             });
 
-            // レイヤー内の「線」と「点」の数を数えて判定
-            let pointCount = 0;
-            let lineCount = 0;
-            group.eachLayer((layer) => {
-                if (layer instanceof L.CircleMarker) pointCount++;
-                else if (layer instanceof L.Polyline) lineCount++;
-            });
-            
-            // 線がメイン（または線しかない）場合に線アイコンにする
-            const hasLine = (lineCount > 0 && pointCount <= 1);
-
+            // 凡例アイコンの判定を辞書から取得
+            const isLine = (setting.type === "line");
             const item = document.createElement('div');
             item.className = 'legend-item';
             const badgeStyle = hasLine ? `width:16px; height:4px; border-radius:2px; margin-right:6px; flex-shrink:0; display:inline-block;` : `width:10px; height:10px; border-radius:50%; margin-right:6px; flex-shrink:0; display:inline-block;`;
