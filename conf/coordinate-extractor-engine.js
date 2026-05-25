@@ -62,6 +62,8 @@
             } catch (error) {
                 console.error('Coord Extraction Error:', error);
                 showMessage('通信エラーが発生しました');
+                // エラーの正体を画面に出力させる
+                showMessage(`通信エラー: ${error.message}`, true);
             } finally {
                 // UI状態を復元
                 btnExtract.disabled = false;
