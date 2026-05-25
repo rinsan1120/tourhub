@@ -70,9 +70,9 @@ async function loadUmapData() {
             "名道": { color: "#ff0000", type: "line" },
             "グルメ": { color: "#ff7f00", type: "point" },
             "温泉": { color: "#007fff", type: "point" },
-            "観光": { color: "#ee827c", type: "point" },
+            "観光": { color: "#ff23ff", type: "point" },
             "キャンプ場": { color: "#006e54", type: "point" },
-            "宿": { color: "#4299e1", type: "point" },
+            "宿": { color: "#808080", type: "point" },
             "景勝地": { color: "#0000ff", type: "point" }
         };
 
