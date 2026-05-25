@@ -96,8 +96,16 @@ async function loadUmapData() {
                 }
             });
 
-            let hasLine = false;
-            group.eachLayer((layer) => { if (layer instanceof L.Polyline) hasLine = true; });
+            // レイヤー内の「線」と「点」の数を数えて判定
+            let pointCount = 0;
+            let lineCount = 0;
+            group.eachLayer((layer) => {
+                if (layer instanceof L.CircleMarker) pointCount++;
+                else if (layer instanceof L.Polyline) lineCount++;
+            });
+            
+            // 線がメイン（または線しかない）場合に線アイコンにする
+            const hasLine = (lineCount > 0 && pointCount <= 1);
 
             const item = document.createElement('div');
             item.className = 'legend-item';
