@@ -72,41 +72,59 @@ function placeTempPin(latlng) {
 }
 
 async function loadUmapData() {
-    const badge = document.getElementById('stats-badge'), legend = document.getElementById('legend-items');
+    const badge = document.getElementById('stats-badge');
+    const legend = document.getElementById('legend-items');
+    
     try {
-        const res = await fetch('umap_backup_map.umap'), data = await res.json();
-        let pC = 0, lC = 0;
-// --- レイヤー設定を一括管理 ---
+        const res = await fetch('umap_backup_map.umap');
+        const data = await res.json();
+        
         const layerSettings = {
             "名道": { color: "#ff0000", type: "line" },
             "グルメ": { color: "#ff7f00", type: "point" },
-            "温泉": { color: "#007fff", type: "point" }, // 正しいオブジェクト形式に修正
+            "温泉": { color: "#007fff", type: "point" },
             "観光": { color: "#ee827c", type: "point" },
             "キャンプ場": { color: "#006e54", type: "point" },
             "宿": { color: "#4299e1", type: "point" },
             "景勝地": { color: "#0000ff", type: "point" }
         };
+
         data.layers.forEach(layer => {
             const n = layer.properties.name || "未分類";
+            console.log("レイヤー処理中:", n); // ここで名前を確認！
+            
             const setting = layerSettings[n] || {};
             const color = setting.color || layer.properties.color || "#3182ce";
+            
             const group = L.layerGroup().addTo(map); 
             layerGroups[n] = group;
             
-            layer.features.forEach(f => {
-                // ... (既存の処理: Point/LineStringの追加) ...
-            });
+            if (layer.features) {
+                layer.features.forEach(f => {
+                    const c = f.geometry.coordinates;
+                    if (f.geometry.type === "Point") {
+                        const marker = L.circleMarker([c[1], c[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(group);
+                        marker.bindPopup(createPopupContent(f.properties.name || "名称未設定", c[1], c[0], f.properties.description, n));
+                    } else if (f.geometry.type === "LineString") {
+                        const latlngs = c.map(p => [p[1], p[0]]);
+                        L.polyline(latlngs, { color: color, weight: 4, opacity: 0.8 }).addTo(group);
+                    }
+                });
+            } else {
+                console.warn("featuresなし:", n);
+            }
 
-            // 凡例アイコンの判定を辞書から取得
             const isLine = (setting.type === "line");
             const item = document.createElement('div');
             item.className = 'legend-item';
-            const badgeStyle = hasLine ? `width:16px; height:4px; border-radius:2px; margin-right:6px; flex-shrink:0; display:inline-block;` : `width:10px; height:10px; border-radius:50%; margin-right:6px; flex-shrink:0; display:inline-block;`;
-            item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${n}', this.checked)"><span style="background:${color}; ${badgeStyle}"></span><span>${n}</span>`;
+            const badgeStyle = isLine ? `width:16px; height:4px; border-radius:2px;` : `width:10px; height:10px; border-radius:50%;`;
+            item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${n}', this.checked)"><span style="background:${color}; ${badgeStyle} display:inline-block; margin-right:6px;"></span><span>${n}</span>`;
             legend.appendChild(item);
         });
-        badge.innerText = `点: ${pC} / 線: ${lC}`;
-    } catch (e) { badge.innerText = "読込エラー"; }
+    } catch (e) {
+        console.error("詳細エラー:", e); // エラー内容をコンソールに出力
+        badge.innerText = "読込エラー";
+    }
 }
 function toggleLayer(n, checked) { if (checked) map.addLayer(layerGroups[n]); else map.removeLayer(layerGroups[n]); }
 
