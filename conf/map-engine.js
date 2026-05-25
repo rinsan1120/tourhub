@@ -22,39 +22,26 @@ function updateMyLocation() {
 
 function goToMyLocation() { if (myLocMarker) map.flyTo(myLocMarker.getLatLng(), 14); }
 
-// 【修正後】すべてのテンプレートリテラルを正しく記述
-// 【修正後】ボタン統一と表示順の変更
 function createPopupContent(name, lat, lng, description = "", category = "") {
     const coords = `${lat},${lng}`;
-    // Google Maps公式URL形式（maps.google.com/maps?q=...)
     const gmapUrl = `https://www.google.com/maps/search/?api=1&query=${coords}`;
     const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=driving`;
     const localUrl = `${baseUrl}&avoid=tolls,highways`;
     
-    // ボタン共通スタイル
     const btnStyle = "display: block; width: 100%; padding: 10px; margin-bottom: 8px; text-decoration: none; border-radius: 8px; font-weight: bold; text-align: center; font-size: 0.9rem; box-sizing: border-box;";
 
     let html = `<div style="text-align: center; min-width: 200px;">`;
     html += `<span style="font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 5px;">${name}</span>`;
-    
     if (category) html += `<span style="font-size: 0.75rem; color: #3182ce; background: #ebf8ff; padding: 2px 8px; border-radius: 4px; margin-bottom: 10px; display: inline-block;">${category}</span>`;
     if (description) html += `<p style="font-size:0.85rem; color:#444; margin-bottom:12px; text-align: left; line-height: 1.4;">${description.replace(/\n/g, '<br>')}</p>`;
     
     html += `<div style="display: flex; flex-direction: column; gap: 4px;">`;
-    
-    // 1. Googleマップで開く
     html += `<a href="${gmapUrl}" target="_blank" style="${btnStyle} background: #f6ad55; color: white;">Googleマップで開く</a>`;
-    
-    // 2. ルート検索（高速）
     html += `<a href="${baseUrl}" target="_blank" style="${btnStyle} background: #4285F4; color: white;">ルート検索（高速）</a>`;
-    
-    // 3. ルート検索（下道）
     html += `<a href="${localUrl}" target="_blank" style="${btnStyle} background: #34A853; color: white;">ルート検索（下道）</a>`;
-    
     return html + `</div></div>`;
 }
 
-// 全画面機能
 function toggleFullScreen() {
     if (!document.fullscreenElement) document.getElementById('map').requestFullscreen().catch(err => console.log(err));
     else document.exitFullscreen();
@@ -74,11 +61,11 @@ function placeTempPin(latlng) {
 async function loadUmapData() {
     const badge = document.getElementById('stats-badge');
     const legend = document.getElementById('legend-items');
+    let pC = 0, lC = 0; // カウンター初期化
     
     try {
         const res = await fetch('umap_backup_map.umap');
         const data = await res.json();
-        
         const layerSettings = {
             "名道": { color: "#ff0000", type: "line" },
             "グルメ": { color: "#ff7f00", type: "point" },
@@ -91,11 +78,8 @@ async function loadUmapData() {
 
         data.layers.forEach(layer => {
             const n = layer.properties.name || "未分類";
-            console.log("レイヤー処理中:", n); // ここで名前を確認！
-            
             const setting = layerSettings[n] || {};
             const color = setting.color || layer.properties.color || "#3182ce";
-            
             const group = L.layerGroup().addTo(map); 
             layerGroups[n] = group;
             
@@ -105,13 +89,13 @@ async function loadUmapData() {
                     if (f.geometry.type === "Point") {
                         const marker = L.circleMarker([c[1], c[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(group);
                         marker.bindPopup(createPopupContent(f.properties.name || "名称未設定", c[1], c[0], f.properties.description, n));
+                        pC++;
                     } else if (f.geometry.type === "LineString") {
                         const latlngs = c.map(p => [p[1], p[0]]);
                         L.polyline(latlngs, { color: color, weight: 4, opacity: 0.8 }).addTo(group);
+                        lC++;
                     }
                 });
-            } else {
-                console.warn("featuresなし:", n);
             }
 
             const isLine = (setting.type === "line");
@@ -121,8 +105,8 @@ async function loadUmapData() {
             item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${n}', this.checked)"><span style="background:${color}; ${badgeStyle} display:inline-block; margin-right:6px;"></span><span>${n}</span>`;
             legend.appendChild(item);
         });
+        badge.innerText = `点: ${pC} / 線: ${lC}`; // 反映
     } catch (e) {
-        console.error("詳細エラー:", e); // エラー内容をコンソールに出力
         badge.innerText = "読込エラー";
     }
 }
