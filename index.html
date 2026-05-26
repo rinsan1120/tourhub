@@ -45,11 +45,34 @@
         .legend-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; flex-shrink: 0; }
         @media (min-width: 768px) {
             .map-container { position: relative; }
+            /* 全画面ボタンが右に行ったので、凡例は元の左下(bottom:20px)に配置 */
             .legend { position: absolute; bottom: 20px; left: 10px; z-index: 1000; width: auto; max-width: 250px; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
             #legend-items { flex-direction: column; gap: 5px; }
             .legend-item { background: transparent; border: none; padding: 0; }
         }
-        .loc-btn { position: absolute; bottom: 20px; right: 10px; z-index: 1000; background: rgba(255, 255, 255, 0.95); border: none; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.2); width: 44px; height: 44px; font-size: 1.2rem; color: #4a5568; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+        /* ▼ 現在地ボタンと全画面ボタンの共通スタイル（両方とも右側に固定） ▼ */
+        .loc-btn, .fullscreen-btn { 
+            position: absolute; 
+            right: 10px; 
+            z-index: 1000; 
+            background: rgba(255, 255, 255, 0.95); 
+            border: none; 
+            border-radius: 8px; 
+            box-shadow: 0 0 15px rgba(0,0,0,0.2); 
+            width: 44px; 
+            height: 44px; 
+            font-size: 1.2rem; 
+            color: #4a5568; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+        }
+        
+        /* ▼ 縦並びにするための高さ調整 ▼ */
+        .loc-btn { bottom: 74px; } /* 現在地ボタン（上） */
+        .fullscreen-btn { bottom: 20px; } /* 全画面ボタン（下） */
         #stats-badge { position: absolute; top: 10px; left: 50px; z-index: 1000; background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; color: #666; border: 1px solid #ddd; pointer-events: none; }
 
         .weather-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; cursor: pointer; }
@@ -132,9 +155,9 @@
 <main>
     <div class="map-container">
         <div class="map-section">
-            <div id="map-wrapper" style="position: relative;">
+                <div id="map-wrapper" style="position: relative;">
                 <div id="map"></div>
-                <button onclick="toggleFullScreen()" style="position: absolute; top: 10px; left: 10px; z-index: 1000; padding: 8px;">
+                <button class="fullscreen-btn" onclick="toggleFullScreen()">
                     <i class="fa-solid fa-expand"></i>
                 </button>
             </div>
