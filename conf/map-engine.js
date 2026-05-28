@@ -84,7 +84,18 @@ async function loadUmapData() {
             
             // クラスタリング対応のグループ設定
             const isPoint = (setting.type === "point");
-            const group = isPoint ? L.markerClusterGroup({ disableClusteringAtZoom: 10 }).addTo(map) : L.layerGroup().addTo(map);
+            // レイヤーごとの色を適用したiconCreateFunctionを設定
+            const group = isPoint ? L.markerClusterGroup({ 
+                disableClusteringAtZoom: 10,
+                iconCreateFunction: function(cluster) {
+                    return L.divIcon({ 
+                        html: `<div style="background-color:${color}; color:white; border-radius:50%; width:30px; height:30px; line-height:30px; text-align:center; opacity:0.9; font-size:12px;">${cluster.getChildCount()}</div>`,
+                        className: 'marker-cluster-custom',
+                        iconSize: L.point(30, 30)
+                    });
+                }
+            }) : L.layerGroup();
+group.addTo(map);
             layerGroups[n] = group;
             
             if (layer.features) {
