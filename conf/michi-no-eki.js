@@ -27,10 +27,15 @@ async function loadMichiNoEki() {
         });
 
         const legend = document.getElementById('legend-items');
-        const item = document.createElement('div');
-        item.className = 'legend-item';
-        item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${layerName}', this.checked)"><span style="background:${color}; width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:6px;"></span><span>${layerName}</span>`;
-        legend.appendChild(item);
+        
+        // IDで重複チェックを行う
+        if (!document.getElementById('legend-item-' + layerName)) {
+            const item = document.createElement('div');
+            item.className = 'legend-item';
+            item.id = 'legend-item-' + layerName; // 一意なIDを付与
+            item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${layerName}', this.checked)"><span style="background:${color}; width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:6px;"></span><span>${layerName}</span>`;
+            legend.appendChild(item);
+        }
 
     } catch (e) {
         console.error("道の駅データの読み込みに失敗しました:", e);
