@@ -73,7 +73,7 @@ async function loadUmapData() {
             "観光": { color: "#ff23ff", type: "point" },
             "キャンプ場": { color: "#00ff00", type: "point" },
             "宿": { color: "#808080", type: "point" },
-            "景勝地": { color: "#0000ff", type: "point" }
+            "景勝地": { color: "#0000ff", type: "point" },
             "道の駅": { color: "#8c6450", type: "point" } // ★ここに追加
         };
 
