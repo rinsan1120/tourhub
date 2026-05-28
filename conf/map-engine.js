@@ -81,14 +81,47 @@ async function loadUmapData() {
             const n = layer.properties.name || "未分類";
             const setting = layerSettings[n] || {};
             const color = setting.color || layer.properties.color || "#3182ce";
-            const group = L.layerGroup().addTo(map); 
+//レイヤーごとの集約に伴うコメントアウトここから 
+/*           const group = L.layerGroup().addTo(map); 
             layerGroups[n] = group;
             
             if (layer.features) {
                 layer.features.forEach(f => {
                     const c = f.geometry.coordinates;
                     if (f.geometry.type === "Point") {
-                        const marker = L.circleMarker([c[1], c[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(group);
+                        const marker = L.circleMarker([c[1], c[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(group); */
+//レイヤーごとの集約に伴うコメントアウトここまで
+//レイヤーごと集約表示に伴う追加　ここから
+            data.layers.forEach(layer => {
+            const n = layer.properties.name || "未分類";
+            const setting = layerSettings[n] || {};
+            const color = setting.color || layer.properties.color || "#3182ce";
+            
+            // ★ここを変更：タイプに応じてグループを使い分ける
+            const isPoint = (setting.type === "point");
+            const group = isPoint ? L.markerClusterGroup({ disableClusteringAtZoom: 10 }).addTo(map) : L.layerGroup().addTo(map);
+            layerGroups[n] = group;
+            
+            if (layer.features) {
+                layer.features.forEach(f => {
+                    const c = f.geometry.coordinates;
+                    if (f.geometry.type === "Point") {
+                        // ★markerClusterGroupの場合はaddLayerを使用
+                        const marker = L.circleMarker([c[1], c[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 });
+                        marker.bindPopup(createPopupContent(f.properties.name || "名称未設定", c[1], c[0], f.properties.description, n));
+                        group.addLayer(marker); // addTo(group) から変更
+                        pC++;
+                    } else if (f.geometry.type === "LineString") {
+                        // ...（線系の処理はそのまま）...
+                        const latlngs = c.map(p => [p[1], p[0]]);
+                        L.polyline(latlngs, { color: color, weight: 4, opacity: 0.8, interactive: false }).addTo(group);
+                        const touchLine = L.polyline(latlngs, { color: 'transparent', weight: 24, opacity: 0, interactive: true }).addTo(group);
+                        touchLine.bindPopup(createPopupContent(f.properties.name || "名道", c[0][1], c[0][0], f.properties.description, n));
+                    }
+                });
+            }
+            // ...（凡例生成の処理はそのまま）...
+//レイヤーごと集約表示に伴う追加　ここまで
                         marker.bindPopup(createPopupContent(f.properties.name || "名称未設定", c[1], c[0], f.properties.description, n));
                         pC++;
                         } else if (f.geometry.type === "LineString") {
