@@ -1,7 +1,5 @@
-// michi-no-eki.js
+// conf/michi-no-eki.js
 
-// 地図（map）はmap-engine.jsで定義されている前提です
-// 読み込みが完了した後に実行されるよう、DOMContentLoadedを使用
 document.addEventListener('DOMContentLoaded', function() {
     
     // マーカークラスタグループの作成
@@ -10,7 +8,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // GeoJSONを読み込んでマーカーを追加
-    fetch('michi_no_eki.geojson')
+    // ※htmlから見てgeojsonがどこにあるかパスを指定してください
+    fetch('P35-18_Roadside_Station.geojson')
         .then(response => response.json())
         .then(data => {
             var geojsonLayer = L.geoJSON(data.features, {
@@ -30,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             stationMarkers.addLayer(geojsonLayer);
-            map.addLayer(stationMarkers); // 既存の map 変数を使用
+            map.addLayer(stationMarkers); // map-engine.jsで定義された map オブジェクトを使用
         })
         .catch(error => console.error('道の駅データの読み込みに失敗しました:', error));
 });
