@@ -105,12 +105,17 @@ async function loadUmapData() {
                 });
             }
 
-            const isLine = (setting.type === "line");
-            const item = document.createElement('div');
-            item.className = 'legend-item';
-            const badgeStyle = isLine ? `width:16px; height:4px; border-radius:2px;` : `width:10px; height:10px; border-radius:50%;`;
-            item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${n}', this.checked)"><span style="background:${color}; ${badgeStyle} display:inline-block; margin-right:6px;"></span><span>${n}</span>`;
-            legend.appendChild(item);
+const isLine = (setting.type === "line");
+            
+            // IDで重複チェックを行う
+            if (!document.getElementById('legend-item-' + n)) {
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+                item.id = 'legend-item-' + n; // 一意なIDを付与
+                const badgeStyle = isLine ? `width:16px; height:4px; border-radius:2px;` : `width:10px; height:10px; border-radius:50%;`;
+                item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${n}', this.checked)"><span style="background:${color}; ${badgeStyle} display:inline-block; margin-right:6px;"></span><span>${n}</span>`;
+                legend.appendChild(item);
+            }
         });
 badge.innerText = `点: ${pC} / 線: ${lC}`;
     } catch (e) {
