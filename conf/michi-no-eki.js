@@ -7,9 +7,12 @@ async function loadMichiNoEki() {
     try {
         const res = await fetch('P35-18_Roadside_Station.geojson');
         const data = await res.json();
-        console.log("読み込んだデータ件数:", data.features.length); // ログ1
         
-        const group = L.layerGroup().addTo(map);
+        // MarkerClusterGroupを使用
+        const group = L.markerClusterGroup({
+            disableClusteringAtZoom: 10
+        }).addTo(map);
+        
         layerGroups[layerName] = group;
 
         data.features.forEach(f => {
@@ -18,22 +21,29 @@ async function loadMichiNoEki() {
             const url = f.properties.P35_007 || "";
             const desc = `<a href="${url}" target="_blank">公式HPへ</a>`;
             
-            // ログ2: 座標が正しいか、マーカーが作られているか確認
-            console.log("マーカー作成中:", name, c[1], c[0]); 
-            
             const marker = L.circleMarker([c[1], c[0]], { 
                 radius: 7, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.8 
-            }).addTo(group);
+            });
             
             marker.bindPopup(createPopupContent(name, c[1], c[0], desc, layerName));
+            
+            // クラスタグループに追加
+            group.addLayer(marker);
         });
+
+        // 凡例に追加
+        const legend = document.getElementById('legend-items');
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${layerName}', this.checked)"><span style="background:${color}; width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:6px;"></span><span>${layerName}</span>`;
+        legend.appendChild(item);
 
     } catch (e) {
         console.error("道の駅データの読み込みに失敗しました:", e);
     }
 }
 
-// 実行
+// ページ読み込み時に実行
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', loadMichiNoEki);
 } else {
