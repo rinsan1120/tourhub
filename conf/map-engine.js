@@ -112,18 +112,21 @@ async function loadUmapData() {
             item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${n}', this.checked)"><span style="background:${color}; ${badgeStyle} display:inline-block; margin-right:6px;"></span><span>${n}</span>`;
             legend.appendChild(item);
         });
-        badge.innerText = `点: ${pC} / 線: ${lC}`;
+badge.innerText = `点: ${pC} / 線: ${lC}`;
     } catch (e) {
         console.error(e);
         badge.innerText = "読込エラー";
     }
 }
-        badge.innerText = `点: ${pC} / 線: ${lC}`; // 反映
-    } catch (e) {
-        badge.innerText = "読込エラー";
-    }
+
+function toggleLayer(n, checked) { 
+    if (checked) map.addLayer(layerGroups[n]); 
+    else map.removeLayer(layerGroups[n]); 
 }
-function toggleLayer(n, checked) { if (checked) map.addLayer(layerGroups[n]); else map.removeLayer(layerGroups[n]); }
+
+updateGuideText();
+updateMyLocation();
+loadUmapData();
 
 updateGuideText();
 updateMyLocation();
