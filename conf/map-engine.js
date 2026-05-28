@@ -61,7 +61,7 @@ function placeTempPin(latlng) {
 async function loadUmapData() {
     const badge = document.getElementById('stats-badge');
     const legend = document.getElementById('legend-items');
-    let pC = 0, lC = 0; // カウンター初期化
+    let pC = 0, lC = 0; 
     
     try {
         const res = await fetch('umap_backup_map.umap');
@@ -74,30 +74,15 @@ async function loadUmapData() {
             "キャンプ場": { color: "#00ff00", type: "point" },
             "宿": { color: "#808080", type: "point" },
             "景勝地": { color: "#0000ff", type: "point" },
-            "道の駅": { color: "#8c6450", type: "point" } // ★ここに追加
+            "道の駅": { color: "#8c6450", type: "point" }
         };
 
         data.layers.forEach(layer => {
             const n = layer.properties.name || "未分類";
             const setting = layerSettings[n] || {};
             const color = setting.color || layer.properties.color || "#3182ce";
-//レイヤーごとの集約に伴うコメントアウトここから 
-/*           const group = L.layerGroup().addTo(map); 
-            layerGroups[n] = group;
             
-            if (layer.features) {
-                layer.features.forEach(f => {
-                    const c = f.geometry.coordinates;
-                    if (f.geometry.type === "Point") {
-                        const marker = L.circleMarker([c[1], c[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 }).addTo(group); */
-//レイヤーごとの集約に伴うコメントアウトここまで
-//レイヤーごと集約表示に伴う追加　ここから
-            data.layers.forEach(layer => {
-            const n = layer.properties.name || "未分類";
-            const setting = layerSettings[n] || {};
-            const color = setting.color || layer.properties.color || "#3182ce";
-            
-            // ★ここを変更：タイプに応じてグループを使い分ける
+            // クラスタリング対応のグループ設定
             const isPoint = (setting.type === "point");
             const group = isPoint ? L.markerClusterGroup({ disableClusteringAtZoom: 10 }).addTo(map) : L.layerGroup().addTo(map);
             layerGroups[n] = group;
@@ -106,33 +91,17 @@ async function loadUmapData() {
                 layer.features.forEach(f => {
                     const c = f.geometry.coordinates;
                     if (f.geometry.type === "Point") {
-                        // ★markerClusterGroupの場合はaddLayerを使用
                         const marker = L.circleMarker([c[1], c[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 });
                         marker.bindPopup(createPopupContent(f.properties.name || "名称未設定", c[1], c[0], f.properties.description, n));
-                        group.addLayer(marker); // addTo(group) から変更
+                        group.addLayer(marker);
                         pC++;
                     } else if (f.geometry.type === "LineString") {
-                        // ...（線系の処理はそのまま）...
                         const latlngs = c.map(p => [p[1], p[0]]);
                         L.polyline(latlngs, { color: color, weight: 4, opacity: 0.8, interactive: false }).addTo(group);
                         const touchLine = L.polyline(latlngs, { color: 'transparent', weight: 24, opacity: 0, interactive: true }).addTo(group);
                         touchLine.bindPopup(createPopupContent(f.properties.name || "名道", c[0][1], c[0][0], f.properties.description, n));
+                        lC++;
                     }
-                });
-            }
-            // ...（凡例生成の処理はそのまま）...
-//レイヤーごと集約表示に伴う追加　ここまで
-                        marker.bindPopup(createPopupContent(f.properties.name || "名称未設定", c[1], c[0], f.properties.description, n));
-                        pC++;
-                        } else if (f.geometry.type === "LineString") {
-                            const latlngs = c.map(p => [p[1], p[0]]);
-                            // 1. 見た目用の線
-                            L.polyline(latlngs, { color: color, weight: 4, opacity: 0.8, interactive: false }).addTo(group);
-                            // 2. 判定用の透明な太い線
-                            const touchLine = L.polyline(latlngs, { color: 'transparent', weight: 24, opacity: 0, interactive: true }).addTo(group);
-                            // 3. ポップアップのバインド
-                            touchLine.bindPopup(createPopupContent(f.properties.name || "名道", c[0][1], c[0][0], f.properties.description, n));
-                        }
                 });
             }
 
@@ -143,6 +112,12 @@ async function loadUmapData() {
             item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${n}', this.checked)"><span style="background:${color}; ${badgeStyle} display:inline-block; margin-right:6px;"></span><span>${n}</span>`;
             legend.appendChild(item);
         });
+        badge.innerText = `点: ${pC} / 線: ${lC}`;
+    } catch (e) {
+        console.error(e);
+        badge.innerText = "読込エラー";
+    }
+}
         badge.innerText = `点: ${pC} / 線: ${lC}`; // 反映
     } catch (e) {
         badge.innerText = "読込エラー";
