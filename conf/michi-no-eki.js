@@ -7,9 +7,18 @@ async function loadMichiNoEki() {
         const data = await res.json();
         
         // MarkerClusterGroupを作成して変数に格納
-        const group = L.markerClusterGroup({ disableClusteringAtZoom: 10 });
-        // addTo(map) を呼び出すのは、グループ作成の直後ではなく、マーカー追加の後でもOKですが、先に呼び出す場合は変数に入れる
-        group.addTo(map); 
+        const group = L.markerClusterGroup({ 
+            disableClusteringAtZoom: 10,
+            iconCreateFunction: function(cluster) {
+                return L.divIcon({ 
+                    // 道の駅の色 #8c6450 を使用
+                    html: `<div style="background-color:#8c6450; color:white; border-radius:50%; width:30px; height:30px; line-height:30px; text-align:center; opacity:0.9; font-size:12px;">${cluster.getChildCount()}</div>`,
+                    className: 'marker-cluster-custom',
+                    iconSize: L.point(30, 30)
+                });
+            }
+        });
+        group.addTo(map);
         layerGroups[layerName] = group;
 
         data.features.forEach(f => {
