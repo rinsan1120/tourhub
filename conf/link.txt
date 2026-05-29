@@ -4,14 +4,14 @@ Google マップ,https://www.google.co.jp/maps/
 二輪車定率割引申込,https://hayatabi.c-nexco.co.jp/drive/detail.html?id=203
 二輪車割引料金検索,https://search.w-nexco.co.jp/touring-search/
 NEXCO<br>ツーリングプラン,https://www.driveplaza.com/etc/drawari/2026_touring/
+ETCマイレージ,https://www2.smile-etc.jp/NASApp/etcmlg/MlgReq?gvlddpef=1013000000&mdwsetmb=1013000000
 バイク駐輪場検索,https://www.s-park.jp/
 フェリー航路,https://searoute.info/
 
 
-※車両管理・その他
-ETCマイレージ,https://www2.smile-etc.jp/NASApp/etcmlg/MlgReq?gvlddpef=1013000000&mdwsetmb=1013000000
-Honda Total Care,https://htc.honda.co.jp/member/
+※ソーシャル
 みんカラ,https://minkara.carview.co.jp/
+マスツーリング用<br>緊急連絡カード,https://kanto-t.jp/business/misc/motorcycleemergencycard/
 
 ※宿泊関連・駐車
 じゃらん,https://www.jalan.net/
