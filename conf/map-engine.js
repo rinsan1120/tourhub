@@ -6,6 +6,7 @@ let myLocMarker = null, tempMarker = null;
 const layerGroups = {};
 const HIGHWAY_IC_LAYER_NAME = "高速道路IC";
 const HIGHWAY_IC_MIN_ZOOM = 12;
+const HIGHWAY_IC_ICON_URL = "images/ic_logo.png";
 
 function updateGuideText() {
     const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
@@ -85,7 +86,7 @@ async function loadUmapData() {
             "宿": { color: "#808080", type: "point" },
             "景勝地": { color: "#0000ff", type: "point" },
             "道の駅": { color: "#8c6450", type: "point" },
-            [HIGHWAY_IC_LAYER_NAME]: { color: "#2f3640", type: "point", cluster: false, minZoom: HIGHWAY_IC_MIN_ZOOM, showInLegend: false, countInStats: false }
+            [HIGHWAY_IC_LAYER_NAME]: { color: "#2f3640", type: "point", cluster: false, minZoom: HIGHWAY_IC_MIN_ZOOM, showInLegend: false, countInStats: false, iconUrl: HIGHWAY_IC_ICON_URL }
         };
 
         data.layers.forEach(layer => {
@@ -119,7 +120,16 @@ async function loadUmapData() {
                 layer.features.forEach(f => {
                     const c = f.geometry.coordinates;
                     if (f.geometry.type === "Point") {
-                        const marker = L.circleMarker([c[1], c[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 });
+                        const marker = setting.iconUrl
+                            ? L.marker([c[1], c[0]], {
+                                icon: L.icon({
+                                    iconUrl: setting.iconUrl,
+                                    iconSize: [24, 24],
+                                    iconAnchor: [12, 12],
+                                    popupAnchor: [0, -12]
+                                })
+                            })
+                            : L.circleMarker([c[1], c[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 });
                         marker.bindPopup(createPopupContent(f.properties.name || "名称未設定", c[1], c[0], f.properties.description, n));
                         group.addLayer(marker);
                         if (setting.countInStats !== false) pC++;
