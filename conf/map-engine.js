@@ -5,7 +5,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 let myLocMarker = null, tempMarker = null;
 const layerGroups = {};
 const HIGHWAY_IC_LAYER_NAME = "高速道路IC";
-const HIGHWAY_IC_MIN_ZOOM = 10;
+const HIGHWAY_IC_MIN_ZOOM = 11;
 const HIGHWAY_IC_ICON_URL = "images/ic_logo.png";
 
 function updateGuideText() {
