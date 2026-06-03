@@ -262,7 +262,10 @@ function placeTempPin(latlng) {
 }
 
 function isMobileMapView() {
-    return window.matchMedia('(max-width: 767px)').matches;
+    return window.matchMedia('(max-width: 767px)').matches ||
+        window.matchMedia('(pointer: coarse)').matches ||
+        ('ontouchstart' in window) ||
+        navigator.maxTouchPoints > 0;
 }
 
 function resolveMinZoom(minZoom) {
