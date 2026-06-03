@@ -1,8 +1,6 @@
 let weatherData = {};
 let loadedRegions = new Set();
 
-function cleanLine(line) { return line.split('//')[0].trim(); }
-
 function getWeatherIcon(code) {
     if (code === 0) return 'fa-sun'; if (code <= 3) return 'fa-cloud-sun'; if (code <= 67) return 'fa-cloud-rain'; return 'fa-cloud';
 }

@@ -140,10 +140,12 @@ function toggleLayer(n, checked) {
     else map.removeLayer(layerGroups[n]); 
 }
 
-updateGuideText();
-updateMyLocation();
-loadUmapData();
+let mapInitialized = false;
 
-updateGuideText();
-updateMyLocation();
-loadUmapData();
+function initMap() {
+    if (mapInitialized) return;
+    mapInitialized = true;
+    updateGuideText();
+    updateMyLocation();
+    loadUmapData();
+}

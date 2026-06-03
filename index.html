@@ -89,17 +89,12 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
+<script src="conf/common.js"></script>
 <script src="conf/map-engine.js"></script>
 <script src="conf/michi-no-eki.js"></script>
 <script src="conf/weather-engine.js"></script>
 
 <script>
-    // ヘルパー関数（nearbyやlinkでも使うため維持）
-    function cleanLine(line) { 
-    // URLの「://」を切断しないよう保護してから、コメントの「//」だけを消す
-    return line.replace(/:\/\//g, '___URL___').split('//')[0].replace(/___URL___/g, '://').trim(); 
-    }
-
     // 周辺検索の読み込み
     async function loadNearbyConfig() {
         const container = document.getElementById('nearby-container');
