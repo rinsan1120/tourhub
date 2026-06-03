@@ -4,6 +4,8 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
 let myLocMarker = null, tempMarker = null;
 const layerGroups = {};
+const HIGHWAY_IC_LAYER_NAME = "高速道路IC";
+const HIGHWAY_IC_MIN_ZOOM = 12;
 
 function updateGuideText() {
     const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
@@ -58,6 +60,14 @@ function placeTempPin(latlng) {
     tempMarker.bindPopup(createPopupContent("指定した地点", latlng.lat, latlng.lng)).openPopup();
 }
 
+function updateZoomLimitedLayer(group, minZoom) {
+    if (map.getZoom() >= minZoom) {
+        if (!map.hasLayer(group)) map.addLayer(group);
+    } else if (map.hasLayer(group)) {
+        map.removeLayer(group);
+    }
+}
+
 async function loadUmapData() {
     const badge = document.getElementById('stats-badge');
     const legend = document.getElementById('legend-items');
@@ -74,28 +84,35 @@ async function loadUmapData() {
             "キャンプ場": { color: "#00ff00", type: "point" },
             "宿": { color: "#808080", type: "point" },
             "景勝地": { color: "#0000ff", type: "point" },
-            "道の駅": { color: "#8c6450", type: "point" }
+            "道の駅": { color: "#8c6450", type: "point" },
+            [HIGHWAY_IC_LAYER_NAME]: { color: "#2f3640", type: "point", cluster: false, minZoom: HIGHWAY_IC_MIN_ZOOM, showInLegend: false, countInStats: false }
         };
 
         data.layers.forEach(layer => {
             const n = layer.properties.name || "未分類";
             const setting = layerSettings[n] || {};
             const color = setting.color || layer.properties.color || "#3182ce";
-            
+
             // クラスタリング対応のグループ設定
             const isPoint = (setting.type === "point");
+            const shouldCluster = isPoint && setting.cluster !== false;
             // レイヤーごとの色を適用したiconCreateFunctionを設定
-            const group = isPoint ? L.markerClusterGroup({ 
+            const group = shouldCluster ? L.markerClusterGroup({
                 disableClusteringAtZoom: 10,
                 iconCreateFunction: function(cluster) {
-                    return L.divIcon({ 
+                    return L.divIcon({
                         html: `<div style="background-color:${color}; color:white; border-radius:50%; width:30px; height:30px; line-height:30px; text-align:center; opacity:0.9; font-size:12px;">${cluster.getChildCount()}</div>`,
                         className: 'marker-cluster-custom',
                         iconSize: L.point(30, 30)
                     });
                 }
             }) : L.layerGroup();
-group.addTo(map);
+            if (setting.minZoom) {
+                updateZoomLimitedLayer(group, setting.minZoom);
+                map.on('zoomend', () => updateZoomLimitedLayer(group, setting.minZoom));
+            } else {
+                group.addTo(map);
+            }
             layerGroups[n] = group;
             
             if (layer.features) {
@@ -105,7 +122,7 @@ group.addTo(map);
                         const marker = L.circleMarker([c[1], c[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 });
                         marker.bindPopup(createPopupContent(f.properties.name || "名称未設定", c[1], c[0], f.properties.description, n));
                         group.addLayer(marker);
-                        pC++;
+                        if (setting.countInStats !== false) pC++;
                     } else if (f.geometry.type === "LineString") {
                         const latlngs = c.map(p => [p[1], p[0]]);
                         L.polyline(latlngs, { color: color, weight: 4, opacity: 0.8, interactive: false }).addTo(group);
@@ -116,10 +133,10 @@ group.addTo(map);
                 });
             }
 
-const isLine = (setting.type === "line");
-            
+            const isLine = (setting.type === "line");
+
             // IDで重複チェックを行う
-            if (!document.getElementById('legend-item-' + n)) {
+            if (setting.showInLegend !== false && !document.getElementById('legend-item-' + n)) {
                 const item = document.createElement('div');
                 item.className = 'legend-item';
                 item.id = 'legend-item-' + n; // 一意なIDを付与
