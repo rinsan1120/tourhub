@@ -6,7 +6,7 @@ let myLocMarker = null, tempMarker = null;
 const layerGroups = {};
 const HIGHWAY_IC_LAYER_NAME = "高速道路IC";
 const HIGHWAY_IC_MIN_ZOOM_PC = 11;
-const HIGHWAY_IC_MIN_ZOOM_MOBILE = 11;
+const HIGHWAY_IC_MIN_ZOOM_MOBILE = 10;
 const HIGHWAY_IC_ICON_URL = "images/ic_logo.png";
 const COORD_JUMP_ZOOM = 16;
 
