@@ -164,8 +164,96 @@ function toggleFullScreen() {
 map.on('contextmenu', (e) => { placeTempPin(e.latlng); return false; });
 map.on('popupopen', attachCopyCoordsHandler);
 let pressTimer;
+const ONE_FINGER_ZOOM_TAP_INTERVAL = 350;
+const ONE_FINGER_ZOOM_TAP_DISTANCE = 40;
+const ONE_FINGER_ZOOM_STEP_DISTANCE = 70;
+let oneFingerZoomState = null;
+
+function clearLongPressTimer() {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+}
+
+function getTouchPoint(touch) {
+    return L.point(touch.clientX, touch.clientY);
+}
+
+function getTouchLatLng(touch) {
+    return map.containerPointToLatLng(map.mouseEventToContainerPoint(touch));
+}
+
+function clampZoom(zoom) {
+    const minZoom = map.getMinZoom();
+    const maxZoom = map.getMaxZoom();
+    return Math.max(minZoom, Math.min(maxZoom, zoom));
+}
+
+function handleOneFingerZoomStart(e) {
+    if (!isMobileMapView() || e.touches.length !== 1) return;
+
+    const touch = e.touches[0];
+    const now = Date.now();
+    const point = getTouchPoint(touch);
+    const previousTap = oneFingerZoomState && oneFingerZoomState.lastTap;
+
+    if (
+        previousTap &&
+        now - previousTap.time <= ONE_FINGER_ZOOM_TAP_INTERVAL &&
+        point.distanceTo(previousTap.point) <= ONE_FINGER_ZOOM_TAP_DISTANCE
+    ) {
+        clearLongPressTimer();
+        oneFingerZoomState = {
+            active: true,
+            anchorLatLng: getTouchLatLng(touch),
+            startY: touch.clientY,
+            startZoom: map.getZoom(),
+            lastZoom: map.getZoom(),
+            lastTap: null
+        };
+        L.DomEvent.preventDefault(e);
+        L.DomEvent.stopPropagation(e);
+        return;
+    }
+
+    oneFingerZoomState = { active: false, lastTap: { time: now, point } };
+}
+
+function handleOneFingerZoomMove(e) {
+    if (!oneFingerZoomState || !oneFingerZoomState.active || e.touches.length !== 1) return;
+
+    clearLongPressTimer();
+    const dy = oneFingerZoomState.startY - e.touches[0].clientY;
+    const zoomDelta = Math.trunc(dy / ONE_FINGER_ZOOM_STEP_DISTANCE);
+    const nextZoom = clampZoom(oneFingerZoomState.startZoom + zoomDelta);
+
+    if (nextZoom !== oneFingerZoomState.lastZoom) {
+        oneFingerZoomState.lastZoom = nextZoom;
+        map.setZoomAround(oneFingerZoomState.anchorLatLng, nextZoom, { animate: false });
+    }
+
+    L.DomEvent.preventDefault(e);
+    L.DomEvent.stopPropagation(e);
+}
+
+function handleOneFingerZoomEnd(e) {
+    if (oneFingerZoomState && oneFingerZoomState.active) {
+        clearLongPressTimer();
+        oneFingerZoomState = null;
+        L.DomEvent.preventDefault(e);
+        L.DomEvent.stopPropagation(e);
+    }
+}
+
+function initOneFingerZoomControl() {
+    const container = map.getContainer();
+    container.addEventListener('touchstart', handleOneFingerZoomStart, { passive: false });
+    container.addEventListener('touchmove', handleOneFingerZoomMove, { passive: false });
+    container.addEventListener('touchend', handleOneFingerZoomEnd, { passive: false });
+    container.addEventListener('touchcancel', handleOneFingerZoomEnd, { passive: false });
+}
+
 map.on('touchstart', (e) => { if (e.originalEvent.touches.length === 1) pressTimer = setTimeout(() => placeTempPin(e.latlng), 800); });
-map.on('touchend dblclick touchmove', () => clearTimeout(pressTimer));
+map.on('touchend dblclick touchmove', clearLongPressTimer);
 
 function placeTempPin(latlng) {
     if (tempMarker) tempMarker.setLatLng(latlng);
@@ -302,6 +390,7 @@ function initMap() {
     updateGuideText();
     updateZoomBadge();
     map.on('zoomend', updateZoomBadge);
+    initOneFingerZoomControl();
     initCoordJumpControl();
     updateMyLocation();
     loadUmapData();
