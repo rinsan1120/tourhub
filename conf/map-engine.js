@@ -157,9 +157,9 @@ async function loadUmapData() {
                             ? L.marker([c[1], c[0]], {
                                 icon: L.icon({
                                     iconUrl: setting.iconUrl,
-                                    iconSize: [24, 24],
-                                    iconAnchor: [12, 12],
-                                    popupAnchor: [0, -12]
+                                    iconSize: [14, 14],
+                                    iconAnchor: [7, 7],
+                                    popupAnchor: [0, -7]
                                 })
                             })
                             : L.circleMarker([c[1], c[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 });
