@@ -120,6 +120,9 @@ async function loadUmapData() {
                 layer.features.forEach(f => {
                     const c = f.geometry.coordinates;
                     if (f.geometry.type === "Point") {
+                        const popupName = n === HIGHWAY_IC_LAYER_NAME
+                            ? `${f.properties.name || "名称未設定"}IC`
+                            : f.properties.name || "名称未設定";
                         const marker = setting.iconUrl
                             ? L.marker([c[1], c[0]], {
                                 icon: L.icon({
@@ -130,7 +133,7 @@ async function loadUmapData() {
                                 })
                             })
                             : L.circleMarker([c[1], c[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 });
-                        marker.bindPopup(createPopupContent(f.properties.name || "名称未設定", c[1], c[0], f.properties.description, n));
+                        marker.bindPopup(createPopupContent(popupName, c[1], c[0], f.properties.description, n));
                         group.addLayer(marker);
                         if (setting.countInStats !== false) pC++;
                     } else if (f.geometry.type === "LineString") {
