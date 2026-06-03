@@ -67,6 +67,7 @@
         #operation-guide { max-width: min(230px, calc(100vw - 24px)); }
         .coord-jump-toggle { display: block; width: 100%; margin-top: 8px; padding: 4px 0; border: 0; background: transparent; color: white; font: inherit; font-weight: bold; text-align: left; cursor: pointer; }
         .coord-jump-panel { display: flex; gap: 6px; margin-top: 4px; }
+        .coord-jump-panel[hidden] { display: none; }
         .coord-jump-input { width: 150px; min-width: 0; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.75rem; box-sizing: border-box; }
         .coord-jump-btn { padding: 6px 10px; border: 0; border-radius: 6px; background: #3182ce; color: white; font-size: 0.75rem; font-weight: bold; cursor: pointer; white-space: nowrap; }
         .copy-coords-btn { width: 100%; margin-top: 4px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f76f6f; color: white; font-size: 0.85rem; font-weight: bold; cursor: pointer; }

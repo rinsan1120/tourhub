@@ -43,6 +43,14 @@ function toggleCoordJumpPanel() {
     toggle.setAttribute('aria-expanded', String(willOpen));
 }
 
+function handleCoordJumpToggle(e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    toggleCoordJumpPanel();
+}
+
 function jumpToInputCoordinates() {
     const input = document.getElementById('coord-jump-input');
     if (!input) return;
@@ -54,6 +62,14 @@ function jumpToInputCoordinates() {
     } catch (err) {
         alert(err.message);
     }
+}
+
+function handleCoordJumpSubmit(e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    jumpToInputCoordinates();
 }
 
 function initCoordJumpControl() {
@@ -68,11 +84,13 @@ function initCoordJumpControl() {
         L.DomEvent.disableScrollPropagation(guide);
     }
 
-    toggle.addEventListener('click', toggleCoordJumpPanel);
-    button.addEventListener('click', jumpToInputCoordinates);
+    toggle.addEventListener('click', handleCoordJumpToggle);
+    toggle.addEventListener('touchend', handleCoordJumpToggle);
+    button.addEventListener('click', handleCoordJumpSubmit);
+    button.addEventListener('touchend', handleCoordJumpSubmit);
     input.addEventListener('focus', () => input.select());
     input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') jumpToInputCoordinates();
+        if (e.key === 'Enter') handleCoordJumpSubmit(e);
     });
 }
 
