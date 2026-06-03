@@ -5,7 +5,8 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 let myLocMarker = null, tempMarker = null;
 const layerGroups = {};
 const HIGHWAY_IC_LAYER_NAME = "高速道路IC";
-const HIGHWAY_IC_MIN_ZOOM = 11;
+const HIGHWAY_IC_MIN_ZOOM_PC = 11;
+const HIGHWAY_IC_MIN_ZOOM_MOBILE = 11;
 const HIGHWAY_IC_ICON_URL = "images/ic_logo.png";
 const COORD_JUMP_ZOOM = 16;
 
@@ -172,7 +173,18 @@ function placeTempPin(latlng) {
     tempMarker.bindPopup(createPopupContent("指定した地点", latlng.lat, latlng.lng)).openPopup();
 }
 
+function isMobileMapView() {
+    return window.matchMedia('(max-width: 767px)').matches;
+}
+
+function resolveMinZoom(minZoom) {
+    if (typeof minZoom === 'number') return minZoom;
+    if (!minZoom) return 0;
+    return isMobileMapView() ? (minZoom.mobile ?? minZoom.pc) : minZoom.pc;
+}
+
 function updateZoomLimitedLayer(group, minZoom) {
+    minZoom = resolveMinZoom(minZoom);
     if (map.getZoom() >= minZoom) {
         if (!map.hasLayer(group)) map.addLayer(group);
     } else if (map.hasLayer(group)) {
@@ -197,7 +209,7 @@ async function loadUmapData() {
             "宿": { color: "#808080", type: "point" },
             "景勝地": { color: "#0000ff", type: "point" },
             "道の駅": { color: "#8c6450", type: "point" },
-            [HIGHWAY_IC_LAYER_NAME]: { color: "#2f3640", type: "point", cluster: false, minZoom: HIGHWAY_IC_MIN_ZOOM, showInLegend: false, countInStats: false, iconUrl: HIGHWAY_IC_ICON_URL }
+            [HIGHWAY_IC_LAYER_NAME]: { color: "#2f3640", type: "point", cluster: false, minZoom: { pc: HIGHWAY_IC_MIN_ZOOM_PC, mobile: HIGHWAY_IC_MIN_ZOOM_MOBILE }, showInLegend: false, countInStats: false, iconUrl: HIGHWAY_IC_ICON_URL }
         };
 
         data.layers.forEach(layer => {
@@ -222,6 +234,7 @@ async function loadUmapData() {
             if (setting.minZoom) {
                 updateZoomLimitedLayer(group, setting.minZoom);
                 map.on('zoomend', () => updateZoomLimitedLayer(group, setting.minZoom));
+                window.addEventListener('resize', () => updateZoomLimitedLayer(group, setting.minZoom));
             } else {
                 group.addTo(map);
             }
