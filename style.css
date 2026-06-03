@@ -64,6 +64,8 @@
         .loc-btn { bottom: 74px; } /* 現在地ボタン（上） */
         .fullscreen-btn { bottom: 20px; } /* 全画面ボタン（下） */
         #stats-badge { position: absolute; top: 10px; left: 50px; z-index: 1000; background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; color: #666; border: 1px solid #ddd; pointer-events: none; }
+        .copy-coords-btn { width: 100%; margin-top: 4px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f8fafc; color: #2d3748; font-size: 0.85rem; font-weight: bold; cursor: pointer; }
+        .copy-coords-btn:hover { background: #edf2f7; }
 
         .weather-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; cursor: pointer; }
         .weather-card-header h2 { margin: 0; font-size: 1.1rem; border-left: 5px solid #3182ce; padding-left: 10px; }

@@ -25,7 +25,7 @@ function updateMyLocation() {
 
 function goToMyLocation() { if (myLocMarker) map.flyTo(myLocMarker.getLatLng(), 14); }
 
-function createPopupContent(name, lat, lng, description = "", category = "") {
+function createPopupContent(name, lat, lng, description = "", category = "", showCopyCoords = category !== "名道") {
     const coords = `${lat},${lng}`;
     const gmapUrl = `https://www.google.com/maps/search/?api=1&query=${coords}`;
     const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=driving`;
@@ -42,7 +42,36 @@ function createPopupContent(name, lat, lng, description = "", category = "") {
     html += `<a href="${gmapUrl}" target="_blank" style="${btnStyle} background: #f6ad55; color: white;">Googleマップで開く</a>`;
     html += `<a href="${baseUrl}" target="_blank" style="${btnStyle} background: #4285F4; color: white;">ルート検索（高速）</a>`;
     html += `<a href="${localUrl}" target="_blank" style="${btnStyle} background: #34A853; color: white;">ルート検索（下道）</a>`;
+    if (showCopyCoords) {
+        html += `<button type="button" class="copy-coords-btn" data-lat="${lat}" data-lng="${lng}">緯度・経度をコピー</button>`;
+    }
     return html + `</div></div>`;
+}
+
+function attachCopyCoordsHandler(e) {
+    const popupElement = e.popup.getElement();
+    if (!popupElement) return;
+
+    popupElement.querySelectorAll('.copy-coords-btn').forEach(btn => {
+        if (btn.dataset.copyHandlerAttached === 'true') return;
+        btn.dataset.copyHandlerAttached = 'true';
+
+        btn.addEventListener('click', async () => {
+            const originalText = '緯度・経度をコピー';
+            const lat = btn.dataset.lat;
+            const lng = btn.dataset.lng;
+
+            try {
+                await navigator.clipboard.writeText(`${lat}, ${lng}`);
+                btn.textContent = 'コピーしました';
+                setTimeout(() => { btn.textContent = originalText; }, 1500);
+            } catch (err) {
+                console.error('座標のコピーに失敗しました:', err);
+                btn.textContent = 'コピー失敗';
+                setTimeout(() => { btn.textContent = originalText; }, 1500);
+            }
+        });
+    });
 }
 
 function toggleFullScreen() {
@@ -51,6 +80,7 @@ function toggleFullScreen() {
 }
 
 map.on('contextmenu', (e) => { placeTempPin(e.latlng); return false; });
+map.on('popupopen', attachCopyCoordsHandler);
 let pressTimer;
 map.on('touchstart', (e) => { if (e.originalEvent.touches.length === 1) pressTimer = setTimeout(() => placeTempPin(e.latlng), 800); });
 map.on('touchend dblclick touchmove', () => clearTimeout(pressTimer));
@@ -140,7 +170,7 @@ async function loadUmapData() {
                         const latlngs = c.map(p => [p[1], p[0]]);
                         L.polyline(latlngs, { color: color, weight: 4, opacity: 0.8, interactive: false }).addTo(group);
                         const touchLine = L.polyline(latlngs, { color: 'transparent', weight: 24, opacity: 0, interactive: true }).addTo(group);
-                        touchLine.bindPopup(createPopupContent(f.properties.name || "名道", c[0][1], c[0][0], f.properties.description, n));
+                        touchLine.bindPopup(createPopupContent(f.properties.name || "名道", c[0][1], c[0][0], f.properties.description, n, false));
                         lC++;
                     }
                 });
