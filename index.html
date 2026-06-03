@@ -36,7 +36,12 @@
             </div>
             <div id="stats-badge">読み込み中...</div>
             <div id="operation-guide" style="position: absolute; top: 10px; right: 10px; z-index: 1000; background: rgba(0,0,0,0.6); color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem;">
-                <i class="fa-solid fa-circle-info"></i> <span id="guide-text">読み込み中...</span>
+                <div><i class="fa-solid fa-circle-info"></i> <span id="guide-text">読み込み中...</span></div>
+                <button type="button" id="coord-jump-toggle" class="coord-jump-toggle" aria-expanded="false">座標移動 ▼</button>
+                <div id="coord-jump-panel" class="coord-jump-panel" hidden>
+                    <input type="text" id="coord-jump-input" class="coord-jump-input" placeholder="35.675303,139.773553" inputmode="decimal">
+                    <button type="button" id="coord-jump-btn" class="coord-jump-btn">移動</button>
+                </div>
             </div>
             <button class="loc-btn" onclick="goToMyLocation()"><i class="fa-solid fa-crosshairs"></i></button>
         </div>

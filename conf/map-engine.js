@@ -7,10 +7,73 @@ const layerGroups = {};
 const HIGHWAY_IC_LAYER_NAME = "高速道路IC";
 const HIGHWAY_IC_MIN_ZOOM = 11;
 const HIGHWAY_IC_ICON_URL = "images/ic_logo.png";
+const COORD_JUMP_ZOOM = 16;
 
 function updateGuideText() {
     const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
     document.getElementById('guide-text').innerText = isTouch ? "長押しでピン設置" : "右クリックでピン設置";
+}
+
+function parseCoordinateInput(value) {
+    const parts = value.trim().split(',');
+    if (parts.length !== 2 || !parts[0].trim() || !parts[1].trim()) {
+        throw new Error("緯度,経度 の形式で入力してください。\n例: 35.675303,139.773553");
+    }
+
+    const lat = Number(parts[0].trim());
+    const lng = Number(parts[1].trim());
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        throw new Error("緯度,経度 の形式で入力してください。\n例: 35.675303,139.773553");
+    }
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        throw new Error("緯度または経度の値が範囲外です。");
+    }
+
+    return { lat, lng };
+}
+
+function toggleCoordJumpPanel() {
+    const toggle = document.getElementById('coord-jump-toggle');
+    const panel = document.getElementById('coord-jump-panel');
+    if (!toggle || !panel) return;
+
+    const willOpen = panel.hidden;
+    panel.hidden = !willOpen;
+    toggle.innerText = willOpen ? "座標移動 ▲" : "座標移動 ▼";
+    toggle.setAttribute('aria-expanded', String(willOpen));
+}
+
+function jumpToInputCoordinates() {
+    const input = document.getElementById('coord-jump-input');
+    if (!input) return;
+
+    try {
+        const latlng = parseCoordinateInput(input.value);
+        map.setView([latlng.lat, latlng.lng], COORD_JUMP_ZOOM);
+        placeTempPin(latlng);
+    } catch (err) {
+        alert(err.message);
+    }
+}
+
+function initCoordJumpControl() {
+    const guide = document.getElementById('operation-guide');
+    const toggle = document.getElementById('coord-jump-toggle');
+    const input = document.getElementById('coord-jump-input');
+    const button = document.getElementById('coord-jump-btn');
+    if (!toggle || !input || !button) return;
+
+    if (guide && L.DomEvent) {
+        L.DomEvent.disableClickPropagation(guide);
+        L.DomEvent.disableScrollPropagation(guide);
+    }
+
+    toggle.addEventListener('click', toggleCoordJumpPanel);
+    button.addEventListener('click', jumpToInputCoordinates);
+    input.addEventListener('focus', () => input.select());
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') jumpToInputCoordinates();
+    });
 }
 
 function updateMyLocation() {
@@ -206,6 +269,7 @@ function initMap() {
     if (mapInitialized) return;
     mapInitialized = true;
     updateGuideText();
+    initCoordJumpControl();
     updateMyLocation();
     loadUmapData();
 }
