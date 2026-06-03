@@ -192,11 +192,15 @@ function updateZoomLimitedLayer(group, minZoom) {
     }
 }
 
-async function loadUmapData() {
+function updateZoomBadge() {
     const badge = document.getElementById('stats-badge');
+    if (!badge) return;
+    badge.innerText = `Zoom: ${map.getZoom()}`;
+}
+
+async function loadUmapData() {
     const legend = document.getElementById('legend-items');
-    let pC = 0, lC = 0; 
-    
+
     try {
         const res = await fetch('umap_backup_map.umap');
         const data = await res.json();
@@ -259,13 +263,11 @@ async function loadUmapData() {
                             : L.circleMarker([c[1], c[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 });
                         marker.bindPopup(createPopupContent(popupName, c[1], c[0], f.properties.description, n));
                         group.addLayer(marker);
-                        if (setting.countInStats !== false) pC++;
                     } else if (f.geometry.type === "LineString") {
                         const latlngs = c.map(p => [p[1], p[0]]);
                         L.polyline(latlngs, { color: color, weight: 4, opacity: 0.8, interactive: false }).addTo(group);
                         const touchLine = L.polyline(latlngs, { color: 'transparent', weight: 24, opacity: 0, interactive: true }).addTo(group);
                         touchLine.bindPopup(createPopupContent(f.properties.name || "名道", c[0][1], c[0][0], f.properties.description, n, false));
-                        lC++;
                     }
                 });
             }
@@ -282,10 +284,8 @@ async function loadUmapData() {
                 legend.appendChild(item);
             }
         });
-badge.innerText = `点: ${pC} / 線: ${lC}`;
     } catch (e) {
         console.error(e);
-        badge.innerText = "読込エラー";
     }
 }
 
@@ -300,6 +300,8 @@ function initMap() {
     if (mapInitialized) return;
     mapInitialized = true;
     updateGuideText();
+    updateZoomBadge();
+    map.on('zoomend', updateZoomBadge);
     initCoordJumpControl();
     updateMyLocation();
     loadUmapData();
