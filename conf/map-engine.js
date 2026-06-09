@@ -167,6 +167,7 @@ let pressTimer;
 const ONE_FINGER_ZOOM_TAP_INTERVAL = 350;
 const ONE_FINGER_ZOOM_TAP_DISTANCE = 40;
 const ONE_FINGER_ZOOM_STEP_DISTANCE = 70;
+const ONE_FINGER_ZOOM_MOVE_DISTANCE = 10;
 let oneFingerZoomState = null;
 
 function clearLongPressTimer() {
@@ -205,9 +206,11 @@ function handleOneFingerZoomStart(e) {
         oneFingerZoomState = {
             active: true,
             anchorLatLng: getTouchLatLng(touch),
+            startPoint: point,
             startY: touch.clientY,
             startZoom: map.getZoom(),
             lastZoom: map.getZoom(),
+            moved: false,
             lastTap: null
         };
         L.DomEvent.preventDefault(e);
@@ -222,7 +225,13 @@ function handleOneFingerZoomMove(e) {
     if (!oneFingerZoomState || !oneFingerZoomState.active || e.touches.length !== 1) return;
 
     clearLongPressTimer();
-    const dy = oneFingerZoomState.startY - e.touches[0].clientY;
+    const touch = e.touches[0];
+    const point = getTouchPoint(touch);
+    if (point.distanceTo(oneFingerZoomState.startPoint) >= ONE_FINGER_ZOOM_MOVE_DISTANCE) {
+        oneFingerZoomState.moved = true;
+    }
+
+    const dy = touch.clientY - oneFingerZoomState.startY;
     const zoomDelta = Math.trunc(dy / ONE_FINGER_ZOOM_STEP_DISTANCE);
     const nextZoom = clampZoom(oneFingerZoomState.startZoom + zoomDelta);
 
@@ -238,6 +247,12 @@ function handleOneFingerZoomMove(e) {
 function handleOneFingerZoomEnd(e) {
     if (oneFingerZoomState && oneFingerZoomState.active) {
         clearLongPressTimer();
+        if (e.type === 'touchend' && !oneFingerZoomState.moved) {
+            const nextZoom = clampZoom(map.getZoom() + 1);
+            if (nextZoom !== map.getZoom()) {
+                map.setZoomAround(oneFingerZoomState.anchorLatLng, nextZoom);
+            }
+        }
         oneFingerZoomState = null;
         L.DomEvent.preventDefault(e);
         L.DomEvent.stopPropagation(e);
