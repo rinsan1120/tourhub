@@ -9,7 +9,7 @@
 - ライブラリ: Leaflet 1.9.4
 - タイル: OpenStreetMap
 - 初期中心: `[35.6895, 139.6917]`
-- 初期ズーム: `8`
+- 初期ズーム: `11`
 - Leaflet設定: `{ tap: false, doubleClickZoom: true }`
 
 ## 2. 地図上のUI
