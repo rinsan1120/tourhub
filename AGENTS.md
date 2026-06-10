@@ -33,11 +33,11 @@ Get-Content -Raw <path>
 1. AGENTS.md
 2. docs/current-status.md
 3. docs/handoff.md
-4. docs/project-memory.md
-5. docs/decisions.md
-6. docs/architecture.md
-7. docs/roadmap.md
-8. docs/requirements.md
+4. docs/architecture.md
+5. docs/map-behavior.md
+6. docs/data-formats.md
+7. docs/verification.md
+8. docs/decisions.md
 
 存在しないドキュメントがある場合は、その旨を報告してください。
 存在しないことを理由に作業全体を止める必要はありません。
