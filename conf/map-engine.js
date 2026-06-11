@@ -455,6 +455,10 @@ function handleOneFingerZoomStart(e) {
         point.distanceTo(previousTap.point) <= ONE_FINGER_ZOOM_TAP_DISTANCE
     ) {
         clearLongPressTimer();
+        const draggingWasEnabled = map.dragging.enabled();
+        if (draggingWasEnabled) {
+            map.dragging.disable();
+        }
         oneFingerZoomState = {
             active: true,
             anchorLatLng: getTouchLatLng(touch),
@@ -463,6 +467,7 @@ function handleOneFingerZoomStart(e) {
             startZoom: map.getZoom(),
             lastZoom: map.getZoom(),
             moved: false,
+            draggingWasEnabled,
             lastTap: null
         };
         L.DomEvent.preventDefault(e);
@@ -498,14 +503,21 @@ function handleOneFingerZoomMove(e) {
 
 function handleOneFingerZoomEnd(e) {
     if (oneFingerZoomState && oneFingerZoomState.active) {
+        const { draggingWasEnabled } = oneFingerZoomState;
         clearLongPressTimer();
-        if (e.type === 'touchend' && !oneFingerZoomState.moved) {
-            const nextZoom = clampZoom(map.getZoom() + 1);
-            if (nextZoom !== map.getZoom()) {
-                map.setZoomAround(oneFingerZoomState.anchorLatLng, nextZoom);
+        try {
+            if (e.type === 'touchend' && !oneFingerZoomState.moved) {
+                const nextZoom = clampZoom(map.getZoom() + 1);
+                if (nextZoom !== map.getZoom()) {
+                    map.setZoomAround(oneFingerZoomState.anchorLatLng, nextZoom);
+                }
+            }
+        } finally {
+            oneFingerZoomState = null;
+            if (draggingWasEnabled) {
+                map.dragging.enable();
             }
         }
-        oneFingerZoomState = null;
         L.DomEvent.preventDefault(e);
         L.DomEvent.stopPropagation(e);
     }
