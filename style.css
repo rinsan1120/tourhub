@@ -64,6 +64,9 @@
         .loc-btn { bottom: 74px; } /* 現在地ボタン（上） */
         .fullscreen-btn { bottom: 20px; } /* 全画面ボタン（下） */
         #stats-badge { position: absolute; top: 10px; left: 50px; z-index: 1000; background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; color: #666; border: 1px solid #ddd; pointer-events: none; }
+        .map-loading-status { position: absolute; bottom: 20px; left: 50%; z-index: 1001; transform: translateX(-50%); max-width: calc(100% - 140px); padding: 7px 12px; border-radius: 6px; background: rgba(26,32,44,0.88); color: white; font-size: 0.75rem; font-weight: bold; text-align: center; white-space: nowrap; pointer-events: none; opacity: 1; transition: opacity 0.2s ease; }
+        .map-loading-status.is-hidden { opacity: 0; visibility: hidden; }
+        .map-loading-status.is-error { background: rgba(197,48,48,0.92); }
         #operation-guide { max-width: min(230px, calc(100vw - 24px)); }
         .coord-jump-toggle { display: block; width: 100%; margin-top: 8px; padding: 4px 0; border: 0; background: transparent; color: white; font: inherit; font-weight: bold; text-align: left; cursor: pointer; }
         .coord-jump-panel { display: flex; gap: 6px; margin-top: 4px; }

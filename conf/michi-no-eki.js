@@ -1,6 +1,8 @@
 async function loadMichiNoEki() {
     const layerName = "道の駅";
     const color = "#8c6450";
+    const loadingTaskId = "michi-no-eki";
+    startMapLoadingTask(loadingTaskId);
 
     try {
         const res = await fetch('P35-18_Roadside_Station.geojson');
@@ -21,19 +23,27 @@ async function loadMichiNoEki() {
         group.addTo(map);
         layerGroups[layerName] = group;
 
-        data.features.forEach(f => {
-            const c = f.geometry.coordinates;
-            const name = f.properties.P35_006 || "名称不明";
-            const url = f.properties.P35_007 || "";
-            const desc = `<a href="${url}" target="_blank">公式HPへ</a>`;
-            
-            const marker = L.circleMarker([c[1], c[0]], { 
-                radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 
-            });
-            
-            marker.bindPopup(createPopupContent(name, c[1], c[0], desc, layerName));
-            group.addLayer(marker); // ここでaddLayerを使用
+        updateMapLoadingTask(loadingTaskId, 0, data.features.length);
+        registerMapFeatureSource({
+            id: "michi-no-eki",
+            name: layerName,
+            priority: MAP_LAYER_PRIORITY_DEFAULT,
+            features: data.features,
+            createFeature(f) {
+                const c = f.geometry.coordinates;
+                const name = f.properties.P35_006 || "名称不明";
+                const url = f.properties.P35_007 || "";
+                const desc = `<a href="${url}" target="_blank">公式HPへ</a>`;
+
+                const marker = L.circleMarker([c[1], c[0]], {
+                    radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9
+                });
+
+                marker.bindPopup(createPopupContent(name, c[1], c[0], desc, layerName));
+                group.addLayer(marker);
+            }
         });
+        updateMapLoadingTask(loadingTaskId, data.features.length, data.features.length);
 
         const legend = document.getElementById('legend-items');
         
@@ -46,8 +56,11 @@ async function loadMichiNoEki() {
             legend.appendChild(item);
         }
 
+        finishMapLoadingTask(loadingTaskId);
+        requestMapViewportGeneration(true);
     } catch (e) {
         console.error("道の駅データの読み込みに失敗しました:", e);
+        finishMapLoadingTask(loadingTaskId, true);
     }
 }
 

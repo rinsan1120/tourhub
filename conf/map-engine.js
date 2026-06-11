@@ -1,5 +1,5 @@
 // --- 地図制御（聖域：ロジック改変厳禁） ---
-const map = L.map('map', { tap: false, doubleClickZoom: true }).setView([35.6895, 139.6917], 8);
+const map = L.map('map', { tap: false, doubleClickZoom: true }).setView([35.6895, 139.6917], 11);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
 let myLocMarker = null, tempMarker = null;
@@ -9,6 +9,258 @@ const HIGHWAY_IC_MIN_ZOOM_PC = 11;
 const HIGHWAY_IC_MIN_ZOOM_MOBILE = 10;
 const HIGHWAY_IC_ICON_URL = "images/ic_logo.png";
 const COORD_JUMP_ZOOM = 16;
+const MAP_FEATURE_GENERATION_CHUNK_SIZE = 40;
+const MAP_GENERATION_IDLE_TIMEOUT_MS = 50;
+const MAP_LOADING_COMPLETE_HIDE_DELAY_MS = 800;
+const MAP_VIEWPORT_PREFETCH_SCALE = 1.4;
+const MAP_VIEWPORT_STAY_DELAY_MS = 1000;
+const MAP_LAYER_PRIORITY_DEFAULT = 2;
+const MAP_LAYER_GENERATION_PRIORITY = {
+    "名道": 1,
+    "景勝地": 1,
+    "グルメ": 1,
+    [HIGHWAY_IC_LAYER_NAME]: 3
+};
+const mapLoadingTasks = new Map();
+const mapFeatureSources = [];
+let mapLoadingHideTimer = null;
+let mapViewportGenerationTimer = null;
+let mapViewportGenerationVersion = 0;
+let mapViewportIsMoving = false;
+
+function yieldMapGeneration() {
+    return new Promise(resolve => {
+        if ('requestIdleCallback' in window) {
+            window.requestIdleCallback(resolve, { timeout: MAP_GENERATION_IDLE_TIMEOUT_MS });
+        } else {
+            setTimeout(resolve, 0);
+        }
+    });
+}
+
+function renderMapLoadingStatus() {
+    const status = document.getElementById('map-loading-status');
+    if (!status) return;
+
+    clearTimeout(mapLoadingHideTimer);
+    const tasks = Array.from(mapLoadingTasks.values());
+    const activeTasks = tasks.filter(task => !task.done);
+    const hasError = tasks.some(task => task.error);
+
+    status.classList.remove('is-hidden');
+    status.classList.toggle('is-error', hasError);
+
+    if (activeTasks.length > 0) {
+        const total = activeTasks.reduce((sum, task) => sum + task.total, 0);
+        const completed = activeTasks.reduce((sum, task) => sum + task.completed, 0);
+        status.textContent = total > 0
+            ? `表示範囲のスポットを準備中... ${completed}/${total}`
+            : "地図データを読み込み中...";
+        return;
+    }
+
+    if (hasError) {
+        status.textContent = "一部の地図データを読み込めませんでした";
+        return;
+    }
+
+    status.textContent = "地図データの読み込みが完了しました";
+    mapLoadingHideTimer = setTimeout(() => {
+        status.classList.add('is-hidden');
+    }, MAP_LOADING_COMPLETE_HIDE_DELAY_MS);
+}
+
+function startMapLoadingTask(id) {
+    mapLoadingTasks.set(id, { completed: 0, total: 0, done: false, error: false });
+    renderMapLoadingStatus();
+}
+
+function cancelMapLoadingTask(id) {
+    if (!mapLoadingTasks.has(id)) return;
+    mapLoadingTasks.delete(id);
+
+    const remainingTasks = Array.from(mapLoadingTasks.values());
+    const hasActiveTask = remainingTasks.some(task => !task.done);
+    const hasError = remainingTasks.some(task => task.error);
+    if (hasActiveTask || hasError) {
+        renderMapLoadingStatus();
+        return;
+    }
+
+    clearTimeout(mapLoadingHideTimer);
+    const status = document.getElementById('map-loading-status');
+    if (status) {
+        status.classList.add('is-hidden');
+        status.classList.remove('is-error');
+    }
+}
+
+function getFeatureExtent(feature) {
+    const coordinates = feature.geometry.coordinates;
+    if (feature.geometry.type === "Point") {
+        return {
+            minLat: coordinates[1],
+            maxLat: coordinates[1],
+            minLng: coordinates[0],
+            maxLng: coordinates[0]
+        };
+    }
+
+    if (feature.geometry.type === "LineString" && coordinates.length > 0) {
+        let minLat = Infinity;
+        let maxLat = -Infinity;
+        let minLng = Infinity;
+        let maxLng = -Infinity;
+        coordinates.forEach(([lng, lat]) => {
+            minLat = Math.min(minLat, lat);
+            maxLat = Math.max(maxLat, lat);
+            minLng = Math.min(minLng, lng);
+            maxLng = Math.max(maxLng, lng);
+        });
+        return { minLat, maxLat, minLng, maxLng };
+    }
+
+    return null;
+}
+
+function getPrefetchBounds() {
+    const paddingRatio = (MAP_VIEWPORT_PREFETCH_SCALE - 1) / 2;
+    return map.getBounds().pad(paddingRatio);
+}
+
+function extentIntersectsBounds(extent, bounds) {
+    if (!extent) return false;
+    return extent.maxLat >= bounds.getSouth() &&
+        extent.minLat <= bounds.getNorth() &&
+        extent.maxLng >= bounds.getWest() &&
+        extent.minLng <= bounds.getEast();
+}
+
+function registerMapFeatureSource({ id, name, priority, features, createFeature, isEligible }) {
+    mapFeatureSources.push({
+        id,
+        name,
+        priority,
+        createFeature,
+        isEligible,
+        generatedFeatureIndexes: new Set(),
+        entries: features.map((feature, index) => ({
+            feature,
+            index,
+            extent: getFeatureExtent(feature)
+        }))
+    });
+}
+
+function cancelMapViewportGeneration() {
+    clearTimeout(mapViewportGenerationTimer);
+    mapViewportGenerationTimer = null;
+    mapViewportGenerationVersion++;
+    cancelMapLoadingTask("viewport-features");
+}
+
+function requestMapViewportGeneration(immediate = false) {
+    cancelMapViewportGeneration();
+    const generationVersion = mapViewportGenerationVersion;
+
+    if (immediate) {
+        generateVisibleMapFeatures(generationVersion);
+        return;
+    }
+
+    mapViewportGenerationTimer = setTimeout(() => {
+        mapViewportGenerationTimer = null;
+        generateVisibleMapFeatures(generationVersion);
+    }, MAP_VIEWPORT_STAY_DELAY_MS);
+}
+
+function collectVisibleFeatureTasks(bounds) {
+    return mapFeatureSources.map(source => ({
+        source,
+        candidates: source.entries.filter(entry =>
+            !source.generatedFeatureIndexes.has(entry.index) &&
+            (!source.isEligible || source.isEligible()) &&
+            extentIntersectsBounds(entry.extent, bounds)
+        ),
+        nextIndex: 0
+    })).filter(task => task.candidates.length > 0);
+}
+
+async function generateVisibleMapFeatures(generationVersion) {
+    if (generationVersion !== mapViewportGenerationVersion || mapViewportIsMoving) return;
+
+    const generationTasks = collectVisibleFeatureTasks(getPrefetchBounds());
+    const totalFeatures = generationTasks.reduce((sum, task) => sum + task.candidates.length, 0);
+    if (totalFeatures === 0) return;
+
+    const loadingTaskId = "viewport-features";
+    let completedFeatures = 0;
+    startMapLoadingTask(loadingTaskId);
+    updateMapLoadingTask(loadingTaskId, completedFeatures, totalFeatures);
+
+    const priorities = [...new Set(generationTasks.map(task => task.source.priority))].sort((a, b) => a - b);
+    for (const priority of priorities) {
+        const tasksAtPriority = generationTasks.filter(task => task.source.priority === priority);
+        let hasRemainingFeatures = true;
+
+        while (hasRemainingFeatures) {
+            if (generationVersion !== mapViewportGenerationVersion || mapViewportIsMoving) return;
+            hasRemainingFeatures = false;
+
+            for (const task of tasksAtPriority) {
+                if (task.nextIndex >= task.candidates.length) continue;
+                hasRemainingFeatures = true;
+                const end = Math.min(
+                    task.nextIndex + MAP_FEATURE_GENERATION_CHUNK_SIZE,
+                    task.candidates.length
+                );
+
+                for (let i = task.nextIndex; i < end; i++) {
+                    const entry = task.candidates[i];
+                    if (task.source.generatedFeatureIndexes.has(entry.index)) continue;
+                    task.source.createFeature(entry.feature);
+                    task.source.generatedFeatureIndexes.add(entry.index);
+                    completedFeatures++;
+                }
+
+                task.nextIndex = end;
+                updateMapLoadingTask(loadingTaskId, completedFeatures, totalFeatures);
+                await yieldMapGeneration();
+                if (generationVersion !== mapViewportGenerationVersion || mapViewportIsMoving) return;
+            }
+        }
+    }
+
+    finishMapLoadingTask(loadingTaskId);
+}
+
+function initViewportFeatureGeneration() {
+    map.on('movestart', () => {
+        mapViewportIsMoving = true;
+        cancelMapViewportGeneration();
+    });
+    map.on('moveend', () => {
+        mapViewportIsMoving = false;
+        requestMapViewportGeneration(false);
+    });
+}
+
+function updateMapLoadingTask(id, completed, total) {
+    const task = mapLoadingTasks.get(id);
+    if (!task) return;
+    task.completed = completed;
+    task.total = total;
+    renderMapLoadingStatus();
+}
+
+function finishMapLoadingTask(id, error = false) {
+    const task = mapLoadingTasks.get(id);
+    if (!task) return;
+    task.completed = task.total;
+    task.done = true;
+    task.error = error;
+    renderMapLoadingStatus();
+}
 
 function updateGuideText() {
     const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
@@ -306,6 +558,8 @@ function updateZoomBadge() {
 
 async function loadUmapData() {
     const legend = document.getElementById('legend-items');
+    const loadingTaskId = "umap";
+    startMapLoadingTask(loadingTaskId);
 
     try {
         const res = await fetch('umap_backup_map.umap');
@@ -321,6 +575,8 @@ async function loadUmapData() {
             "道の駅": { color: "#8c6450", type: "point" },
             [HIGHWAY_IC_LAYER_NAME]: { color: "#2f3640", type: "point", cluster: false, minZoom: { pc: HIGHWAY_IC_MIN_ZOOM_PC, mobile: HIGHWAY_IC_MIN_ZOOM_MOBILE }, showInLegend: false, countInStats: false, iconUrl: HIGHWAY_IC_ICON_URL }
         };
+
+        let totalFeatures = 0;
 
         data.layers.forEach(layer => {
             const n = layer.properties.name || "未分類";
@@ -349,9 +605,18 @@ async function loadUmapData() {
                 group.addTo(map);
             }
             layerGroups[n] = group;
-            
-            if (layer.features) {
-                layer.features.forEach(f => {
+
+            const features = layer.features || [];
+            totalFeatures += features.length;
+            registerMapFeatureSource({
+                id: `umap:${n}`,
+                name: n,
+                priority: MAP_LAYER_GENERATION_PRIORITY[n] ?? MAP_LAYER_PRIORITY_DEFAULT,
+                features,
+                isEligible: setting.minZoom
+                    ? () => map.getZoom() >= resolveMinZoom(setting.minZoom)
+                    : null,
+                createFeature(f) {
                     const c = f.geometry.coordinates;
                     if (f.geometry.type === "Point") {
                         const popupName = n === HIGHWAY_IC_LAYER_NAME
@@ -375,8 +640,8 @@ async function loadUmapData() {
                         const touchLine = L.polyline(latlngs, { color: 'transparent', weight: 24, opacity: 0, interactive: true }).addTo(group);
                         touchLine.bindPopup(createPopupContent(f.properties.name || "名道", c[0][1], c[0][0], f.properties.description, n, false));
                     }
-                });
-            }
+                }
+            });
 
             const isLine = (setting.type === "line");
 
@@ -390,8 +655,14 @@ async function loadUmapData() {
                 legend.appendChild(item);
             }
         });
+
+        updateMapLoadingTask(loadingTaskId, 0, totalFeatures);
+        updateMapLoadingTask(loadingTaskId, totalFeatures, totalFeatures);
+        finishMapLoadingTask(loadingTaskId);
+        requestMapViewportGeneration(true);
     } catch (e) {
         console.error(e);
+        finishMapLoadingTask(loadingTaskId, true);
     }
 }
 
@@ -410,6 +681,7 @@ function initMap() {
     map.on('zoomend', updateZoomBadge);
     initOneFingerZoomControl();
     initCoordJumpControl();
+    initViewportFeatureGeneration();
     updateMyLocation();
     loadUmapData();
 }
