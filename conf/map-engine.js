@@ -444,15 +444,40 @@ function toggleFullScreen() {
 map.on('contextmenu', (e) => { placeTempPin(e.latlng); return false; });
 map.on('popupopen', attachCopyCoordsHandler);
 let pressTimer;
+let longPressTouchActive = false;
+let longPressTouchMoved = false;
+let longPressStartPoint = null;
+let longPressLatLng = null;
+let suppressLongPressPin = false;
+const LONG_PRESS_PIN_DELAY_MS = 800;
 const ONE_FINGER_ZOOM_TAP_INTERVAL = 350;
 const ONE_FINGER_ZOOM_TAP_DISTANCE = 40;
 const ONE_FINGER_ZOOM_STEP_DISTANCE = 70;
 const ONE_FINGER_ZOOM_MOVE_DISTANCE = 10;
 let oneFingerZoomState = null;
 
-function clearLongPressTimer() {
+function resetLongPressState() {
     clearTimeout(pressTimer);
     pressTimer = null;
+    longPressTouchActive = false;
+    longPressTouchMoved = false;
+    longPressStartPoint = null;
+    longPressLatLng = null;
+    suppressLongPressPin = false;
+}
+
+function clearLongPressTimer() {
+    resetLongPressState();
+}
+
+function cancelLongPressPin() {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+    longPressTouchActive = false;
+    longPressTouchMoved = false;
+    longPressStartPoint = null;
+    longPressLatLng = null;
+    suppressLongPressPin = true;
 }
 
 function getTouchPoint(touch) {
@@ -469,6 +494,51 @@ function clampZoom(zoom) {
     return Math.max(minZoom, Math.min(maxZoom, zoom));
 }
 
+function markLongPressTouchMoved(touch) {
+    if (!longPressTouchActive || !longPressStartPoint || !touch) return;
+
+    if (longPressStartPoint.distanceTo(getTouchPoint(touch)) >= ONE_FINGER_ZOOM_MOVE_DISTANCE) {
+        longPressTouchMoved = true;
+    }
+}
+
+function scheduleLongPressPin(e) {
+    const originalEvent = e.originalEvent;
+    if (!originalEvent || originalEvent.touches.length !== 1) return;
+    if (oneFingerZoomState && oneFingerZoomState.active) {
+        cancelLongPressPin();
+        return;
+    }
+
+    clearLongPressTimer();
+    longPressTouchActive = true;
+    longPressTouchMoved = false;
+    longPressStartPoint = getTouchPoint(originalEvent.touches[0]);
+    longPressLatLng = e.latlng;
+    suppressLongPressPin = false;
+
+    pressTimer = setTimeout(() => {
+        pressTimer = null;
+        if (
+            !longPressTouchActive ||
+            longPressTouchMoved ||
+            suppressLongPressPin ||
+            (oneFingerZoomState && oneFingerZoomState.active) ||
+            !longPressLatLng
+        ) {
+            return;
+        }
+
+        placeTempPin(longPressLatLng);
+        suppressLongPressPin = true;
+    }, LONG_PRESS_PIN_DELAY_MS);
+}
+
+function handleLongPressTouchMove(e) {
+    markLongPressTouchMoved(e.touches && e.touches[0]);
+    cancelLongPressPin();
+}
+
 function handleOneFingerZoomStart(e) {
     if (!isMobileMapView() || e.touches.length !== 1) return;
 
@@ -482,7 +552,7 @@ function handleOneFingerZoomStart(e) {
         now - previousTap.time <= ONE_FINGER_ZOOM_TAP_INTERVAL &&
         point.distanceTo(previousTap.point) <= ONE_FINGER_ZOOM_TAP_DISTANCE
     ) {
-        clearLongPressTimer();
+        cancelLongPressPin();
         const draggingWasEnabled = map.dragging.enabled();
         if (draggingWasEnabled) {
             map.dragging.disable();
@@ -509,7 +579,7 @@ function handleOneFingerZoomStart(e) {
 function handleOneFingerZoomMove(e) {
     if (!oneFingerZoomState || !oneFingerZoomState.active || e.touches.length !== 1) return;
 
-    clearLongPressTimer();
+    cancelLongPressPin();
     const touch = e.touches[0];
     const point = getTouchPoint(touch);
     if (point.distanceTo(oneFingerZoomState.startPoint) >= ONE_FINGER_ZOOM_MOVE_DISTANCE) {
@@ -532,7 +602,7 @@ function handleOneFingerZoomMove(e) {
 function handleOneFingerZoomEnd(e) {
     if (oneFingerZoomState && oneFingerZoomState.active) {
         const { draggingWasEnabled } = oneFingerZoomState;
-        clearLongPressTimer();
+        cancelLongPressPin();
         try {
             if (e.type === 'touchend' && !oneFingerZoomState.moved) {
                 const nextZoom = clampZoom(map.getZoom() + 1);
@@ -541,6 +611,7 @@ function handleOneFingerZoomEnd(e) {
                 }
             }
         } finally {
+            clearLongPressTimer();
             oneFingerZoomState = null;
             if (draggingWasEnabled) {
                 map.dragging.enable();
@@ -557,9 +628,12 @@ function initOneFingerZoomControl() {
     container.addEventListener('touchmove', handleOneFingerZoomMove, { passive: false });
     container.addEventListener('touchend', handleOneFingerZoomEnd, { passive: false });
     container.addEventListener('touchcancel', handleOneFingerZoomEnd, { passive: false });
+    container.addEventListener('touchmove', handleLongPressTouchMove, { passive: true });
+    container.addEventListener('touchend', clearLongPressTimer, { passive: true });
+    container.addEventListener('touchcancel', clearLongPressTimer, { passive: true });
 }
 
-map.on('touchstart', (e) => { if (e.originalEvent.touches.length === 1) pressTimer = setTimeout(() => placeTempPin(e.latlng), 800); });
+map.on('touchstart', scheduleLongPressPin);
 map.on('touchend dblclick touchmove', clearLongPressTimer);
 
 function placeTempPin(latlng) {
