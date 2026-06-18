@@ -15,6 +15,9 @@ const MAP_LOADING_COMPLETE_HIDE_DELAY_MS = 800;
 const MAP_VIEWPORT_PREFETCH_SCALE = 1.4;
 const MAP_VIEWPORT_STAY_DELAY_MS = 1000;
 const MAP_LAYER_PRIORITY_DEFAULT = 2;
+const MAP_ZOOM_CONTROL_MOBILE_MEDIA_QUERY = '(max-width: 767px)';
+const MAP_ZOOM_CONTROL_PC_POSITION = 'topleft';
+const MAP_ZOOM_CONTROL_MOBILE_POSITION = 'bottomleft';
 const MAP_LAYER_GENERATION_PRIORITY = {
     "名道": 1,
     "景勝地": 1,
@@ -27,6 +30,7 @@ let mapLoadingHideTimer = null;
 let mapViewportGenerationTimer = null;
 let mapViewportGenerationVersion = 0;
 let mapViewportIsMoving = false;
+let mapZoomControlPosition = null;
 
 function yieldMapGeneration() {
     return new Promise(resolve => {
@@ -260,6 +264,30 @@ function finishMapLoadingTask(id, error = false) {
     task.done = true;
     task.error = error;
     renderMapLoadingStatus();
+}
+
+function applyZoomControlPosition(isMobileWidth) {
+    const nextPosition = isMobileWidth
+        ? MAP_ZOOM_CONTROL_MOBILE_POSITION
+        : MAP_ZOOM_CONTROL_PC_POSITION;
+
+    if (mapZoomControlPosition === nextPosition) return;
+    map.zoomControl.setPosition(nextPosition);
+    mapZoomControlPosition = nextPosition;
+}
+
+function initResponsiveZoomControl() {
+    if (!map.zoomControl || !window.matchMedia) return;
+
+    const mobileWidthQuery = window.matchMedia(MAP_ZOOM_CONTROL_MOBILE_MEDIA_QUERY);
+    const updateZoomControlPosition = () => applyZoomControlPosition(mobileWidthQuery.matches);
+
+    updateZoomControlPosition();
+    if (mobileWidthQuery.addEventListener) {
+        mobileWidthQuery.addEventListener('change', updateZoomControlPosition);
+    } else if (mobileWidthQuery.addListener) {
+        mobileWidthQuery.addListener(updateZoomControlPosition);
+    }
 }
 
 function updateGuideText() {
@@ -688,6 +716,7 @@ let mapInitialized = false;
 function initMap() {
     if (mapInitialized) return;
     mapInitialized = true;
+    initResponsiveZoomControl();
     updateGuideText();
     updateZoomBadge();
     map.on('zoomend', updateZoomBadge);
