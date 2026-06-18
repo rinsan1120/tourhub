@@ -449,34 +449,50 @@ let longPressTouchMoved = false;
 let longPressStartPoint = null;
 let longPressLatLng = null;
 let suppressLongPressPin = false;
+let longPressTouchEnded = true;
+let longPressGestureId = 0;
+let longPressSuppressResetTimer = null;
 const LONG_PRESS_PIN_DELAY_MS = 800;
+const LONG_PRESS_SUPPRESS_RESET_DELAY_MS = 50;
 const ONE_FINGER_ZOOM_TAP_INTERVAL = 350;
 const ONE_FINGER_ZOOM_TAP_DISTANCE = 40;
 const ONE_FINGER_ZOOM_STEP_DISTANCE = 70;
 const ONE_FINGER_ZOOM_MOVE_DISTANCE = 10;
 let oneFingerZoomState = null;
 
-function resetLongPressState() {
+function clearLongPressTimerOnly() {
     clearTimeout(pressTimer);
     pressTimer = null;
+}
+
+function resetLongPressState(resetSuppress = true) {
+    clearLongPressTimerOnly();
     longPressTouchActive = false;
     longPressTouchMoved = false;
     longPressStartPoint = null;
     longPressLatLng = null;
-    suppressLongPressPin = false;
+    longPressTouchEnded = true;
+    longPressGestureId++;
+
+    if (resetSuppress) {
+        clearTimeout(longPressSuppressResetTimer);
+        longPressSuppressResetTimer = null;
+        suppressLongPressPin = false;
+    }
 }
 
 function clearLongPressTimer() {
-    resetLongPressState();
+    clearLongPressTimerOnly();
 }
 
 function cancelLongPressPin() {
-    clearTimeout(pressTimer);
-    pressTimer = null;
+    clearLongPressTimerOnly();
     longPressTouchActive = false;
     longPressTouchMoved = false;
     longPressStartPoint = null;
     longPressLatLng = null;
+    longPressTouchEnded = true;
+    longPressGestureId++;
     suppressLongPressPin = true;
 }
 
@@ -502,28 +518,66 @@ function markLongPressTouchMoved(touch) {
     }
 }
 
+function isOneFingerZoomActive() {
+    return Boolean(oneFingerZoomState && oneFingerZoomState.active);
+}
+
+function isSecondTapForOneFingerZoom(touch) {
+    const previousTap = oneFingerZoomState && oneFingerZoomState.lastTap;
+    if (!previousTap || !touch) return false;
+
+    const now = Date.now();
+    const point = getTouchPoint(touch);
+    return now - previousTap.time <= ONE_FINGER_ZOOM_TAP_INTERVAL &&
+        point.distanceTo(previousTap.point) <= ONE_FINGER_ZOOM_TAP_DISTANCE;
+}
+
+function scheduleLongPressSuppressReset() {
+    clearTimeout(longPressSuppressResetTimer);
+    longPressSuppressResetTimer = setTimeout(() => {
+        if (!longPressTouchActive && longPressTouchEnded && !isOneFingerZoomActive()) {
+            suppressLongPressPin = false;
+        }
+        longPressSuppressResetTimer = null;
+    }, LONG_PRESS_SUPPRESS_RESET_DELAY_MS);
+}
+
+function finishLongPressTouch() {
+    resetLongPressState(false);
+    scheduleLongPressSuppressReset();
+}
+
 function scheduleLongPressPin(e) {
     const originalEvent = e.originalEvent;
-    if (!originalEvent || originalEvent.touches.length !== 1) return;
-    if (oneFingerZoomState && oneFingerZoomState.active) {
+    if (!originalEvent || originalEvent.touches.length !== 1) {
         cancelLongPressPin();
         return;
     }
 
-    clearLongPressTimer();
+    const touch = originalEvent.touches[0];
+    if (suppressLongPressPin || isOneFingerZoomActive() || isSecondTapForOneFingerZoom(touch)) {
+        cancelLongPressPin();
+        return;
+    }
+
+    clearLongPressTimerOnly();
+    longPressGestureId++;
+    const gestureId = longPressGestureId;
     longPressTouchActive = true;
     longPressTouchMoved = false;
-    longPressStartPoint = getTouchPoint(originalEvent.touches[0]);
+    longPressStartPoint = getTouchPoint(touch);
     longPressLatLng = e.latlng;
-    suppressLongPressPin = false;
+    longPressTouchEnded = false;
 
     pressTimer = setTimeout(() => {
         pressTimer = null;
         if (
+            gestureId !== longPressGestureId ||
             !longPressTouchActive ||
             longPressTouchMoved ||
             suppressLongPressPin ||
-            (oneFingerZoomState && oneFingerZoomState.active) ||
+            isOneFingerZoomActive() ||
+            longPressTouchEnded ||
             !longPressLatLng
         ) {
             return;
@@ -539,8 +593,16 @@ function handleLongPressTouchMove(e) {
     cancelLongPressPin();
 }
 
+function handleLongPressTouchEnd() {
+    finishLongPressTouch();
+}
+
 function handleOneFingerZoomStart(e) {
-    if (!isMobileMapView() || e.touches.length !== 1) return;
+    if (!isMobileMapView()) return;
+    if (e.touches.length !== 1) {
+        cancelLongPressPin();
+        return;
+    }
 
     const touch = e.touches[0];
     const now = Date.now();
@@ -611,7 +673,7 @@ function handleOneFingerZoomEnd(e) {
                 }
             }
         } finally {
-            clearLongPressTimer();
+            finishLongPressTouch();
             oneFingerZoomState = null;
             if (draggingWasEnabled) {
                 map.dragging.enable();
@@ -629,12 +691,14 @@ function initOneFingerZoomControl() {
     container.addEventListener('touchend', handleOneFingerZoomEnd, { passive: false });
     container.addEventListener('touchcancel', handleOneFingerZoomEnd, { passive: false });
     container.addEventListener('touchmove', handleLongPressTouchMove, { passive: true });
-    container.addEventListener('touchend', clearLongPressTimer, { passive: true });
-    container.addEventListener('touchcancel', clearLongPressTimer, { passive: true });
+    container.addEventListener('touchend', handleLongPressTouchEnd, { passive: true });
+    container.addEventListener('touchcancel', handleLongPressTouchEnd, { passive: true });
 }
 
 map.on('touchstart', scheduleLongPressPin);
-map.on('touchend dblclick touchmove', clearLongPressTimer);
+map.on('touchend', handleLongPressTouchEnd);
+map.on('touchmove', handleLongPressTouchMove);
+map.on('dblclick', cancelLongPressPin);
 
 function placeTempPin(latlng) {
     if (tempMarker) tempMarker.setLatLng(latlng);
