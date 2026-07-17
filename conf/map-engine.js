@@ -4,20 +4,35 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
 let myLocMarker = null, tempMarker = null;
 const layerGroups = {};
+// 高速道路ICレイヤーを識別する名前。変更するとuMapデータ内のレイヤー名や優先度設定との対応がずれます。
 const HIGHWAY_IC_LAYER_NAME = "高速道路IC";
+// PC幅で高速道路ICを表示し始めるズーム値。大きくするとより拡大しないと表示されず、小さくすると早い段階で表示されます。
 const HIGHWAY_IC_MIN_ZOOM_PC = 11;
+// モバイル/タッチ表示で高速道路ICを表示し始めるズーム値。PC用とは別にスマホでの見やすさを調整します。
 const HIGHWAY_IC_MIN_ZOOM_MOBILE = 10;
+// 高速道路ICマーカーに使う画像パス。変更すると地図上のICアイコン画像が変わります。
 const HIGHWAY_IC_ICON_URL = "images/ic_logo.png";
+// 座標移動機能で入力地点へ移動するときのズーム値。大きくするとより詳細に、小さくすると広域で表示されます。
 const COORD_JUMP_ZOOM = 16;
+// 表示範囲内Featureを一度に生成する件数。大きくすると描画完了は早くなりやすい一方、操作中の引っかかりが出やすくなります。
 const MAP_FEATURE_GENERATION_CHUNK_SIZE = 40;
-const MAP_GENERATION_IDLE_TIMEOUT_MS = 50;
+// requestIdleCallbackで待てる最大時間。大きくすると生成処理を待ちやすく、小さくすると細かく処理を返しやすくなります。
+const MAP_GENERATION_IDLE_TIMEOUT_MS = 10;
+// 地図データ読み込み完了メッセージを非表示にするまでの時間。大きくすると完了表示が長く残ります。
 const MAP_LOADING_COMPLETE_HIDE_DELAY_MS = 800;
+// 現在の表示範囲より少し外側まで先読み生成する倍率。大きくすると移動先の表示は滑らかになりやすい一方、生成対象が増えます。
 const MAP_VIEWPORT_PREFETCH_SCALE = 1.4;
+// 地図移動が止まってから追加Feature生成を始めるまでの待ち時間。大きくすると移動中の生成を抑え、小さくすると早く表示されます。
 const MAP_VIEWPORT_STAY_DELAY_MS = 1000;
+// 個別指定がないレイヤーのFeature生成優先度。数値が小さい優先度のレイヤーほど先に生成されます。
 const MAP_LAYER_PRIORITY_DEFAULT = 2;
+// ズームボタンをスマホ配置に切り替える画面幅条件。値を変えるとPC/スマホ扱いの境界が変わります。
 const MAP_ZOOM_CONTROL_MOBILE_MEDIA_QUERY = '(max-width: 767px)';
+// PC幅でのLeaflet標準ズームボタン位置。値を変えるとPC表示時の「+」「-」の配置が変わります。
 const MAP_ZOOM_CONTROL_PC_POSITION = 'topleft';
+// スマホ幅でのLeaflet標準ズームボタン位置。値を変えるとスマホ表示時の「+」「-」の配置が変わります。
 const MAP_ZOOM_CONTROL_MOBILE_POSITION = 'bottomleft';
+// レイヤーごとのFeature生成優先度。数値が小さいレイヤーほど、表示範囲内のスポットや線が先に生成されます。
 const MAP_LAYER_GENERATION_PRIORITY = {
     "名道": 1,
     "景勝地": 1,
