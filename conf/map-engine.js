@@ -41,6 +41,8 @@ const MAP_LAYER_GENERATION_PRIORITY = {
 };
 const mapLoadingTasks = new Map();
 const mapFeatureSources = [];
+const mapLayerVisibility = {};
+const mapLayerMinZoomSettings = {};
 let mapLoadingHideTimer = null;
 let mapViewportGenerationTimer = null;
 let mapViewportGenerationVersion = 0;
@@ -596,9 +598,19 @@ function resolveMinZoom(minZoom) {
     return isMobileMapView() ? (minZoom.mobile ?? minZoom.pc) : minZoom.pc;
 }
 
-function updateZoomLimitedLayer(group, minZoom) {
+function isLayerVisibleByDefault(setting) {
+    return setting.defaultVisible !== false;
+}
+
+function isLayerEligibleForDisplay(name, minZoom) {
+    if (mapLayerVisibility[name] === false) return false;
+    if (!minZoom) return true;
+    return map.getZoom() >= resolveMinZoom(minZoom);
+}
+
+function updateZoomLimitedLayer(name, group, minZoom) {
     minZoom = resolveMinZoom(minZoom);
-    if (map.getZoom() >= minZoom) {
+    if (mapLayerVisibility[name] !== false && map.getZoom() >= minZoom) {
         if (!map.hasLayer(group)) map.addLayer(group);
     } else if (map.hasLayer(group)) {
         map.removeLayer(group);
@@ -620,15 +632,15 @@ async function loadUmapData() {
         const res = await fetch('umap_backup_map.umap');
         const data = await res.json();
         const layerSettings = {
-            "名道": { color: "#ff0000", type: "line" },
-            "グルメ": { color: "#ff7f00", type: "point" },
-            "温泉": { color: "#00ffff", type: "point" },
-            "観光": { color: "#ff23ff", type: "point" },
-            "キャンプ場": { color: "#00ff00", type: "point" },
-            "宿": { color: "#808080", type: "point" },
-            "景勝地": { color: "#0000ff", type: "point" },
-            "道の駅": { color: "#8c6450", type: "point" },
-            [HIGHWAY_IC_LAYER_NAME]: { color: "#2f3640", type: "point", cluster: false, minZoom: { pc: HIGHWAY_IC_MIN_ZOOM_PC, mobile: HIGHWAY_IC_MIN_ZOOM_MOBILE }, showInLegend: false, countInStats: false, iconUrl: HIGHWAY_IC_ICON_URL }
+            "名道": { color: "#ff0000", type: "line", defaultVisible: true },
+            "グルメ": { color: "#ff7f00", type: "point", defaultVisible: true },
+            "温泉": { color: "#00ffff", type: "point", defaultVisible: true },
+            "観光": { color: "#ff23ff", type: "point", defaultVisible: true },
+            "キャンプ場": { color: "#00ff00", type: "point", defaultVisible: true },
+            "宿": { color: "#808080", type: "point", defaultVisible: true },
+            "景勝地": { color: "#0000ff", type: "point", defaultVisible: true },
+            "道の駅": { color: "#8c6450", type: "point", defaultVisible: true },
+            [HIGHWAY_IC_LAYER_NAME]: { color: "#2f3640", type: "point", cluster: false, minZoom: { pc: HIGHWAY_IC_MIN_ZOOM_PC, mobile: HIGHWAY_IC_MIN_ZOOM_MOBILE }, showInLegend: false, countInStats: false, iconUrl: HIGHWAY_IC_ICON_URL, defaultVisible: false }
         };
 
         let totalFeatures = 0;
@@ -637,6 +649,11 @@ async function loadUmapData() {
             const n = layer.properties.name || "未分類";
             const setting = layerSettings[n] || {};
             const color = setting.color || layer.properties.color || "#3182ce";
+            const defaultVisible = isLayerVisibleByDefault(setting);
+            mapLayerVisibility[n] = defaultVisible;
+            if (setting.minZoom) {
+                mapLayerMinZoomSettings[n] = setting.minZoom;
+            }
 
             // クラスタリング対応のグループ設定
             const isPoint = (setting.type === "point");
@@ -653,10 +670,10 @@ async function loadUmapData() {
                 }
             }) : L.layerGroup();
             if (setting.minZoom) {
-                updateZoomLimitedLayer(group, setting.minZoom);
-                map.on('zoomend', () => updateZoomLimitedLayer(group, setting.minZoom));
-                window.addEventListener('resize', () => updateZoomLimitedLayer(group, setting.minZoom));
-            } else {
+                updateZoomLimitedLayer(n, group, setting.minZoom);
+                map.on('zoomend', () => updateZoomLimitedLayer(n, group, setting.minZoom));
+                window.addEventListener('resize', () => updateZoomLimitedLayer(n, group, setting.minZoom));
+            } else if (defaultVisible) {
                 group.addTo(map);
             }
             layerGroups[n] = group;
@@ -669,8 +686,8 @@ async function loadUmapData() {
                 priority: MAP_LAYER_GENERATION_PRIORITY[n] ?? MAP_LAYER_PRIORITY_DEFAULT,
                 features,
                 isEligible: setting.minZoom
-                    ? () => map.getZoom() >= resolveMinZoom(setting.minZoom)
-                    : null,
+                    ? () => isLayerEligibleForDisplay(n, setting.minZoom)
+                    : () => isLayerEligibleForDisplay(n),
                 createFeature(f) {
                     const c = f.geometry.coordinates;
                     if (f.geometry.type === "Point") {
@@ -706,7 +723,8 @@ async function loadUmapData() {
                 item.className = 'legend-item';
                 item.id = 'legend-item-' + n; // 一意なIDを付与
                 const badgeStyle = isLine ? `width:16px; height:4px; border-radius:2px;` : `width:10px; height:10px; border-radius:50%;`;
-                item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${n}', this.checked)"><span style="background:${color}; ${badgeStyle} display:inline-block; margin-right:6px;"></span><span>${n}</span>`;
+                const checkedAttr = defaultVisible ? ' checked' : '';
+                item.innerHTML = `<input type="checkbox"${checkedAttr} onchange="toggleLayer('${n}', this.checked)"><span style="background:${color}; ${badgeStyle} display:inline-block; margin-right:6px;"></span><span>${n}</span>`;
                 legend.appendChild(item);
             }
         });
@@ -721,9 +739,20 @@ async function loadUmapData() {
     }
 }
 
-function toggleLayer(n, checked) { 
-    if (checked) map.addLayer(layerGroups[n]); 
-    else map.removeLayer(layerGroups[n]); 
+function toggleLayer(n, checked) {
+    const group = layerGroups[n];
+    if (!group) return;
+
+    mapLayerVisibility[n] = checked;
+    const minZoom = mapLayerMinZoomSettings[n];
+    if (checked) {
+        if (!minZoom || map.getZoom() >= resolveMinZoom(minZoom)) {
+            map.addLayer(group);
+        }
+        requestMapViewportGeneration(true);
+    } else {
+        map.removeLayer(group);
+    }
 }
 
 let mapInitialized = false;
