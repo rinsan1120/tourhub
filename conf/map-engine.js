@@ -1,8 +1,11 @@
 // --- 地図制御（聖域：ロジック改変厳禁） ---
+// setViewの第1引数は初期中心、第2引数は初期ズーム。変更するとサイトを開いた直後の地図位置と縮尺が変わります。
 const map = L.map('map', { tap: false, doubleClickZoom: true }).setView([35.6895, 139.6917], 11);
+// ベース地図タイルの取得先。変更すると背景地図の提供元や見た目、利用条件が変わります。
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
 let myLocMarker = null, tempMarker = null;
+// レイヤー名ごとのLeafletレイヤーを保持します。キー名が変わると凡例や表示切り替えとの対応に影響します。
 const layerGroups = {};
 // 高速道路ICレイヤーを識別する名前。変更するとuMapデータ内のレイヤー名や優先度設定との対応がずれます。
 const HIGHWAY_IC_LAYER_NAME = "高速道路IC";
@@ -39,9 +42,13 @@ const MAP_LAYER_GENERATION_PRIORITY = {
     "グルメ": 1,
     [HIGHWAY_IC_LAYER_NAME]: 3
 };
+// 読み込み中/完了/エラーの表示状態を管理します。直接変更すると読み込み状況表示の整合性に影響します。
 const mapLoadingTasks = new Map();
+// 表示範囲に応じて後から生成するFeature元データを保持します。直接変更すると地図上のスポット生成に影響します。
 const mapFeatureSources = [];
+// レイヤーごとの現在の表示希望状態です。falseのレイヤーは初期表示やFeature生成の対象外になります。
 const mapLayerVisibility = {};
+// ズーム制限があるレイヤーの最小ズーム設定を保持します。凡例ON時やズーム変更時の表示判定に使います。
 const mapLayerMinZoomSettings = {};
 let mapLoadingHideTimer = null;
 let mapViewportGenerationTimer = null;
@@ -402,6 +409,7 @@ function updateMyLocation() {
     }, null, { enableHighAccuracy: true });
 }
 
+// flyToの第2引数は現在地へ移動するときのズーム値。大きくすると現在地周辺をより詳細に表示します。
 function goToMyLocation() { if (myLocMarker) map.flyTo(myLocMarker.getLatLng(), 14); }
 
 function createPopupContent(name, lat, lng, description = "", category = "", showCopyCoords = category !== "名道") {
@@ -461,9 +469,13 @@ function toggleFullScreen() {
 map.on('contextmenu', (e) => { placeTempPin(e.latlng); return false; });
 map.on('popupopen', attachCopyCoordsHandler);
 let pressTimer;
+// ダブルタップとみなす最大間隔。大きくするとゆっくりした2回タップでもズーム扱いになりやすくなります。
 const ONE_FINGER_ZOOM_TAP_INTERVAL = 350;
+// ダブルタップとみなす2回のタップ位置の許容距離。大きくすると多少ずれたタップも同じ操作として扱います。
 const ONE_FINGER_ZOOM_TAP_DISTANCE = 40;
+// ワンハンドズーム中に1段階ズームを変えるための指の移動量。小さくすると少しの上下移動でズームが変わります。
 const ONE_FINGER_ZOOM_STEP_DISTANCE = 70;
+// タップではなく移動操作とみなす距離。小さくすると微小な指ぶれでも移動扱いになりやすくなります。
 const ONE_FINGER_ZOOM_MOVE_DISTANCE = 10;
 let oneFingerZoomState = null;
 
@@ -576,6 +588,7 @@ function initOneFingerZoomControl() {
     container.addEventListener('touchcancel', handleOneFingerZoomEnd, { passive: false });
 }
 
+// setTimeoutの800msは長押しピン設置までの待ち時間。大きくすると長押し判定が遅く、小さくすると誤設置しやすくなります。
 map.on('touchstart', (e) => { if (e.originalEvent.touches.length === 1) pressTimer = setTimeout(() => placeTempPin(e.latlng), 800); });
 map.on('touchend dblclick touchmove', clearLongPressTimer);
 
@@ -631,6 +644,15 @@ async function loadUmapData() {
     try {
         const res = await fetch('umap_backup_map.umap');
         const data = await res.json();
+        // layerSettingsは、uMap内のレイヤー名ごとに表示方法を上書きする設定です。
+        // colorを変えると、マーカー・線・クラスタ・凡例バッジの色が変わります。
+        // typeを"line"にすると線レイヤー扱い、"point"にすると点マーカー/クラスタ扱いになります。
+        // clusterをfalseにすると、Pointでもクラスタ化せず個別マーカーとして表示します。
+        // minZoomを指定すると、そのズーム以上のときだけ地図上に表示されます。
+        // showInLegendをfalseにすると、「表示レイヤーの切り替え」に表示されなくなります。
+        // countInStatsをfalseにすると、統計表示などの件数集計対象から外すための設定として使えます。
+        // iconUrlを指定すると、円形マーカーではなく指定画像アイコンで表示します。
+        // defaultVisibleをfalseにすると、初期状態では非表示かつ凡例チェックOFFになります。
         const layerSettings = {
             "名道": { color: "#ff0000", type: "line", defaultVisible: true },
             "グルメ": { color: "#ff7f00", type: "point", defaultVisible: true },
@@ -640,7 +662,7 @@ async function loadUmapData() {
             "宿": { color: "#808080", type: "point", defaultVisible: true },
             "景勝地": { color: "#0000ff", type: "point", defaultVisible: true },
             "道の駅": { color: "#8c6450", type: "point", defaultVisible: true },
-            [HIGHWAY_IC_LAYER_NAME]: { color: "#2f3640", type: "point", cluster: false, minZoom: { pc: HIGHWAY_IC_MIN_ZOOM_PC, mobile: HIGHWAY_IC_MIN_ZOOM_MOBILE }, showInLegend: false, countInStats: false, iconUrl: HIGHWAY_IC_ICON_URL, defaultVisible: false }
+            [HIGHWAY_IC_LAYER_NAME]: { color: "#2f3640", type: "point", cluster: false, minZoom: { pc: HIGHWAY_IC_MIN_ZOOM_PC, mobile: HIGHWAY_IC_MIN_ZOOM_MOBILE }, showInLegend: true, countInStats: false, iconUrl: HIGHWAY_IC_ICON_URL, defaultVisible: false }
         };
 
         let totalFeatures = 0;
@@ -660,11 +682,14 @@ async function loadUmapData() {
             const shouldCluster = isPoint && setting.cluster !== false;
             // レイヤーごとの色を適用したiconCreateFunctionを設定
             const group = shouldCluster ? L.markerClusterGroup({
+                // このズーム以上ではクラスタを解除して個別マーカー表示にします。小さくすると早く個別表示になります。
                 disableClusteringAtZoom: 10,
                 iconCreateFunction: function(cluster) {
                     return L.divIcon({
+                        // width/height/line-height/font-sizeを変えると、クラスタ丸バッジの大きさや文字サイズが変わります。
                         html: `<div style="background-color:${color}; color:white; border-radius:50%; width:30px; height:30px; line-height:30px; text-align:center; opacity:0.9; font-size:12px;">${cluster.getChildCount()}</div>`,
                         className: 'marker-cluster-custom',
+                        // クラスタアイコンのクリック領域とLeaflet上のサイズを指定します。html側のサイズと合わせて調整します。
                         iconSize: L.point(30, 30)
                     });
                 }
@@ -698,17 +723,23 @@ async function loadUmapData() {
                             ? L.marker([c[1], c[0]], {
                                 icon: L.icon({
                                     iconUrl: setting.iconUrl,
+                                    // 画像アイコンの表示サイズ。大きくすると地図上のアイコンが大きく表示されます。
                                     iconSize: [18, 18],
+                                    // アイコン画像内のどの位置を座標に合わせるか。値を変えるとマーカー位置の見え方がずれます。
                                     iconAnchor: [9, 9],
+                                    // ポップアップの吹き出し位置。値を変えるとアイコンに対するポップアップ表示位置が変わります。
                                     popupAnchor: [0, -9]
                                 })
                             })
+                            // radiusは円形マーカーの大きさ、weightは白枠の太さ、fillOpacityは塗りの濃さを調整します。
                             : L.circleMarker([c[1], c[0]], { radius: 9, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.9 });
                         marker.bindPopup(createPopupContent(popupName, c[1], c[0], f.properties.description, n));
                         group.addLayer(marker);
                     } else if (f.geometry.type === "LineString") {
                         const latlngs = c.map(p => [p[1], p[0]]);
+                        // weightを変えるとルート線の太さ、opacityを変えると線の濃さが変わります。
                         L.polyline(latlngs, { color: color, weight: 4, opacity: 0.8, interactive: false }).addTo(group);
+                        // 透明なクリック領域です。weightを大きくすると線をタップ/クリックしやすくなります。
                         const touchLine = L.polyline(latlngs, { color: 'transparent', weight: 24, opacity: 0, interactive: true }).addTo(group);
                         touchLine.bindPopup(createPopupContent(f.properties.name || "名道", c[0][1], c[0][0], f.properties.description, n, false));
                     }
@@ -722,7 +753,9 @@ async function loadUmapData() {
                 const item = document.createElement('div');
                 item.className = 'legend-item';
                 item.id = 'legend-item-' + n; // 一意なIDを付与
+                // 線レイヤーは横線、点レイヤーは丸で凡例バッジを表示します。サイズを変えると凡例上の見た目が変わります。
                 const badgeStyle = isLine ? `width:16px; height:4px; border-radius:2px;` : `width:10px; height:10px; border-radius:50%;`;
+                // defaultVisibleがtrueなら初期チェックON、falseなら初期チェックOFFになります。
                 const checkedAttr = defaultVisible ? ' checked' : '';
                 item.innerHTML = `<input type="checkbox"${checkedAttr} onchange="toggleLayer('${n}', this.checked)"><span style="background:${color}; ${badgeStyle} display:inline-block; margin-right:6px;"></span><span>${n}</span>`;
                 legend.appendChild(item);
