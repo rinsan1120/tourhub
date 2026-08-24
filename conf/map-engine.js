@@ -661,7 +661,7 @@ async function loadUmapData() {
             "キャンプ場": { color: "#00ff00", type: "point", defaultVisible: true },
             "宿": { color: "#808080", type: "point", defaultVisible: true },
             "景勝地": { color: "#0000ff", type: "point", defaultVisible: true },
-            "道の駅": { color: "#8c6450", type: "point", defaultVisible: true },
+            "道の駅": { color: "#8c6450", type: "point", defaultVisible: false },
             [HIGHWAY_IC_LAYER_NAME]: { color: "#2f3640", type: "point", cluster: false, minZoom: { pc: HIGHWAY_IC_MIN_ZOOM_PC, mobile: HIGHWAY_IC_MIN_ZOOM_MOBILE }, showInLegend: true, countInStats: false, iconUrl: HIGHWAY_IC_ICON_URL, defaultVisible: false }
         };
 
