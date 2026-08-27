@@ -1,6 +1,8 @@
 async function loadMichiNoEki() {
     const layerName = "道の駅";
     const color = "#8c6450";
+    const defaultVisible = false;
+    mapLayerVisibility[layerName] = defaultVisible;
     const loadingTaskId = "michi-no-eki";
     startMapLoadingTask(loadingTaskId);
 
@@ -20,7 +22,9 @@ async function loadMichiNoEki() {
                 });
             }
         });
-        group.addTo(map);
+        if (defaultVisible) {
+            group.addTo(map);
+        }
         layerGroups[layerName] = group;
 
         updateMapLoadingTask(loadingTaskId, 0, data.features.length);
@@ -29,6 +33,7 @@ async function loadMichiNoEki() {
             name: layerName,
             priority: MAP_LAYER_PRIORITY_DEFAULT,
             features: data.features,
+            isEligible: () => mapLayerVisibility[layerName] !== false,
             createFeature(f) {
                 const c = f.geometry.coordinates;
                 const name = f.properties.P35_006 || "名称不明";
@@ -52,7 +57,8 @@ async function loadMichiNoEki() {
             const item = document.createElement('div');
             item.className = 'legend-item';
             item.id = 'legend-item-' + layerName; // 一意なIDを付与
-            item.innerHTML = `<input type="checkbox" checked onchange="toggleLayer('${layerName}', this.checked)"><span style="background:${color}; width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:6px;"></span><span>${layerName}</span>`;
+            const checkedAttr = defaultVisible ? ' checked' : '';
+            item.innerHTML = `<input type="checkbox"${checkedAttr} onchange="toggleLayer('${layerName}', this.checked)"><span style="background:${color}; width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:6px;"></span><span>${layerName}</span>`;
             legend.appendChild(item);
         }
 
