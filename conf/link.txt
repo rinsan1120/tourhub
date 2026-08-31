@@ -7,6 +7,7 @@ NEXCO<br>ツーリングプラン,https://www.driveplaza.com/etc/drawari/2026_to
 ETCマイレージ,https://www2.smile-etc.jp/NASApp/etcmlg/MlgReq?gvlddpef=1013000000&mdwsetmb=1013000000
 バイク駐輪場検索,https://www.s-park.jp/
 フェリー航路,https://searoute.info/
+uMap,https://umap.openstreetmap.fr/ja/
 
 
 ※ソーシャル
