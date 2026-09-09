@@ -78,14 +78,27 @@
 
         @media (max-width: 767px) {
             .leaflet-popup-content:has(> .spot-popup) {
-                width: min(255px, calc(100vw - 80px)) !important;
-                margin: 10px 12px 12px;
+                width: min(245px, calc(100vw - 70px)) !important;
+                margin: 8px 10px 10px;
             }
             .spot-popup { min-width: 0 !important; overflow-wrap: anywhere; }
+            .spot-popup > span:first-child {
+                font-size: 0.98rem !important;
+                margin-bottom: 4px !important;
+            }
+            .spot-popup > span + span {
+                font-size: 0.68rem !important;
+                padding: 1px 6px !important;
+                margin-bottom: 6px !important;
+            }
             .spot-popup > .popup-description {
-                margin-bottom: 8px !important;
-                max-height: 6em;
+                font-size: 0.75rem !important;
+                line-height: 1.35 !important;
+                margin-top: 4px;
+                margin-bottom: 6px !important;
+                max-height: 5.4em;
                 overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
             }
             .spot-popup > .popup-actions {
                 display: grid !important;
@@ -93,16 +106,19 @@
                 gap: 5px !important;
             }
             .popup-actions > a {
-                padding: 7px 5px !important;
+                padding: 5px 4px !important;
                 margin-bottom: 0 !important;
-                font-size: 0.78rem !important;
+                font-size: 0.72rem !important;
+                border-radius: 6px !important;
             }
             .popup-actions > a:first-child { grid-column: 1 / -1; }
             .popup-actions > .copy-coords-btn {
                 grid-column: 1 / -1;
                 margin-top: 0;
-                padding: 7px 5px;
-                font-size: 0.78rem;
+                padding: 5px 4px;
+                font-size: 0.72rem;
+                line-height: inherit;
+                border-radius: 6px;
             }
         }
 
