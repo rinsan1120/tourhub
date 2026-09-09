@@ -8,6 +8,7 @@ ETCマイレージ,https://www2.smile-etc.jp/NASApp/etcmlg/MlgReq?gvlddpef=10130
 バイク駐輪場検索,https://www.s-park.jp/
 フェリー航路,https://searoute.info/
 uMap,https://umap.openstreetmap.fr/ja/
+Googleマップ<br>ルート動画作成,https://rinsan1120.github.io/timeline-route-animator/
 
 
 ※ソーシャル
