@@ -1,3 +1,6 @@
+※りんのその他のツール
+Googleマップ<br>ルート動画作成,https://rinsan1120.github.io/timeline-route-animator/
+
 ※ルート作成・交通情報関連
 Google マップ,https://www.google.co.jp/maps/
 高速料金検索,https://www.driveplaza.com/dp/SearchTop
@@ -8,8 +11,6 @@ ETCマイレージ,https://www2.smile-etc.jp/NASApp/etcmlg/MlgReq?gvlddpef=10130
 バイク駐輪場検索,https://www.s-park.jp/
 フェリー航路,https://searoute.info/
 uMap,https://umap.openstreetmap.fr/ja/
-Googleマップ<br>ルート動画作成,https://rinsan1120.github.io/timeline-route-animator/
-
 
 ※ソーシャル
 みんカラ,https://minkara.carview.co.jp/
