@@ -76,6 +76,36 @@
         .copy-coords-btn { width: 100%; margin-top: 4px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: #f76f6f; color: white; font-size: 0.85rem; font-weight: bold; cursor: pointer; }
         /*.copy-coords-btn:hover { background: #f76f6f; }*/
 
+        @media (max-width: 767px) {
+            .leaflet-popup-content:has(> .spot-popup) {
+                width: min(255px, calc(100vw - 80px)) !important;
+                margin: 10px 12px 12px;
+            }
+            .spot-popup { min-width: 0 !important; overflow-wrap: anywhere; }
+            .spot-popup > .popup-description {
+                margin-bottom: 8px !important;
+                max-height: 6em;
+                overflow-y: auto;
+            }
+            .spot-popup > .popup-actions {
+                display: grid !important;
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+                gap: 5px !important;
+            }
+            .popup-actions > a {
+                padding: 7px 5px !important;
+                margin-bottom: 0 !important;
+                font-size: 0.78rem !important;
+            }
+            .popup-actions > a:first-child { grid-column: 1 / -1; }
+            .popup-actions > .copy-coords-btn {
+                grid-column: 1 / -1;
+                margin-top: 0;
+                padding: 7px 5px;
+                font-size: 0.78rem;
+            }
+        }
+
         .weather-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; cursor: pointer; }
         .weather-card-header h2 { margin: 0; font-size: 1.1rem; border-left: 5px solid #3182ce; padding-left: 10px; }
         .toggle-icon { transition: transform 0.3s; }
