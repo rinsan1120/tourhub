@@ -26,7 +26,7 @@ const MAP_LOADING_COMPLETE_HIDE_DELAY_MS = 800;
 // 現在の表示範囲より少し外側まで先読み生成する倍率。大きくすると移動先の表示は滑らかになりやすい一方、生成対象が増えます。
 const MAP_VIEWPORT_PREFETCH_SCALE = 1.4;
 // 地図移動が止まってから追加Feature生成を始めるまでの待ち時間。大きくすると移動中の生成を抑え、小さくすると早く表示されます。
-const MAP_VIEWPORT_STAY_DELAY_MS = 1000;
+const MAP_VIEWPORT_STAY_DELAY_MS = 500;
 // 個別指定がないレイヤーのFeature生成優先度。数値が小さい優先度のレイヤーほど先に生成されます。
 const MAP_LAYER_PRIORITY_DEFAULT = 2;
 // ズームボタンをスマホ配置に切り替える画面幅条件。値を変えるとPC/スマホ扱いの境界が変わります。
