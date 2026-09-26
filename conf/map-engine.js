@@ -5,6 +5,7 @@ const map = L.map('map', { tap: false, doubleClickZoom: true }).setView([35.6895
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
 let myLocMarker = null, tempMarker = null;
+let isLocationTracking = false;
 // レイヤー名ごとのLeafletレイヤーを保持します。キー名が変わると凡例や表示切り替えとの対応に影響します。
 const layerGroups = {};
 // 高速道路ICレイヤーを識別する名前。変更するとuMapデータ内のレイヤー名や優先度設定との対応がずれます。
@@ -406,11 +407,34 @@ function updateMyLocation() {
         if (!myLocMarker) {
             myLocMarker = L.marker(latlng, { icon: L.divIcon({ className: 'my-loc-con', html: '<div class="my-location-marker"></div>', iconSize:[14,14], iconAnchor:[7,7] }) }).addTo(map);
         } else { myLocMarker.setLatLng(latlng); }
+        if (isLocationTracking) map.panTo(latlng, { animate: false });
     }, null, { enableHighAccuracy: true });
 }
 
 // flyToの第2引数は現在地へ移動するときのズーム値。大きくすると現在地周辺をより詳細に表示します。
 function goToMyLocation() { if (myLocMarker) map.flyTo(myLocMarker.getLatLng(), 14); }
+
+function setLocationTracking(enabled) {
+    isLocationTracking = enabled;
+    document.getElementById('map-wrapper').classList.toggle('is-location-tracking', enabled);
+    const button = document.getElementById('location-tracking-btn');
+    const label = enabled ? '現在地追従を停止' : '現在地追従を開始';
+    button.setAttribute('aria-pressed', String(enabled));
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    button.innerHTML = enabled ? '追従<br>ON' : '追従<br>OFF';
+}
+
+function toggleLocationTracking() {
+    setLocationTracking(!isLocationTracking);
+    // panToはズームを指定せず、現在の倍率のまま中心だけを移動します。
+    if (isLocationTracking && myLocMarker) map.panTo(myLocMarker.getLatLng(), { animate: false });
+}
+
+// 自動移動やズームでは解除せず、ユーザーのドラッグだけで解除します。
+map.on('dragstart', () => {
+    if (isLocationTracking) setLocationTracking(false);
+});
 
 function createPopupContent(name, lat, lng, description = "", category = "", showCopyCoords = category !== "名道") {
     const coords = `${lat},${lng}`;
@@ -462,9 +486,19 @@ function attachCopyCoordsHandler(e) {
 }
 
 function toggleFullScreen() {
-    if (!document.fullscreenElement) document.getElementById('map').requestFullscreen().catch(err => console.log(err));
+    if (!document.fullscreenElement) document.getElementById('map-wrapper').requestFullscreen().catch(err => console.log(err));
     else document.exitFullscreen();
 }
+
+document.addEventListener('fullscreenchange', () => {
+    const isFullscreen = document.fullscreenElement === document.getElementById('map-wrapper');
+    const button = document.querySelector('.fullscreen-btn');
+    const label = isFullscreen ? '全画面解除' : '全画面表示';
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    button.querySelector('i').className = isFullscreen ? 'fa-solid fa-compress' : 'fa-solid fa-expand';
+    requestAnimationFrame(() => map.invalidateSize({ pan: false }));
+});
 
 map.on('contextmenu', (e) => { placeTempPin(e.latlng); return false; });
 map.on('popupopen', attachCopyCoordsHandler);
