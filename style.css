@@ -66,6 +66,15 @@
         .tracking-btn[aria-pressed="true"] { background: rgba(49,130,206,0.7); color: white; }
         .fullscreen-btn { bottom: 20px; } /* 全画面ボタン（下） */
         @media (max-width: 767px) {
+            #map-wrapper:fullscreen .loc-btn { top: 10px; bottom: auto; }
+            #map-wrapper:fullscreen .tracking-btn { top: 64px; bottom: auto; }
+            #map-wrapper:fullscreen .fullscreen-btn { top: 118px; bottom: auto; }
+            #map-wrapper:fullscreen .leaflet-bottom.leaflet-left {
+                top: 0; bottom: auto;
+            }
+            #map-wrapper:fullscreen .leaflet-bottom.leaflet-left .leaflet-control-zoom {
+                margin-top: 10px; margin-bottom: 0;
+            }
             #map-wrapper.is-location-tracking .leaflet-control-zoom a.leaflet-control-zoom-in,
             #map-wrapper.is-location-tracking .leaflet-control-zoom a.leaflet-control-zoom-out {
                 width: 80px !important;
