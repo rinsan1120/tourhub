@@ -66,9 +66,30 @@
         .tracking-btn[aria-pressed="true"] { background: rgba(49,130,206,0.7); color: white; }
         .fullscreen-btn { bottom: 20px; } /* 全画面ボタン（下） */
         @media (max-width: 767px) {
-            #map-wrapper:fullscreen .loc-btn { top: 10px; bottom: auto; }
-            #map-wrapper:fullscreen .tracking-btn { top: 64px; bottom: auto; }
-            #map-wrapper:fullscreen .fullscreen-btn { top: 118px; bottom: auto; }
+            #map-wrapper:fullscreen .loc-btn {
+                top: calc(env(safe-area-inset-top, 0px) + 20px) !important;
+                bottom: auto !important;
+            }
+            #map-wrapper:fullscreen #location-tracking-btn {
+                top: calc(env(safe-area-inset-top, 0px) + 74px) !important;
+                bottom: auto !important;
+            }
+            #map-wrapper:fullscreen .fullscreen-btn {
+                top: calc(env(safe-area-inset-top, 0px) + 128px) !important;
+                bottom: auto !important;
+            }
+            #map-wrapper:-webkit-full-screen .loc-btn {
+                top: calc(env(safe-area-inset-top, 0px) + 20px) !important;
+                bottom: auto !important;
+            }
+            #map-wrapper:-webkit-full-screen #location-tracking-btn {
+                top: calc(env(safe-area-inset-top, 0px) + 74px) !important;
+                bottom: auto !important;
+            }
+            #map-wrapper:-webkit-full-screen .fullscreen-btn {
+                top: calc(env(safe-area-inset-top, 0px) + 128px) !important;
+                bottom: auto !important;
+            }
             #map-wrapper:fullscreen .leaflet-bottom.leaflet-left {
                 top: 0; bottom: auto;
             }
