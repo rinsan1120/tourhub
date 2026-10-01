@@ -1,5 +1,6 @@
 ※りんのその他のツール
 Googleマップ<br>ルート動画作成,https://rinsan1120.github.io/timeline-route-animator/
+写真にモザイクをいれるツール,https://rinsan1120.github.io/JustMosaic/
 
 ※ルート作成・交通情報関連
 Google マップ,https://www.google.co.jp/maps/
