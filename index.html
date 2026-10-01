@@ -7,7 +7,7 @@
     <title>Rin’s Touring Hub</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <link rel="stylesheet" href="style.css?t=20261001-rain-refresh">
+    <link rel="stylesheet" href="style.css?t=20261001-rain-compact">
     
 </head>
 <body>
@@ -40,12 +40,18 @@
                 <div id="screen-wake-lock-status" class="screen-wake-lock-status" role="status" aria-live="polite" hidden>画面ONモードが有効です。画面の点灯を維持します。</div>
                 <button type="button" id="rain-toggle-btn" class="rain-toggle-btn" aria-pressed="false" aria-controls="rain-panel" hidden>☔ 雨雲</button>
                 <div id="rain-panel" class="rain-panel" hidden>
+                    <div class="rain-compact-bar">
+                        <button type="button" id="rain-time-prev" aria-label="前の雨雲時刻">‹</button>
+                        <button type="button" id="rain-time-current" aria-controls="rain-time-options" aria-expanded="false">現在</button>
+                        <button type="button" id="rain-time-next" aria-label="次の雨雲時刻">›</button>
+                    </div>
                     <div id="rain-time-options" class="rain-time-options" role="group" aria-label="雨雲の時間選択"></div>
-                    <div class="rain-caption"><span id="rain-valid-time" aria-live="polite"></span> · <a href="https://www.jma.go.jp/bosai/nowc/" target="_blank" rel="noopener noreferrer">降水情報：気象庁</a></div>
+                    <div class="rain-caption"><span class="rain-wide-time"><span id="rain-valid-time" aria-live="polite"></span> · </span><a href="https://www.jma.go.jp/bosai/nowc/" target="_blank" rel="noopener noreferrer">降水情報：気象庁</a></div>
                     <div id="rain-updated-time" class="rain-updated-time" aria-live="polite"></div>
                 </div>
                 <div id="rain-error" class="rain-error" role="status" aria-live="polite" hidden></div>
             </div>
+            <div id="rain-compact-host"></div>
             <div id="stats-badge">Zoom: --</div>
             <div id="operation-guide">
                 <div><i class="fa-solid fa-circle-info"></i> <span id="guide-text">読み込み中...</span></div>
@@ -107,7 +113,7 @@
 
 <script src="conf/common.js"></script>
 <script src="conf/map-engine.js?v=20261001-screen-wake-lock"></script>
-<script src="conf/rain-engine.js?v=20261001-refresh"></script>
+<script src="conf/rain-engine.js?v=20261001-compact"></script>
 <script src="conf/michi-no-eki.js"></script>
 <script src="conf/weather-engine.js"></script>
 

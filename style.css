@@ -396,6 +396,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .rain-caption a { color: var(--color-primary); }
 .rain-updated-time { font-size: 0.65rem; line-height: 1.2; text-align: center; color: var(--color-text-muted); }
 .rain-error { text-align: center; pointer-events: none; }
+.rain-compact-bar { display: none; }
 @media (max-width: 767px) {
     .rain-panel, .rain-error {
         left: 10px;
@@ -434,4 +435,58 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
         max-width: calc(100% - 20px);
     }
     #map-wrapper:fullscreen .rain-time-options { display: flex; }
+}
+
+/* スマホ通常表示だけ、地図直下の小さな操作バーにする。 */
+.rain-panel.is-compact {
+    position: relative;
+    inset: auto;
+    transform: none;
+    width: 100%;
+    max-width: none;
+    padding: 6px 10px;
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-content: center;
+    column-gap: 8px;
+    border-radius: 0;
+    box-shadow: none;
+    border-top: 1px solid var(--color-border);
+}
+.rain-panel.is-compact[hidden] { display: none; }
+.is-compact .rain-compact-bar { display: flex; grid-column: 1 / -1; justify-content: center; }
+.rain-compact-bar button {
+    min-height: 44px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-text);
+    font: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+#rain-time-prev, #rain-time-next { width: 44px; font-size: 1.5rem; }
+#rain-time-current { min-width: 140px; font-weight: bold; }
+.rain-compact-bar button:disabled { opacity: 0.35; cursor: default; }
+.is-compact .rain-wide-time { display: none; }
+.is-compact .rain-caption, .is-compact .rain-updated-time {
+    margin: 0;
+    font-size: 0.65rem;
+    line-height: 1.4;
+    align-self: center;
+    white-space: nowrap;
+}
+.is-compact .rain-time-options { display: none; }
+.is-compact.is-time-list-open .rain-time-options {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(44px, 1fr));
+    gap: 4px;
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 10px;
+    right: 10px;
+    padding: 6px;
+    border-radius: var(--radius-sm);
+    background: var(--color-map-surface);
+    box-shadow: var(--shadow-map);
 }

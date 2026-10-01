@@ -20,6 +20,13 @@
     const validTime = document.getElementById('rain-valid-time');
     const updatedTime = document.getElementById('rain-updated-time');
     const error = document.getElementById('rain-error');
+    const compactHost = document.getElementById('rain-compact-host');
+    const mapWrapper = document.getElementById('map-wrapper');
+    const compactQuery = window.matchMedia('(max-width: 767px)');
+    const previousTime = document.getElementById('rain-time-prev');
+    const currentTime = document.getElementById('rain-time-current');
+    const nextTime = document.getElementById('rain-time-next');
+    let timeListOpen = false;
     let enabled = false;
     let offset = 0;
     let version = 0;
@@ -30,6 +37,7 @@
     let refreshTimer = null;
     let nextRefreshAt = null;
     let automaticUpdating = false;
+    let pageActive = true;
     let cancelReplacement = null;
     let tileTimer = null;
     let errorTimer = null;
@@ -57,8 +65,8 @@
     }
 
     async function getTimes(force = false) {
-        if (!force && cache && Date.now() - cache.fetchedAt < CACHE_TTL_MS) return cache;
         if (pending) return pending;
+        if (!force && cache && Date.now() - cache.fetchedAt < CACHE_TTL_MS) return cache;
         pending = (async () => {
             const controller = new AbortController();
             pendingController = controller;
@@ -78,7 +86,6 @@
                 // 更新境界に複数の予測系列があっても、最新の基準時刻の系列だけを使う。
                 const newestBase = Math.max(...forecasts.map(item => item.baseMs));
                 cache = { current, forecasts: forecasts.filter(item => item.baseMs === newestBase), fetchedAt: Date.now() };
-                updatedTime.textContent = `雨雲更新：${formatTime(cache.fetchedAt)}`;
                 return cache;
             } finally {
                 clearTimeout(timeout);
@@ -106,6 +113,36 @@
         options.querySelectorAll('button').forEach(button => {
             button.setAttribute('aria-pressed', String(Number(button.dataset.minutes) === offset));
         });
+        renderCompactBar();
+    }
+
+    function renderCompactBar() {
+        if (!enabled) timeListOpen = false;
+        currentTime.textContent = `${offset === 0 ? '現在' : `+${offset}分`} ${validTime.textContent}`.trim();
+        previousTime.disabled = offset === TIME_OFFSETS[0];
+        nextTime.disabled = offset === TIME_OFFSETS[TIME_OFFSETS.length - 1];
+        currentTime.setAttribute('aria-expanded', String(timeListOpen));
+        panel.classList.toggle('is-time-list-open', timeListOpen);
+    }
+
+    function syncRainLayout() {
+        const compact = compactQuery.matches && document.fullscreenElement !== mapWrapper;
+        timeListOpen = false;
+        panel.classList.toggle('is-compact', compact);
+        // 通常表示では地図の外へ出し、既存の地図上ボタンの位置を維持する。
+        const host = compact ? compactHost : mapWrapper;
+        if (panel.parentElement !== host) host.appendChild(panel);
+        renderCompactBar();
+    }
+
+    function chooseOffset(minutes) {
+        if (!enabled) return;
+        const restoreFocus = timeListOpen;
+        offset = minutes;
+        timeListOpen = false;
+        render();
+        if (restoreFocus) currentTime.focus();
+        void update();
     }
 
     function stop() {
@@ -147,7 +184,7 @@
     }
 
     function canAutoRefresh() {
-        return enabled && screenWakeLockEnabled && document.visibilityState === 'visible';
+        return enabled && screenWakeLockEnabled && pageActive && document.visibilityState === 'visible';
     }
 
     function scheduleRefresh() {
@@ -168,7 +205,7 @@
     }
 
     // 自動更新は新しいタイルの読み込み完了まで旧レイヤーを残す。
-    function replaceAutomatically(nextLayer, time, requestVersion) {
+    function replaceAutomatically(nextLayer, time, fetchedAt, requestVersion) {
         return new Promise(resolve => {
             const oldLayer = layer;
             let timeout;
@@ -184,6 +221,7 @@
                     map.removeLayer(oldLayer);
                     attachTileHandlers(nextLayer);
                     validTime.textContent = formatTime(time.validMs);
+                    updatedTime.textContent = `雨雲更新：${formatTime(fetchedAt)}`;
                     error.hidden = true;
                 } else {
                     map.removeLayer(nextLayer);
@@ -229,6 +267,7 @@
             const time = selectTime(times);
             const url = `${DATA_ROOT}/${time.basetime}/none/${time.validtime}/surf/hrpns/{z}/{x}/{y}.png`;
             if (layer && layer._url === url) {
+                updatedTime.textContent = `雨雲更新：${formatTime(times.fetchedAt)}`;
                 error.hidden = true;
                 return;
             }
@@ -249,13 +288,14 @@
                 bounds: [[20, 118], [48, 150]], noWrap: true
             });
             if (automatic && layer) {
-                await replaceAutomatically(nextLayer, time, requestVersion);
+                await replaceAutomatically(nextLayer, time, times.fetchedAt, requestVersion);
                 return;
             }
             layer = nextLayer;
             attachTileHandlers(nextLayer);
             validTime.textContent = formatTime(time.validMs);
             nextLayer.addTo(map);
+            updatedTime.textContent = `雨雲更新：${formatTime(times.fetchedAt)}`;
             error.hidden = true;
         } catch (err) {
             if (enabled && requestVersion === version) {
@@ -278,13 +318,34 @@
         button.dataset.minutes = String(minutes);
         button.textContent = minutes === 0 ? '現在' : `+${minutes}分`;
         button.addEventListener('click', () => {
-            if (!enabled) return;
-            offset = minutes;
-            render();
-            void update();
+            chooseOffset(minutes);
         });
         options.appendChild(button);
     });
+    previousTime.addEventListener('click', () => {
+        const index = TIME_OFFSETS.indexOf(offset);
+        if (index > 0) chooseOffset(TIME_OFFSETS[index - 1]);
+    });
+    nextTime.addEventListener('click', () => {
+        const index = TIME_OFFSETS.indexOf(offset);
+        if (index < TIME_OFFSETS.length - 1) chooseOffset(TIME_OFFSETS[index + 1]);
+    });
+    currentTime.addEventListener('click', () => {
+        timeListOpen = !timeListOpen;
+        renderCompactBar();
+    });
+    panel.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && timeListOpen) {
+            timeListOpen = false;
+            renderCompactBar();
+            currentTime.focus();
+        }
+    });
+    document.addEventListener('fullscreenchange', syncRainLayout);
+    if (compactQuery.addEventListener) compactQuery.addEventListener('change', syncRainLayout);
+    else compactQuery.addListener(syncRainLayout);
+    // 自動更新の既存描画を監視し、コンパクト表示だけを同期する。
+    new MutationObserver(renderCompactBar).observe(validTime, { childList: true });
     toggle.addEventListener('click', () => {
         if (enabled) { stop(); return; }
         error.hidden = true;
@@ -310,12 +371,17 @@
     }
     document.addEventListener('visibilitychange', resumeRefresh);
     window.addEventListener('pagehide', () => {
+        pageActive = false;
         clearTimeout(refreshTimer);
         refreshTimer = null;
         nextRefreshAt = null;
         if (automaticUpdating && pendingController) pendingController.abort();
         if (cancelReplacement) cancelReplacement();
     });
-    window.addEventListener('pageshow', resumeRefresh);
+    window.addEventListener('pageshow', () => {
+        pageActive = true;
+        resumeRefresh();
+    });
+    syncRainLayout();
     render();
 })();
