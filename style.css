@@ -394,6 +394,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .rain-time-options button[aria-pressed="true"] { background: var(--color-primary); color: white; }
 .rain-caption { margin-top: 4px; text-align: center; }
 .rain-caption a { color: var(--color-primary); }
+.rain-updated-time { font-size: 0.65rem; line-height: 1.2; text-align: center; color: var(--color-text-muted); }
 .rain-error { text-align: center; pointer-events: none; }
 @media (max-width: 767px) {
     .rain-panel, .rain-error {
@@ -410,6 +411,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
         .rain-panel { padding: 4px; }
         .rain-time-options { gap: 2px; grid-template-columns: repeat(2, minmax(44px, 1fr)); }
         .rain-caption { margin-top: 2px; }
+        .rain-caption, .rain-updated-time { font-size: 0.6rem; line-height: 1; }
         @media (min-width: 568px) {
             .rain-toggle-btn { right: 64px; bottom: 74px; }
             .rain-panel, .rain-error { right: 118px; }

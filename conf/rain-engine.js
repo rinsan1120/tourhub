@@ -2,6 +2,7 @@
 (() => {
     const DATA_ROOT = 'https://www.jma.go.jp/bosai/jmatile/data/nowc';
     const CACHE_TTL_MS = 5 * 60 * 1000;
+    const AUTO_REFRESH_MS = 10 * 60 * 1000;
     const JSON_TIMEOUT_MS = 10000;
     const TILE_TIMEOUT_MS = 15000;
     const ERROR_HIDE_MS = 5000;
@@ -17,6 +18,7 @@
     const panel = document.getElementById('rain-panel');
     const options = document.getElementById('rain-time-options');
     const validTime = document.getElementById('rain-valid-time');
+    const updatedTime = document.getElementById('rain-updated-time');
     const error = document.getElementById('rain-error');
     let enabled = false;
     let offset = 0;
@@ -24,7 +26,11 @@
     let layer = null;
     let cache = null;
     let pending = null;
+    let pendingController = null;
     let refreshTimer = null;
+    let nextRefreshAt = null;
+    let automaticUpdating = false;
+    let cancelReplacement = null;
     let tileTimer = null;
     let errorTimer = null;
 
@@ -50,11 +56,12 @@
             .filter(item => Number.isFinite(item.baseMs) && Number.isFinite(item.validMs));
     }
 
-    async function getTimes() {
-        if (cache && performance.now() - cache.fetchedAt < CACHE_TTL_MS) return cache;
+    async function getTimes(force = false) {
+        if (!force && cache && Date.now() - cache.fetchedAt < CACHE_TTL_MS) return cache;
         if (pending) return pending;
         pending = (async () => {
             const controller = new AbortController();
+            pendingController = controller;
             const timeout = setTimeout(() => controller.abort(), JSON_TIMEOUT_MS);
             try {
                 const results = await Promise.all(['N1', 'N2'].map(async name => {
@@ -70,11 +77,13 @@
                 if (!current || !forecasts.length) throw new Error('Missing nowcast times');
                 // 更新境界に複数の予測系列があっても、最新の基準時刻の系列だけを使う。
                 const newestBase = Math.max(...forecasts.map(item => item.baseMs));
-                cache = { current, forecasts: forecasts.filter(item => item.baseMs === newestBase), fetchedAt: performance.now() };
+                cache = { current, forecasts: forecasts.filter(item => item.baseMs === newestBase), fetchedAt: Date.now() };
+                updatedTime.textContent = `雨雲更新：${formatTime(cache.fetchedAt)}`;
                 return cache;
             } finally {
                 clearTimeout(timeout);
                 controller.abort();
+                if (pendingController === controller) pendingController = null;
             }
         })();
         try { return await pending; }
@@ -103,6 +112,10 @@
         enabled = false;
         version++;
         clearTimeout(refreshTimer);
+        refreshTimer = null;
+        nextRefreshAt = null;
+        if (automaticUpdating && pendingController) pendingController.abort();
+        if (cancelReplacement) cancelReplacement();
         clearTimeout(tileTimer);
         if (layer) {
             const oldLayer = layer;
@@ -117,32 +130,110 @@
     function fail() {
         stop();
         cache = null;
-        error.textContent = '雨雲情報を取得できませんでした';
+        showError('雨雲情報を取得できませんでした');
+    }
+
+    function showError(message) {
+        error.textContent = message;
         error.hidden = false;
         clearTimeout(errorTimer);
         errorTimer = setTimeout(() => { error.hidden = true; }, ERROR_HIDE_MS);
     }
 
-    function scheduleRefresh() {
-        clearTimeout(refreshTimer);
-        if (enabled && document.visibilityState === 'visible' && cache) {
-            refreshTimer = setTimeout(() => void update(), Math.max(0, CACHE_TTL_MS - (performance.now() - cache.fetchedAt)));
-        }
+    function formatTime(time) {
+        return new Intl.DateTimeFormat('ja-JP', {
+            timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit'
+        }).format(new Date(time));
     }
 
-    async function update() {
+    function canAutoRefresh() {
+        return enabled && screenWakeLockEnabled && document.visibilityState === 'visible';
+    }
+
+    function scheduleRefresh() {
+        clearTimeout(refreshTimer);
+        refreshTimer = null;
+        if (!canAutoRefresh()) {
+            nextRefreshAt = null;
+            if (automaticUpdating && pendingController) pendingController.abort();
+            if (cancelReplacement) cancelReplacement();
+            return;
+        }
+        if (automaticUpdating) return;
+        if (nextRefreshAt === null) nextRefreshAt = Date.now() + AUTO_REFRESH_MS;
+        refreshTimer = setTimeout(() => {
+            refreshTimer = null;
+            if (canAutoRefresh()) void update(true);
+        }, Math.max(0, nextRefreshAt - Date.now()));
+    }
+
+    // 自動更新は新しいタイルの読み込み完了まで旧レイヤーを残す。
+    function replaceAutomatically(nextLayer, time, requestVersion) {
+        return new Promise(resolve => {
+            const oldLayer = layer;
+            let timeout;
+            const finish = (success, reportError = false) => {
+                if (cancelReplacement !== cancel) return;
+                cancelReplacement = null;
+                clearTimeout(timeout);
+                nextLayer.off('tileerror loading load');
+                if (success && enabled && requestVersion === version && canAutoRefresh()) {
+                    layer = nextLayer;
+                    nextLayer.setOpacity(OPACITY);
+                    oldLayer.off('tileerror loading load');
+                    map.removeLayer(oldLayer);
+                    attachTileHandlers(nextLayer);
+                    validTime.textContent = formatTime(time.validMs);
+                    error.hidden = true;
+                } else {
+                    map.removeLayer(nextLayer);
+                    if (reportError) showError('雨雲情報を更新できませんでした');
+                }
+                resolve(success);
+            };
+            const cancel = () => finish(false);
+            cancelReplacement = cancel;
+            nextLayer.setOpacity(0);
+            nextLayer.on('tileerror', () => finish(false, true));
+            nextLayer.on('load', () => finish(true));
+            timeout = setTimeout(() => finish(false, true), TILE_TIMEOUT_MS);
+            nextLayer.addTo(map);
+            // 日本の表示範囲外など、取得対象タイルがない場合にも完了させる。
+            if (cancelReplacement === cancel && !nextLayer.isLoading()) finish(true);
+        });
+    }
+
+    function attachTileHandlers(nextLayer) {
+        nextLayer.on('tileerror', () => { if (enabled && layer === nextLayer) fail(); });
+        nextLayer.on('loading', () => {
+            clearTimeout(tileTimer);
+            tileTimer = setTimeout(() => { if (enabled && layer === nextLayer) fail(); }, TILE_TIMEOUT_MS);
+        });
+        nextLayer.on('load', () => {
+            if (layer === nextLayer) clearTimeout(tileTimer);
+        });
+    }
+
+    async function update(automatic = false) {
+        if (automatic && (!canAutoRefresh() || automaticUpdating)) return;
+        if (cancelReplacement) cancelReplacement();
+        if (automatic) {
+            automaticUpdating = true;
+            clearTimeout(refreshTimer);
+            refreshTimer = null;
+        }
         const requestVersion = ++version;
         try {
-            const times = await getTimes();
-            if (!enabled || requestVersion !== version) return;
+            const times = await getTimes(automatic);
+            if (!enabled || requestVersion !== version || (automatic && !canAutoRefresh())) return;
             const time = selectTime(times);
             const url = `${DATA_ROOT}/${time.basetime}/none/${time.validtime}/surf/hrpns/{z}/{x}/{y}.png`;
             if (layer && layer._url === url) {
-                scheduleRefresh();
+                error.hidden = true;
                 return;
             }
             clearTimeout(tileTimer);
-            if (layer) {
+            if (layer && !automatic) {
                 layer.off('tileerror loading load');
                 map.removeLayer(layer);
             }
@@ -157,22 +248,27 @@
                 // maxZoomを指定しないことで既存地図のズーム上限を変えない。
                 bounds: [[20, 118], [48, 150]], noWrap: true
             });
+            if (automatic && layer) {
+                await replaceAutomatically(nextLayer, time, requestVersion);
+                return;
+            }
             layer = nextLayer;
-            nextLayer.on('tileerror', () => { if (enabled && layer === nextLayer) fail(); });
-            nextLayer.on('loading', () => {
-                clearTimeout(tileTimer);
-                tileTimer = setTimeout(() => { if (enabled && layer === nextLayer) fail(); }, TILE_TIMEOUT_MS);
-            });
-            nextLayer.on('load', () => {
-                if (layer === nextLayer) clearTimeout(tileTimer);
-            });
-            validTime.textContent = new Intl.DateTimeFormat('ja-JP', {
-                timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit'
-            }).format(new Date(time.validMs));
+            attachTileHandlers(nextLayer);
+            validTime.textContent = formatTime(time.validMs);
             nextLayer.addTo(map);
-            scheduleRefresh();
+            error.hidden = true;
         } catch (err) {
-            if (enabled && requestVersion === version) fail();
+            if (enabled && requestVersion === version) {
+                if (automatic && layer) {
+                    if (canAutoRefresh()) showError('雨雲情報を更新できませんでした');
+                } else fail();
+            }
+        } finally {
+            if (automatic) {
+                automaticUpdating = false;
+                nextRefreshAt = null;
+            }
+            scheduleRefresh();
         }
     }
 
@@ -204,11 +300,22 @@
         L.DomEvent.disableScrollPropagation(element);
         L.DomEvent.on(element, 'touchmove', L.DomEvent.stopPropagation);
     });
-    document.addEventListener('visibilitychange', () => {
-        clearTimeout(refreshTimer);
-        if (enabled && document.visibilityState === 'visible') void update();
+    // 非同期のWake Lock取得/解除を含め、既存UIが描画した設定変更だけを監視する。
+    new MutationObserver(scheduleRefresh).observe(document.getElementById('screen-wake-lock-btn'), {
+        attributes: true, attributeFilter: ['aria-pressed']
     });
-    window.addEventListener('pagehide', () => { clearTimeout(refreshTimer); });
-    window.addEventListener('pageshow', () => { if (enabled) void update(); });
+    function resumeRefresh() {
+        if (canAutoRefresh() && cache && Date.now() - cache.fetchedAt >= CACHE_TTL_MS) void update(true);
+        else scheduleRefresh();
+    }
+    document.addEventListener('visibilitychange', resumeRefresh);
+    window.addEventListener('pagehide', () => {
+        clearTimeout(refreshTimer);
+        refreshTimer = null;
+        nextRefreshAt = null;
+        if (automaticUpdating && pendingController) pendingController.abort();
+        if (cancelReplacement) cancelReplacement();
+    });
+    window.addEventListener('pageshow', resumeRefresh);
     render();
 })();
