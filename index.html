@@ -7,7 +7,7 @@
     <title>Rin’s Touring Hub</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <link rel="stylesheet" href="style.css?t=20260930-ui">
+    <link rel="stylesheet" href="style.css?t=20261001-screen-wake-lock">
     
 </head>
 <body>
@@ -36,6 +36,8 @@
                 <button type="button" class="fullscreen-btn" onclick="toggleFullScreen()" aria-label="全画面表示" title="全画面表示">
                     <i class="fa-solid fa-expand"></i>
                 </button>
+                <button type="button" id="screen-wake-lock-btn" class="screen-wake-lock-btn" aria-pressed="false" aria-label="画面ONモードを開始" title="画面ONモードを開始" hidden>画面<br>OFF</button>
+                <div id="screen-wake-lock-status" class="screen-wake-lock-status" role="status" aria-live="polite" hidden>画面ONモードが有効です。画面の点灯を維持します。</div>
             </div>
             <div id="stats-badge">Zoom: --</div>
             <div id="operation-guide">
@@ -97,7 +99,7 @@
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
 <script src="conf/common.js"></script>
-<script src="conf/map-engine.js?v=20260927-tracking"></script>
+<script src="conf/map-engine.js?v=20261001-screen-wake-lock"></script>
 <script src="conf/michi-no-eki.js"></script>
 <script src="conf/weather-engine.js"></script>
 

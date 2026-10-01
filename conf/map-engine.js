@@ -500,6 +500,125 @@ document.addEventListener('fullscreenchange', () => {
     requestAnimationFrame(() => map.invalidateSize({ pan: false }));
 });
 
+// 画面ONのユーザー設定と、OSが解除する実際のWake Lockは別に保持します。
+const screenWakeLockMobileQuery = window.matchMedia(MAP_ZOOM_CONTROL_MOBILE_MEDIA_QUERY);
+let screenWakeLockEnabled = false;
+let screenWakeLockSentinel = null;
+let screenWakeLockRequest = null;
+
+function getScreenWakeLockContext() {
+    return {
+        isMobile: screenWakeLockMobileQuery.matches,
+        isFullscreen: document.fullscreenElement === document.getElementById('map-wrapper'),
+        isVisible: document.visibilityState === 'visible'
+    };
+}
+
+function renderScreenWakeLock() {
+    const context = getScreenWakeLockContext();
+    const button = document.getElementById('screen-wake-lock-btn');
+    button.hidden = !(context.isMobile && context.isFullscreen);
+    button.setAttribute('aria-pressed', String(screenWakeLockEnabled));
+    const label = screenWakeLockEnabled ? '画面ONモードを停止' : '画面ONモードを開始';
+    button.setAttribute('aria-label', label);
+    button.title = label;
+    button.innerHTML = screenWakeLockEnabled ? '画面<br>ON' : '画面<br>OFF';
+    document.getElementById('screen-wake-lock-status').hidden = !(
+        context.isMobile && context.isFullscreen && context.isVisible &&
+        screenWakeLockSentinel && !screenWakeLockSentinel.released
+    );
+}
+
+async function releaseScreenWakeLockSentinel(sentinel) {
+    if (!sentinel || sentinel.released) return;
+    try {
+        await sentinel.release();
+    } catch (err) {
+        // 解除の失敗を地図処理へ伝播させません。
+        console.warn('画面ONモードの解除に失敗しました:', err);
+    }
+}
+
+function releaseScreenWakeLock(resetSetting) {
+    if (resetSetting) screenWakeLockEnabled = false;
+    // 取得中にOFF/全画面解除/非表示になった場合、遅れて届く取得結果を無効化します。
+    screenWakeLockRequest = null;
+    const sentinel = screenWakeLockSentinel;
+    screenWakeLockSentinel = null;
+    renderScreenWakeLock();
+    void releaseScreenWakeLockSentinel(sentinel);
+}
+
+async function requestScreenWakeLock() {
+    const context = getScreenWakeLockContext();
+    if (!context.isMobile || !context.isFullscreen || !context.isVisible ||
+        screenWakeLockRequest || (screenWakeLockSentinel && !screenWakeLockSentinel.released)) return;
+
+    const request = {};
+    screenWakeLockRequest = request;
+    try {
+        if (!navigator.wakeLock || typeof navigator.wakeLock.request !== 'function') {
+            throw new Error('Screen Wake Lock API非対応');
+        }
+        const sentinel = await navigator.wakeLock.request('screen');
+        const currentContext = getScreenWakeLockContext();
+        if (screenWakeLockRequest !== request || !currentContext.isMobile ||
+            !currentContext.isFullscreen || !currentContext.isVisible) {
+            await releaseScreenWakeLockSentinel(sentinel);
+            return;
+        }
+        if (sentinel.released) throw new Error('Wake Lockは解除済みです');
+
+        screenWakeLockSentinel = sentinel;
+        sentinel.addEventListener('release', () => {
+            if (screenWakeLockSentinel !== sentinel) return;
+            screenWakeLockSentinel = null;
+            // 設定は維持し、再取得はvisibleへの復帰時のみ行います。
+            renderScreenWakeLock();
+        });
+        screenWakeLockEnabled = true;
+    } catch (err) {
+        if (screenWakeLockRequest === request) {
+            screenWakeLockEnabled = false;
+            console.warn('画面ONモードを有効にできませんでした:', err);
+        }
+    } finally {
+        if (screenWakeLockRequest === request) screenWakeLockRequest = null;
+        renderScreenWakeLock();
+    }
+}
+
+function syncScreenWakeLockContext() {
+    const context = getScreenWakeLockContext();
+    if (!context.isMobile || !context.isFullscreen) {
+        releaseScreenWakeLock(true);
+    } else if (!context.isVisible) {
+        releaseScreenWakeLock(false);
+    } else {
+        renderScreenWakeLock();
+        if (screenWakeLockEnabled) void requestScreenWakeLock();
+    }
+}
+
+const screenWakeLockButton = document.getElementById('screen-wake-lock-btn');
+screenWakeLockButton.addEventListener('click', () => {
+    if (screenWakeLockEnabled || screenWakeLockRequest) releaseScreenWakeLock(true);
+    else void requestScreenWakeLock();
+});
+// 地図の既存タッチ/長押し処理へ、新しいボタン操作を流しません。
+L.DomEvent.disableClickPropagation(screenWakeLockButton);
+L.DomEvent.disableScrollPropagation(screenWakeLockButton);
+document.addEventListener('fullscreenchange', syncScreenWakeLockContext);
+document.addEventListener('visibilitychange', syncScreenWakeLockContext);
+window.addEventListener('pagehide', () => releaseScreenWakeLock(false));
+window.addEventListener('pageshow', syncScreenWakeLockContext);
+if (screenWakeLockMobileQuery.addEventListener) {
+    screenWakeLockMobileQuery.addEventListener('change', syncScreenWakeLockContext);
+} else if (screenWakeLockMobileQuery.addListener) {
+    screenWakeLockMobileQuery.addListener(syncScreenWakeLockContext);
+}
+renderScreenWakeLock();
+
 map.on('contextmenu', (e) => { placeTempPin(e.latlng); return false; });
 map.on('popupopen', attachCopyCoordsHandler);
 let pressTimer;

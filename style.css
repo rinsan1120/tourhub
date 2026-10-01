@@ -64,7 +64,7 @@
         }
 
         /* ▼ 現在地ボタンと全画面ボタンの共通スタイル（両方とも右側に固定） ▼ */
-        .loc-btn, .tracking-btn, .fullscreen-btn {
+        .loc-btn, .tracking-btn, .fullscreen-btn, .screen-wake-lock-btn {
             position: absolute; 
             right: 10px; 
             z-index: 1000; 
@@ -87,7 +87,34 @@
         .tracking-btn { bottom: 74px; font-size: 0.75rem; font-weight: bold; background: var(--color-map-surface); }
         .tracking-btn[aria-pressed="true"] { background: var(--color-primary); color: white; }
         .fullscreen-btn { bottom: 20px; } /* 全画面ボタン（下） */
+        .screen-wake-lock-btn, .screen-wake-lock-status { display: none; }
+        .screen-wake-lock-btn { font-size: 0.75rem; font-weight: bold; }
+        .screen-wake-lock-btn[aria-pressed="true"] { background: var(--color-primary); color: white; }
         @media (max-width: 767px) {
+            #map-wrapper:fullscreen .screen-wake-lock-btn:not([hidden]) {
+                display: flex;
+                top: calc(env(safe-area-inset-top, 0px) + 182px);
+                bottom: auto;
+            }
+            #map-wrapper:fullscreen .screen-wake-lock-status:not([hidden]) {
+                display: block;
+                position: absolute;
+                top: calc(env(safe-area-inset-top, 0px) + 20px);
+                left: 50%;
+                transform: translateX(-50%);
+                width: max-content;
+                max-width: calc(100% - 220px);
+                box-sizing: border-box;
+                padding: 6px 8px;
+                border-radius: 6px;
+                background: rgba(26,32,44,0.72);
+                color: white;
+                font-size: 0.7rem;
+                line-height: 1.5;
+                text-align: center;
+                pointer-events: none;
+                z-index: 1001;
+            }
             #map-wrapper:fullscreen .loc-btn {
                 top: calc(env(safe-area-inset-top, 0px) + 20px) !important;
                 bottom: auto !important;
@@ -274,7 +301,7 @@
 .legend-item { border-radius: var(--radius-sm); }
 .legend-item input { accent-color: var(--color-primary); }
 .legend-item:has(input:checked) { background: #edf4fa; }
-.loc-btn, .tracking-btn, .fullscreen-btn, #stats-badge, #operation-guide, .map-loading-status {
+.loc-btn, .tracking-btn, .fullscreen-btn, .screen-wake-lock-btn, #stats-badge, #operation-guide, .map-loading-status {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow-map);
