@@ -2,7 +2,9 @@
 // setViewの第1引数は初期中心、第2引数は初期ズーム。変更するとサイトを開いた直後の地図位置と縮尺が変わります。
 const map = L.map('map', { tap: false, doubleClickZoom: true }).setView([35.6895, 139.6917], 11);
 // ベース地図タイルの取得先。変更すると背景地図の提供元や見た目、利用条件が変わります。
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
 
 let myLocMarker = null, tempMarker = null;
 let isLocationTracking = false;

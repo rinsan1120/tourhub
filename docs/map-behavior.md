@@ -8,6 +8,7 @@
 
 - ライブラリ: Leaflet 1.9.4
 - タイル: OpenStreetMap
+- タイルURL: `https://tile.openstreetmap.org/{z}/{x}/{y}.png`。Leaflet標準のattribution controlに「© OpenStreetMap contributors」とcopyrightリンクを常時表示します。雨雲の気象庁出典とは独立して共存します。[Tile Usage Policy](https://operations.osmfoundation.org/policies/tiles/)に従い、ブラウザ標準のReferer・HTTPキャッシュを使用し、独自キャッシュ・オフライン取得は追加しません。
 - 初期中心: `[35.6895, 139.6917]`
 - 初期ズーム: `11`
 - Leaflet設定: `{ tap: false, doubleClickZoom: true }`
