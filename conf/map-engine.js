@@ -8,6 +8,12 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 let myLocMarker = null, tempMarker = null;
 let isLocationTracking = false;
+// GPSの微小移動と低速時の方位変動を抑えるしきい値。
+const LOCATION_HEADING_MIN_DISTANCE_M = 5;
+const LOCATION_HEADING_MIN_SPEED_MPS = 0.5;
+const locationHeadingMobileQuery = window.matchMedia('(max-width: 767px), (pointer: coarse)');
+let previousHeadingPosition = null;
+let lastLocationHeading = null;
 // レイヤー名ごとのLeafletレイヤーを保持します。キー名が変わると凡例や表示切り替えとの対応に影響します。
 const layerGroups = {};
 // 高速道路ICレイヤーを識別する名前。変更するとuMapデータ内のレイヤー名や優先度設定との対応がずれます。
@@ -402,13 +408,55 @@ function initCoordJumpControl() {
     });
 }
 
+function updateLocationHeading(coords, latlng) {
+    const distance = previousHeadingPosition ? map.distance(previousHeadingPosition, latlng) : null;
+    const speed = typeof coords.speed === 'number' && Number.isFinite(coords.speed) && coords.speed >= 0
+        ? coords.speed : null;
+    const stationary = previousHeadingPosition && (speed !== null
+        ? speed < LOCATION_HEADING_MIN_SPEED_MPS
+        : distance < LOCATION_HEADING_MIN_DISTANCE_M);
+
+    if (!stationary) {
+        if (typeof coords.heading === 'number' && Number.isFinite(coords.heading) &&
+            coords.heading >= 0 && coords.heading <= 360) {
+            lastLocationHeading = coords.heading % 360;
+        } else if (distance >= LOCATION_HEADING_MIN_DISTANCE_M) {
+            // 球面上の初期方位角。経度差は±180度をまたぐ場合もsin/cosで扱える。
+            const radians = Math.PI / 180;
+            const lat1 = previousHeadingPosition[0] * radians;
+            const lat2 = latlng[0] * radians;
+            const deltaLng = (latlng[1] - previousHeadingPosition[1]) * radians;
+            const y = Math.sin(deltaLng) * Math.cos(lat2);
+            const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLng);
+            if (x !== 0 || y !== 0) lastLocationHeading = (Math.atan2(y, x) / radians + 360) % 360;
+        }
+    }
+    previousHeadingPosition = latlng;
+    renderLocationHeading();
+}
+
+function renderLocationHeading() {
+    const headingElement = myLocMarker && myLocMarker.getElement()?.querySelector('.my-location-heading');
+    if (!headingElement) return;
+    const visible = locationHeadingMobileQuery.matches && isLocationTracking && Number.isFinite(lastLocationHeading);
+    headingElement.classList.toggle('has-heading', visible);
+    headingElement.style.setProperty('--location-heading', visible ? `${lastLocationHeading}deg` : '0deg');
+}
+
+if (locationHeadingMobileQuery.addEventListener) {
+    locationHeadingMobileQuery.addEventListener('change', renderLocationHeading);
+} else {
+    locationHeadingMobileQuery.addListener(renderLocationHeading);
+}
+
 function updateMyLocation() {
     if (!navigator.geolocation) return;
     navigator.geolocation.watchPosition((pos) => {
         const latlng = [pos.coords.latitude, pos.coords.longitude];
         if (!myLocMarker) {
-            myLocMarker = L.marker(latlng, { icon: L.divIcon({ className: 'my-loc-con', html: '<div class="my-location-marker"></div>', iconSize:[14,14], iconAnchor:[7,7] }) }).addTo(map);
+            myLocMarker = L.marker(latlng, { icon: L.divIcon({ className: 'my-loc-con', html: '<div class="my-location-heading"><div class="my-location-marker"></div></div>', iconSize:[14,14], iconAnchor:[7,7] }) }).addTo(map);
         } else { myLocMarker.setLatLng(latlng); }
+        updateLocationHeading(pos.coords, latlng);
         if (isLocationTracking) map.panTo(latlng, { animate: false });
     }, null, { enableHighAccuracy: true });
 }
@@ -425,6 +473,7 @@ function setLocationTracking(enabled) {
     button.setAttribute('aria-label', label);
     button.title = label;
     button.innerHTML = enabled ? '追従<br>ON' : '追従<br>OFF';
+    renderLocationHeading();
 }
 
 function toggleLocationTracking() {
