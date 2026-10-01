@@ -13,8 +13,6 @@
     const MIN_NATIVE_ZOOM = 4;
     const MAX_NATIVE_ZOOM = 10;
     const NATIVE_ZOOM_STEP = 2;
-    const mobileQuery = window.matchMedia('(max-width: 767px)');
-    const wrapper = document.getElementById('map-wrapper');
     const toggle = document.getElementById('rain-toggle-btn');
     const panel = document.getElementById('rain-panel');
     const options = document.getElementById('rain-time-options');
@@ -37,10 +35,6 @@
             return Math.floor(nativeZoom / NATIVE_ZOOM_STEP) * NATIVE_ZOOM_STEP;
         }
     });
-
-    function inContext() {
-        return mobileQuery.matches && document.fullscreenElement === wrapper;
-    }
 
     function parseTime(value) {
         if (typeof value !== 'string' || !/^\d{14}$/.test(value)) return NaN;
@@ -97,7 +91,7 @@
     }
 
     function render() {
-        toggle.hidden = !inContext();
+        toggle.hidden = false;
         toggle.setAttribute('aria-pressed', String(enabled));
         panel.hidden = !enabled;
         options.querySelectorAll('button').forEach(button => {
@@ -197,7 +191,6 @@
     });
     toggle.addEventListener('click', () => {
         if (enabled) { stop(); return; }
-        if (!inContext()) return;
         error.hidden = true;
         clearTimeout(errorTimer);
         offset = 0;
@@ -211,16 +204,6 @@
         L.DomEvent.disableScrollPropagation(element);
         L.DomEvent.on(element, 'touchmove', L.DomEvent.stopPropagation);
     });
-    function syncContext() {
-        if (!inContext()) {
-            stop();
-            error.hidden = true;
-        }
-        render();
-    }
-    document.addEventListener('fullscreenchange', syncContext);
-    if (mobileQuery.addEventListener) mobileQuery.addEventListener('change', syncContext);
-    else mobileQuery.addListener(syncContext);
     document.addEventListener('visibilitychange', () => {
         clearTimeout(refreshTimer);
         if (enabled && document.visibilityState === 'visible') void update();

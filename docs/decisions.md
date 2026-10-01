@@ -180,3 +180,14 @@
 - uMap同期手順
 - ドキュメント構成の正式化
 - インラインJS/CSSを分離するかどうか
+
+## 12. 気象庁雨雲レイヤー（2026-10-01）
+
+ユーザーの実装依頼に従い、気象庁の公開Web配信用ナウキャストを独立したLeafletタイルレイヤーで表示します。APIキー・課金登録・追加ライブラリ・サーバー処理は不要です。2026-10-01に公式ページの配信設定、JSONとPNGの実レスポンス、CORSを確認しました。
+
+- 実況: `https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N1.json`
+- 予測: `https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N2.json`
+- タイル: `https://www.jma.go.jp/bosai/jmatile/data/nowc/{basetime}/none/{validtime}/surf/hrpns/{z}/{x}/{y}.png`
+- 出典: https://www.jma.go.jp/bosai/nowc/
+
+時刻はJSONから取得し、最新実況を時間選択の基準にします。5分キャッシュとON中だけの更新でアクセスを抑えます。代替は気象庁ページへのリンクですが、今回の目的は地図上での重ね合わせです。Web配信用URLや配信仕様は将来変更される可能性があり、その場合も雨雲だけを停止して地図利用を維持します。

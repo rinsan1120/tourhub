@@ -87,7 +87,7 @@
         .tracking-btn { bottom: 74px; font-size: 0.75rem; font-weight: bold; background: var(--color-map-surface); }
         .tracking-btn[aria-pressed="true"] { background: var(--color-primary); color: white; }
         .fullscreen-btn { bottom: 20px; } /* 全画面ボタン（下） */
-        .screen-wake-lock-btn, .screen-wake-lock-status, .rain-toggle-btn { display: none; }
+        .screen-wake-lock-btn, .screen-wake-lock-status { display: none; }
         .screen-wake-lock-btn { font-size: 0.75rem; font-weight: bold; }
         .screen-wake-lock-btn[aria-pressed="true"] { background: var(--color-primary); color: white; }
         @media (max-width: 767px) {
@@ -359,16 +359,17 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 }
 
 /* 雨雲専用UI。既存の操作ボタン・ズーム・クレジットの位置は変えない。 */
-.rain-toggle-btn { font-size: 0.7rem; font-weight: bold; white-space: nowrap; }
+.rain-toggle-btn { bottom: 182px; font-size: 0.7rem; font-weight: bold; white-space: nowrap; }
+.rain-toggle-btn[hidden] { display: none; }
 .rain-toggle-btn[aria-pressed="true"] { background: var(--color-primary); color: white; }
 .rain-panel, .rain-error {
     position: absolute;
-    left: 50%;
+    right: 64px;
     bottom: calc(env(safe-area-inset-bottom, 0px) + 30px);
-    transform: translateX(-50%);
     z-index: 1001;
     box-sizing: border-box;
-    max-width: calc(100% - 20px);
+    width: max-content;
+    max-width: calc(100% - 354px); /* PC凡例と右側の操作ボタン列を避ける。 */
     border-radius: var(--radius-sm);
     padding: 6px;
     background: var(--color-map-surface);
@@ -395,10 +396,40 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .rain-caption a { color: var(--color-primary); }
 .rain-error { text-align: center; pointer-events: none; }
 @media (max-width: 767px) {
+    .rain-panel, .rain-error {
+        left: 10px;
+        right: 64px;
+        bottom: 182px; /* 通常表示のズーム・追従・全画面ボタンより上。 */
+        width: auto;
+        max-width: none;
+    }
+    .rain-time-options { display: grid; grid-template-columns: repeat(4, minmax(44px, 1fr)); }
+    .rain-time-options button { padding-inline: 2px; }
+    @media (max-height: 500px) {
+        .rain-panel, .rain-error { left: 100px; bottom: 10px; }
+        .rain-panel { padding: 4px; }
+        .rain-time-options { gap: 2px; grid-template-columns: repeat(2, minmax(44px, 1fr)); }
+        .rain-caption { margin-top: 2px; }
+        @media (min-width: 568px) {
+            .rain-toggle-btn { right: 64px; bottom: 74px; }
+            .rain-panel, .rain-error { right: 118px; }
+            .rain-time-options { grid-template-columns: repeat(4, minmax(44px, 1fr)); }
+        }
+    }
     #map-wrapper:fullscreen .rain-toggle-btn:not([hidden]) {
         display: flex;
+        right: 10px;
         top: calc(env(safe-area-inset-top, 0px) + 236px);
         bottom: auto;
     }
-    #map-wrapper:fullscreen .rain-panel { width: max-content; }
+    #map-wrapper:fullscreen .rain-panel,
+    #map-wrapper:fullscreen .rain-error {
+        left: 50%;
+        right: auto;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 30px);
+        transform: translateX(-50%);
+        width: max-content;
+        max-width: calc(100% - 20px);
+    }
+    #map-wrapper:fullscreen .rain-time-options { display: flex; }
 }

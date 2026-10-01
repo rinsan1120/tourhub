@@ -30,6 +30,7 @@ TouringHub は、ツーリング・ドライブ向けの静的Webサイトです
 ├─ conf/
 │  ├─ common.js
 │  ├─ map-engine.js
+│  ├─ rain-engine.js
 │  ├─ michi-no-eki.js
 │  ├─ weather-engine.js
 │  ├─ weather.txt
@@ -134,6 +135,12 @@ HTML内インラインJSの主な責務:
 ### `conf/michi-no-eki.js`
 
 `P35-18_Roadside_Station.geojson` を読み込み、道の駅レイヤーをクラスタ付きで生成します。
+
+### `conf/rain-engine.js`（2026-10-01追加）
+
+`map-engine.js` の直後に読み込み、既存の共有 `map` へ独立した雨雲タイルレイヤーを追加します。雨雲の時刻取得、5分キャッシュ、表示中の更新、時間選択、エラー表示を担当します。既存の追従・全画面・Wake Lock処理は変更しません。
+
+専用 `rainPane` はz-index 350で、背景タイル(200)とルート(400)の間に配置し、ポインターイベントを透過します。気象庁公式設定の偶数ズーム配信に合わせ、Leaflet 1.9.4の `_clampZoom` を小さなサブクラスで拡張しています。Leaflet更新時はこの部分とON/OFF後のズーム操作を再確認してください。
 
 ### `conf/weather-engine.js`
 
