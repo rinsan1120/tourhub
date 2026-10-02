@@ -1,6 +1,6 @@
 # TouringHub Current Status
 
-更新日: 2026-10-01
+更新日: 2026-10-03
 
 現在の実装状態、既知の課題、次に確認すべきことをまとめます。
 
@@ -13,6 +13,7 @@ TouringHub は、静的HTML/CSS/JavaScriptで構成されたツーリング・�
 - エントリーポイント: `index.html`
 - スタイル: `style.css`
 - 地図ロジック: `conf/map-engine.js`
+- 場所検索: `conf/poi-search.js`
 - 道の駅ロジック: `conf/michi-no-eki.js`
 - 天気ロジック: `conf/weather-engine.js`
 - 設定データ: `conf/*.txt`
@@ -38,6 +39,7 @@ TouringHub は、静的HTML/CSS/JavaScriptで構成されたツーリング・�
 - 高速/下道ルート検索
 - 緯度経度コピー
 - 座標移動
+- 「場所を検索」パネルでOpenPOI APIの施設名・地名検索と従来の座標移動を利用可能（通常・全画面）。300ms debounce、最大5候補、通信中断・古い応答の無効化、検索結果の永続保存なし。
 - 全画面表示
 - スマホ幅の地図全画面時の画面ONモード（Screen Wake Lock API、復帰時再取得、全画面解除時OFF）
 - PC/スマホの通常・全画面での雨雲表示（気象庁高解像度降水ナウキャスト、現在〜60分先、5分キャッシュ、画面切替時の状態維持）

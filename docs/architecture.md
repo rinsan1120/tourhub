@@ -1,6 +1,6 @@
 # TouringHub Architecture
 
-更新日: 2026-06-11
+更新日: 2026-10-03
 
 TouringHub の画面構成、JavaScript責務、データ読み込み、地図初期化、主要イベントフローをまとめる設計メモです。
 
@@ -30,6 +30,7 @@ TouringHub は、ツーリング・ドライブ向けの静的Webサイトです
 ├─ conf/
 │  ├─ common.js
 │  ├─ map-engine.js
+│  ├─ poi-search.js
 │  ├─ rain-engine.js
 │  ├─ michi-no-eki.js
 │  ├─ weather-engine.js
@@ -60,9 +61,11 @@ TouringHub は、ツーリング・ドライブ向けの静的Webサイトです
 5. Leaflet.markercluster
 6. `conf/common.js`
 7. `conf/map-engine.js`
-8. `conf/michi-no-eki.js`
-9. `conf/weather-engine.js`
-10. `index.html` 内インラインJS
+8. `conf/poi-search.js`
+9. `conf/rain-engine.js`
+10. `conf/michi-no-eki.js`
+11. `conf/weather-engine.js`
+12. `index.html` 内インラインJS
 
 `window.load` 時に以下が実行されます。
 
@@ -135,6 +138,12 @@ HTML内インラインJSの主な責務:
 ### `conf/michi-no-eki.js`
 
 `P35-18_Roadside_Station.geojson` を読み込み、道の駅レイヤーをクラスタ付きで生成します。
+
+### `conf/poi-search.js`（2026-10-03追加）
+
+`map-engine.js` の直後に読み込み、「場所を検索」内のOpenPOI通信、300ms debounce、日本語変換、候補描画・選択を担当します。共有 `map`、`COORD_JUMP_ZOOM`、`placeTempPin()`、`toggleCoordJumpPanel()` を再利用します。中核ファイルの変更はパネル開閉文言のみです。
+
+入力変更・パネルを閉じる操作でAbortControllerと世代番号により古い通信を無効化します。10秒でタイムアウトし、検索だけにエラーを表示します。APIの文字列はtextContentで描画し、結果はメモリだけで使用します。全画面中だけ同じ操作ガイドを `map-wrapper` 内へ移し、解除時に元の位置へ戻します。VisualViewportに応じてパネルのスクロール高さを調整します。
 
 ### `conf/rain-engine.js`（2026-10-01追加）
 

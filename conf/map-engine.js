@@ -353,7 +353,7 @@ function toggleCoordJumpPanel() {
 
     const willOpen = panel.hidden;
     panel.hidden = !willOpen;
-    toggle.innerText = willOpen ? "座標移動 ▲" : "座標移動 ▼";
+    toggle.innerText = willOpen ? "場所を検索 ▲" : "場所を検索 ▼";
     toggle.setAttribute('aria-expanded', String(willOpen));
 }
 

@@ -7,7 +7,7 @@
     <title>Rin’s Touring Hub</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <link rel="stylesheet" href="style.css?t=20261001-location-heading">
+    <link rel="stylesheet" href="style.css?t=20261003-poi-search">
     
 </head>
 <body>
@@ -55,10 +55,22 @@
             <div id="stats-badge">Zoom: --</div>
             <div id="operation-guide">
                 <div><i class="fa-solid fa-circle-info"></i> <span id="guide-text">読み込み中...</span></div>
-                <button type="button" id="coord-jump-toggle" class="coord-jump-toggle" aria-expanded="false">座標移動 ▼</button>
+                <button type="button" id="coord-jump-toggle" class="coord-jump-toggle" aria-expanded="false" aria-controls="coord-jump-panel">場所を検索 ▼</button>
                 <div id="coord-jump-panel" class="coord-jump-panel" hidden>
-                    <input type="text" id="coord-jump-input" class="coord-jump-input" placeholder="35.675303,139.773553" inputmode="decimal">
-                    <button type="button" id="coord-jump-btn" class="coord-jump-btn">移動</button>
+                    <section class="poi-search-section">
+                        <label for="poi-search-input" class="place-search-heading">施設名・地名を検索</label>
+                        <input type="search" id="poi-search-input" class="poi-search-input" placeholder="草津温泉、宗谷岬、函館駅" autocomplete="off" aria-controls="poi-search-results">
+                        <div id="poi-search-results" class="poi-search-results" aria-label="検索候補" hidden></div>
+                        <div id="poi-search-status" class="poi-search-status" role="status" aria-live="polite"></div>
+                        <div class="poi-search-credit">検索データ：<a href="https://openpoiapi.com/attribution.html" target="_blank" rel="noopener noreferrer">OpenPOI API</a></div>
+                    </section>
+                    <section>
+                        <label for="coord-jump-input" class="place-search-heading">緯度・経度で移動</label>
+                        <div class="coord-jump-row">
+                            <input type="text" id="coord-jump-input" class="coord-jump-input" placeholder="35.675303,139.773553" inputmode="decimal">
+                            <button type="button" id="coord-jump-btn" class="coord-jump-btn">移動</button>
+                        </div>
+                    </section>
                 </div>
             </div>
         </div>
@@ -112,7 +124,8 @@
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
 <script src="conf/common.js"></script>
-<script src="conf/map-engine.js?v=20261001-location-heading"></script>
+<script src="conf/map-engine.js?v=20261003-poi-search"></script>
+<script src="conf/poi-search.js?v=20261003"></script>
 <script src="conf/rain-engine.js?v=20261001-compact"></script>
 <script src="conf/michi-no-eki.js"></script>
 <script src="conf/weather-engine.js"></script>
@@ -240,6 +253,7 @@
 <footer class="site-footer">
     <div class="footer-sources">
         出典：国土交通省国土数値情報ダウンロードサイト（https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P35.html,https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N06-v1_2.html）
+        <br>検索データ：<a href="https://openpoiapi.com/attribution.html" target="_blank" rel="noopener noreferrer">OpenPOI API</a>
     </div>
     <div class="footer-credit">
         <span>© 2026 Created by rinsan1120</span>

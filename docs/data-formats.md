@@ -1,6 +1,6 @@
 # TouringHub Data Formats
 
-更新日: 2026-06-11
+更新日: 2026-10-03
 
 TouringHub が読み込む設定データ、地図データ、外部データの形式をまとめます。
 
@@ -254,6 +254,19 @@ Feature geometry:
 - 許可される更新は、正規マスタによるファイル全体の置換のみです。
 
 ## 9. 外部APIデータ
+
+### OpenPOI API（2026-10-03追加）
+
+`GET https://api.openpoiapi.com/v1/suggest` を `conf/poi-search.js` から呼び出します。
+
+- `q`: 入力文字列、`limit=5`、`fields=minimal`
+- `bbox`: Leaflet getBoundsから `[west,south,east,north]` をカンマ連結（経度・緯度の順）
+- `center`: Leaflet getCenterから `lng,lat`
+- `suggestions`: `name`、`address`、`lat`、`lng`を利用
+- `vocabulary`: `type`、`label`、`query`を利用。placeのみbbox `[minLng,minLat,maxLng,maxLat]` / center `[lng,lat]`で移動
+- `licenses` / `attributions`: minimal応答ではトップレベルに存在。今回は保存せず、将来永続保存する場合はこれらも保存して条件を再確認する
+
+原本・設定データの形式変更はありません。出典は https://openpoiapi.com/attribution.html、公式仕様は https://docs.openpoiapi.com/ です。
 
 ### Open-Meteo
 
