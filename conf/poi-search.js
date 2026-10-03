@@ -3,19 +3,23 @@
 (() => {
     'use strict';
     const SUGGEST_URL = 'https://api.openpoiapi.com/v1/suggest';
+    const SEARCH_URL = 'https://api.openpoiapi.com/v1/search';
     const DEBOUNCE_MS = 300;
     const RESULT_LIMIT = 5;
+    const SEARCH_FETCH_LIMIT = 15;
     const VOCABULARY_LIMIT_WITH_FACILITIES = 2;
     const REQUEST_TIMEOUT_MS = 10000;
     const VIEWPORT_BOTTOM_MARGIN_PX = 80;
     const MIN_PANEL_HEIGHT_PX = 100;
     const input = document.getElementById('poi-search-input');
+    const searchButton = document.getElementById('poi-search-btn');
+    const resultHeading = document.getElementById('poi-search-result-heading');
     const results = document.getElementById('poi-search-results');
     const status = document.getElementById('poi-search-status');
     const panel = document.getElementById('coord-jump-panel');
     const guide = document.getElementById('operation-guide');
     const wrapper = document.getElementById('map-wrapper');
-    if (!input || !results || !status || !panel || !guide || !wrapper) return;
+    if (!input || !searchButton || !resultHeading || !results || !status || !panel || !guide || !wrapper) return;
 
     let debounceTimer = null;
     let controller = null;
@@ -36,6 +40,7 @@
         candidates = [];
         results.replaceChildren();
         results.hidden = true;
+        resultHeading.hidden = true;
         status.textContent = '';
     }
 
@@ -79,12 +84,16 @@
         closePanel();
     }
 
-    function renderCandidates(data, facilitiesOnly) {
-        const vocabulary = facilitiesOnly ? [] : (Array.isArray(data.vocabulary) ? data.vocabulary : []);
-        const facilities = Array.isArray(data.suggestions) ? data.suggestions : [];
+    function renderCandidates(data, facilitiesOnly, mode) {
+        const vocabulary = facilitiesOnly || mode === 'search' ? [] : (Array.isArray(data.vocabulary) ? data.vocabulary : []);
+        const facilities = mode === 'search' ? data.results : data.suggestions;
         // 地名・再検索候補も5件の枠内に含め、施設はAPIの順序を維持する。
-        const validFacilities = facilities.filter(item => item && typeof item.name === 'string' && validPoint(item.lng, item.lat))
-            .map(item => ({ ...item, type: 'facility' }));
+        // searchの座標は数値文字列の場合もある。空文字・null等は地点として扱わない。
+        const coordinateNumber = value => typeof value === 'number' ? value :
+            typeof value === 'string' && value.trim() ? Number(value) : NaN;
+        const validFacilities = facilities.filter(item => item && typeof item.name === 'string')
+            .map(item => ({ ...item, lat: coordinateNumber(item.lat), lng: coordinateNumber(item.lng), type: 'facility' }))
+            .filter(item => validPoint(item.lng, item.lat));
         const validVocabulary = vocabulary.filter(item => item && typeof item.label === 'string' && (
                 (item.type === 'place' && (validBounds(item.bbox) ||
                     (Array.isArray(item.center) && validPoint(item.center[0], item.center[1])))) ||
@@ -116,32 +125,30 @@
             results.append(button);
         });
         results.hidden = candidates.length === 0;
-        status.textContent = candidates.length ? '' : '候補が見つかりませんでした';
+        resultHeading.hidden = mode !== 'search';
+        status.textContent = candidates.length ? '' : mode === 'search' ? '検索結果が見つかりませんでした' : '候補が見つかりませんでした';
     }
 
-    async function search(query, version, facilitiesOnly) {
+    async function search(query, version, facilitiesOnly, mode = 'suggest') {
         if (version !== generation || panel.hidden) return;
         const requestController = new AbortController();
         controller = requestController;
         const timeout = setTimeout(() => requestController.abort(), REQUEST_TIMEOUT_MS);
         status.textContent = '検索中…';
         try {
-            const bounds = map.getBounds();
-            const center = map.getCenter();
-            const url = new URL(SUGGEST_URL);
-            url.search = new URLSearchParams({
+            const url = new URL(mode === 'search' ? SEARCH_URL : SUGGEST_URL);
+            const params = new URLSearchParams({
                 q: query,
-                bbox: [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()].join(','),
-                center: [center.lng, center.lat].join(','),
-                limit: String(RESULT_LIMIT),
-                fields: 'minimal'
-            }).toString();
+                limit: String(mode === 'search' ? SEARCH_FETCH_LIMIT : RESULT_LIMIT)
+            });
+            if (mode === 'suggest') params.set('fields', 'minimal');
+            url.search = params.toString();
             const response = await fetch(url, { signal: requestController.signal, cache: 'no-store', credentials: 'omit' });
             if (!response.ok) throw new Error('OpenPOI request failed');
             const data = await response.json();
             if (version !== generation || panel.hidden) return;
-            if (!data || !Array.isArray(data.suggestions)) throw new Error('Invalid OpenPOI response');
-            renderCandidates(data, facilitiesOnly);
+            if (!data || !Array.isArray(mode === 'search' ? data.results : data.suggestions)) throw new Error('Invalid OpenPOI response');
+            renderCandidates(data, facilitiesOnly, mode);
         } catch (error) {
             if (version !== generation || panel.hidden) return;
             clearResults();
@@ -162,15 +169,24 @@
         else debounceTimer = setTimeout(() => search(query, version, facilitiesOnly), DEBOUNCE_MS);
     }
 
+    function submitSearch(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (composing || panel.hidden) return;
+        cancelSearch();
+        clearResults();
+        const query = input.value.trim();
+        if (query) search(query, generation, true, 'search');
+    }
+
+    searchButton.addEventListener('click', submitSearch);
     input.addEventListener('input', () => scheduleSearch());
     input.addEventListener('compositionstart', () => { composing = true; cancelSearch(); clearResults(); });
     input.addEventListener('compositionend', () => { composing = false; scheduleSearch(); });
     input.addEventListener('keydown', event => {
         if (event.isComposing || composing) return;
         if (event.key === 'Enter') {
-            event.preventDefault();
-            if (candidates.length) selectCandidate(candidates[0]);
-            else scheduleSearch(true);
+            submitSearch(event);
         }
         if (event.key === 'ArrowDown' && candidates.length) {
             event.preventDefault();

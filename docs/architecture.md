@@ -143,6 +143,8 @@ HTML内インラインJSの主な責務:
 
 `map-engine.js` の直後に読み込み、「場所を検索」内のOpenPOI通信、300ms debounce、日本語変換、候補描画・選択を担当します。共有 `map`、`COORD_JUMP_ZOOM`、`placeTempPin()`、`toggleCoordJumpPanel()` を再利用します。中核ファイルの変更はパネル開閉文言のみです。
 
+入力中は全国対象の `/v1/suggest`、検索ボタン・入力欄のEnterは `/v1/search` へ分けます。通信のmodeと応答配列（suggestions / results）、検索結果見出し・0件文言を分離し、中断・世代番号・候補描画・選択処理は共有します。地図範囲や中心は検索条件へ取得・送信しません。本検索は15件取得し、有効な座標を持つ施設を最大5件表示します。
+
 入力変更・パネルを閉じる操作でAbortControllerと世代番号により古い通信を無効化します。10秒でタイムアウトし、検索だけにエラーを表示します。APIの文字列はtextContentで描画し、結果はメモリだけで使用します。全画面中だけ同じ操作ガイドを `map-wrapper` 内へ移し、解除時に元の位置へ戻します。VisualViewportに応じてパネルのスクロール高さを調整します。
 
 ### `conf/rain-engine.js`（2026-10-01追加）

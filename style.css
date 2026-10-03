@@ -217,6 +217,10 @@
         .place-search-heading { display: block; margin-bottom: 6px; font-weight: bold; }
         .poi-search-section { min-width: 0; padding-bottom: 8px; border-bottom: 1px solid var(--color-border); }
         .poi-search-input { width: 100%; min-width: 0; box-sizing: border-box; min-height: 44px; padding: 8px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-size: 16px; }
+        .poi-search-row { display: flex; gap: 6px; }
+        .poi-search-row .poi-search-input { flex: 1; width: 0; }
+        .poi-search-btn { flex: 0 0 auto; min-width: 44px; min-height: 44px; padding: 6px 8px; border: 0; border-radius: var(--radius-sm); background: var(--color-primary); color: white; font-size: 0.75rem; font-weight: bold; cursor: pointer; touch-action: manipulation; }
+        .poi-search-result-heading { margin-top: 6px; font-size: 0.7rem; font-weight: bold; }
         .poi-search-results { max-height: min(220px, 30dvh); overflow-y: auto; overscroll-behavior: contain; margin-top: 4px; }
         .poi-search-results[hidden] { display: none; }
         .poi-search-candidate { display: block; width: 100%; min-height: 48px; padding: 8px; box-sizing: border-box; border: 0; border-bottom: 1px solid var(--color-border); background: var(--color-soft); color: var(--color-text); text-align: left; cursor: pointer; touch-action: manipulation; }

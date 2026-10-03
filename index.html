@@ -7,7 +7,7 @@
     <title>Rin’s Touring Hub</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <link rel="stylesheet" href="style.css?t=20261003-poi-search">
+    <link rel="stylesheet" href="style.css?t=20261003-poi-national">
     
 </head>
 <body>
@@ -59,7 +59,11 @@
                 <div id="coord-jump-panel" class="coord-jump-panel" hidden>
                     <section class="poi-search-section">
                         <label for="poi-search-input" class="place-search-heading">施設名・地名を検索</label>
-                        <input type="search" id="poi-search-input" class="poi-search-input" placeholder="草津温泉、宗谷岬、函館駅" autocomplete="off" aria-controls="poi-search-results">
+                        <div class="poi-search-row">
+                            <input type="search" id="poi-search-input" class="poi-search-input" placeholder="草津温泉、宗谷岬、函館駅" autocomplete="off" aria-controls="poi-search-results">
+                            <button type="button" id="poi-search-btn" class="poi-search-btn">検索</button>
+                        </div>
+                        <div id="poi-search-result-heading" class="poi-search-result-heading" hidden>検索結果</div>
                         <div id="poi-search-results" class="poi-search-results" aria-label="検索候補" hidden></div>
                         <div id="poi-search-status" class="poi-search-status" role="status" aria-live="polite"></div>
                         <div class="poi-search-credit">検索データ：<a href="https://openpoiapi.com/attribution.html" target="_blank" rel="noopener noreferrer">OpenPOI API</a></div>
@@ -125,7 +129,7 @@
 
 <script src="conf/common.js"></script>
 <script src="conf/map-engine.js?v=20261003-poi-search"></script>
-<script src="conf/poi-search.js?v=20261003"></script>
+<script src="conf/poi-search.js?v=20261003-national"></script>
 <script src="conf/rain-engine.js?v=20261001-compact"></script>
 <script src="conf/michi-no-eki.js"></script>
 <script src="conf/weather-engine.js"></script>

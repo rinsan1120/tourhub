@@ -257,12 +257,12 @@ Feature geometry:
 
 ### OpenPOI API（2026-10-03追加）
 
-`GET https://api.openpoiapi.com/v1/suggest` を `conf/poi-search.js` から呼び出します。
+`conf/poi-search.js` から全国検索を呼び出します。
 
-- `q`: 入力文字列、`limit=5`、`fields=minimal`
-- `bbox`: Leaflet getBoundsから `[west,south,east,north]` をカンマ連結（経度・緯度の順）
-- `center`: Leaflet getCenterから `lng,lat`
-- `suggestions`: `name`、`address`、`lat`、`lng`を利用
+- 入力補完: `GET https://api.openpoiapi.com/v1/suggest` に `q`、`limit=5`、`fields=minimal`のみ。応答の `suggestions` を利用
+- 検索確定: `GET https://api.openpoiapi.com/v1/search` に `q`、`limit=15`のみ。応答の `results` を利用し、座標が有効な施設を最大5件表示
+- どちらもリクエストへ `bbox` / `center` / `radius` を付けず、地図範囲・中心も取得しない
+- 施設の `name`、`address`、`lat`、`lng`を利用。searchは数値文字列の座標も数値化する。空文字・null・無効座標は除外する
 - `vocabulary`: `type`、`label`、`query`を利用。placeのみbbox `[minLng,minLat,maxLng,maxLat]` / center `[lng,lat]`で移動
 - `licenses` / `attributions`: minimal応答ではトップレベルに存在。今回は保存せず、将来永続保存する場合はこれらも保存して条件を再確認する
 
