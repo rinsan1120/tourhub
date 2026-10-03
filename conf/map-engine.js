@@ -796,10 +796,10 @@ function initOneFingerZoomControl() {
 map.on('touchstart', (e) => { if (e.originalEvent.touches.length === 1) pressTimer = setTimeout(() => placeTempPin(e.latlng), 800); });
 map.on('touchend dblclick touchmove', clearLongPressTimer);
 
-function placeTempPin(latlng) {
+function placeTempPin(latlng, name = "指定した地点") {
     if (tempMarker) tempMarker.setLatLng(latlng);
     else tempMarker = L.marker(latlng).addTo(map);
-    tempMarker.bindPopup(createPopupContent("指定した地点", latlng.lat, latlng.lng)).openPopup();
+    tempMarker.bindPopup(createPopupContent(name, latlng.lat, latlng.lng)).openPopup();
 }
 
 function isMobileMapView() {

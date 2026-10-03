@@ -79,8 +79,8 @@
         } else {
             if (!validPoint(item.lng, item.lat)) return;
             map.setView([item.lat, item.lng], COORD_JUMP_ZOOM);
-            placeTempPin({ lat: item.lat, lng: item.lng });
-        }
+			placeTempPin({ lat: item.lat, lng: item.lng }, item.name);        
+			}
         closePanel();
     }
 
