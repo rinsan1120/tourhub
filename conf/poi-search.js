@@ -87,7 +87,7 @@
     function renderCandidates(data, facilitiesOnly, mode) {
         const vocabulary = facilitiesOnly || mode === 'search' ? [] : (Array.isArray(data.vocabulary) ? data.vocabulary : []);
         const facilities = mode === 'search' ? data.results : data.suggestions;
-        // 地名・再検索候補も5件の枠内に含め、施設はAPIの順序を維持する。
+        // suggestは語彙も含め5件、searchは有効な施設を15件まで。APIの順序を維持する。
         // searchの座標は数値文字列の場合もある。空文字・null等は地点として扱わない。
         const coordinateNumber = value => typeof value === 'number' ? value :
             typeof value === 'string' && value.trim() ? Number(value) : NaN;
@@ -99,10 +99,11 @@
                     (Array.isArray(item.center) && validPoint(item.center[0], item.center[1])))) ||
                 (['category', 'brand'].includes(item.type) && typeof item.query === 'string' && item.query.trim())
             ));
+        const displayLimit = mode === 'search' ? SEARCH_FETCH_LIMIT : RESULT_LIMIT;
         candidates = [
             ...validVocabulary.slice(0, validFacilities.length ? VOCABULARY_LIMIT_WITH_FACILITIES : RESULT_LIMIT),
             ...validFacilities
-        ].slice(0, RESULT_LIMIT);
+        ].slice(0, displayLimit);
         results.replaceChildren();
         candidates.forEach(item => {
             const button = document.createElement('button');

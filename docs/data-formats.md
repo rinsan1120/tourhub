@@ -260,7 +260,7 @@ Feature geometry:
 `conf/poi-search.js` から全国検索を呼び出します。
 
 - 入力補完: `GET https://api.openpoiapi.com/v1/suggest` に `q`、`limit=5`、`fields=minimal`のみ。応答の `suggestions` を利用
-- 検索確定: `GET https://api.openpoiapi.com/v1/search` に `q`、`limit=15`のみ。応答の `results` を利用し、座標が有効な施設を最大5件表示
+- 検索確定: `GET https://api.openpoiapi.com/v1/search` に `q`、`limit=15`のみ。応答の `results` を利用し、無効データの除外後に座標が有効な施設を最大15件表示
 - どちらもリクエストへ `bbox` / `center` / `radius` を付けず、地図範囲・中心も取得しない
 - 施設の `name`、`address`、`lat`、`lng`を利用。searchは数値文字列の座標も数値化する。空文字・null・無効座標は除外する
 - `vocabulary`: `type`、`label`、`query`を利用。placeのみbbox `[minLng,minLat,maxLng,maxLat]` / center `[lng,lat]`で移動

@@ -223,6 +223,17 @@
         .poi-search-result-heading { margin-top: 6px; font-size: 0.7rem; font-weight: bold; }
         .poi-search-results { max-height: min(220px, 30dvh); overflow-y: auto; overscroll-behavior: contain; margin-top: 4px; }
         .poi-search-results[hidden] { display: none; }
+        .poi-search-result-heading:not([hidden]) + .poi-search-results { max-height: min(320px, 40dvh); }
+        /* 本検索は一覧を主なスクロール領域にする。小さい画面では既存のパネル高さ制限を維持。 */
+        @media (min-height: 501px) {
+            .coord-jump-panel:has(#poi-search-result-heading:not([hidden])) { max-height: min(520px, 60dvh, var(--poi-panel-max-height, 400px)); }
+            .coord-jump-panel:has(#poi-search-result-heading:not([hidden])) .poi-search-section { display: flex; flex-direction: column; min-height: 220px; }
+            .coord-jump-panel:has(#poi-search-result-heading:not([hidden])) .poi-search-section > :not(.poi-search-results) { flex-shrink: 0; }
+            @media (max-width: 767px) {
+                .coord-jump-panel:has(#poi-search-result-heading:not([hidden])) { max-height: min(520px, 60dvh, calc(65vh - 80px), var(--poi-panel-max-height, 400px)); }
+                #map-wrapper:fullscreen .coord-jump-panel:has(#poi-search-result-heading:not([hidden])) { max-height: min(520px, calc(100dvh - 260px), var(--poi-panel-max-height, 400px)); }
+            }
+        }
         .poi-search-candidate { display: block; width: 100%; min-height: 48px; padding: 8px; box-sizing: border-box; border: 0; border-bottom: 1px solid var(--color-border); background: var(--color-soft); color: var(--color-text); text-align: left; cursor: pointer; touch-action: manipulation; }
         .poi-search-candidate:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
         .poi-search-name { display: block; font-size: 0.9rem; font-weight: bold; overflow-wrap: anywhere; }
