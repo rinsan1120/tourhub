@@ -495,6 +495,7 @@ let mapDistanceLine = null;
 let mapDistanceCenter = null;
 let mapDistanceLabel = null;
 let mapDistanceUpdateFrame = null;
+let isMapDistanceIndicatorEnabled = false;
 
 function formatMapCenterDistance(distanceMeters) {
     if (distanceMeters >= MAP_DISTANCE_KILOMETER_DECIMAL_LIMIT_METERS) {
@@ -505,7 +506,7 @@ function formatMapCenterDistance(distanceMeters) {
 }
 
 function updateMapDistanceIndicator() {
-    if (!mapDistanceIndicator || !myLocMarker) {
+    if (!isMapDistanceIndicatorEnabled || !mapDistanceIndicator || !myLocMarker) {
         mapDistanceIndicator?.classList.remove('is-visible');
         return;
     }
@@ -543,7 +544,7 @@ function updateMapDistanceIndicator() {
 }
 
 function scheduleMapDistanceIndicatorUpdate() {
-    if (!mapDistanceIndicator || mapDistanceUpdateFrame !== null) return;
+    if (!isMapDistanceIndicatorEnabled || !mapDistanceIndicator || mapDistanceUpdateFrame !== null) return;
     mapDistanceUpdateFrame = requestAnimationFrame(() => {
         mapDistanceUpdateFrame = null;
         updateMapDistanceIndicator();
@@ -571,7 +572,27 @@ function initMapDistanceIndicator() {
     mapDistanceIndicator.appendChild(mapDistanceLabel);
 
     map.getContainer().appendChild(mapDistanceIndicator);
-    map.on('move zoom resize', scheduleMapDistanceIndicatorUpdate);
+    const toggle = document.getElementById('map-distance-indicator-toggle');
+    if (toggle) {
+        toggle.checked = false;
+        toggle.addEventListener('change', () => setMapDistanceIndicatorEnabled(toggle.checked));
+    }
+}
+
+function setMapDistanceIndicatorEnabled(enabled) {
+    if (isMapDistanceIndicatorEnabled === enabled) return;
+    isMapDistanceIndicatorEnabled = enabled;
+    if (enabled) {
+        map.on('move zoom resize', scheduleMapDistanceIndicatorUpdate);
+        scheduleMapDistanceIndicatorUpdate();
+        return;
+    }
+    map.off('move zoom resize', scheduleMapDistanceIndicatorUpdate);
+    if (mapDistanceUpdateFrame !== null) {
+        cancelAnimationFrame(mapDistanceUpdateFrame);
+        mapDistanceUpdateFrame = null;
+    }
+    mapDistanceIndicator?.classList.remove('is-visible');
 }
 
 // flyToの第2引数は現在地へ移動するときのズーム値。大きくすると現在地周辺をより詳細に表示します。
@@ -1496,6 +1517,21 @@ async function loadUmapData() {
                 legend.appendChild(item);
             }
         });
+
+        if (!document.getElementById('legend-item-distance-indicator')) {
+            const item = document.createElement('label');
+            item.className = 'legend-item';
+            item.id = 'legend-item-distance-indicator';
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.id = 'map-distance-indicator-toggle';
+            input.setAttribute('aria-label', '距離表示');
+            input.addEventListener('change', () => setMapDistanceIndicatorEnabled(input.checked));
+            const label = document.createElement('span');
+            label.textContent = '距離表示';
+            item.append(input, label);
+            legend.appendChild(item);
+        }
 
         updateMapLoadingTask(loadingTaskId, 0, totalFeatures);
         updateMapLoadingTask(loadingTaskId, totalFeatures, totalFeatures);
