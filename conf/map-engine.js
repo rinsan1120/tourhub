@@ -1492,7 +1492,7 @@ async function loadUmapData() {
                             touchLine.on('click', event => {
                                 const nearest = getNearestScenicRouteLatLng(event.latlng, c);
                                 popupContent = nearest ? createPopupContent(f.properties.name || "名道",
-                                    nearest.lat, nearest.lng, f.properties.description, n, false) : '';
+                                    nearest.lat, nearest.lng, f.properties.description, n, true) : '';
                             });
                             touchLine.bindPopup(() => popupContent);
                         } else {

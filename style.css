@@ -1138,6 +1138,8 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 }
 @media (min-width: 1100px) { .hub-below-map .link-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
 @media (hover:hover) { .hub-below-map .link-card:hover { border-color:#b9c8c1; background:#f8faf8; color:#203d43; } }
+/* Leaflet's popup is nested in a transformed pane; elevate its map wrapper only while a mobile spot popup is open. */
+.map-section:has(> #map-wrapper.is-mobile-map-ui:not(.is-mobile-fullscreen-ui) .leaflet-popup-pane .spot-popup) > #map-wrapper { position:relative; z-index:1001; }
 @media (prefers-reduced-motion: reduce) {
     .hub-drawer, .hub-drawer-overlay,
     .hub-below-map .toggle-icon,
