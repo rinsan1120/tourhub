@@ -399,6 +399,36 @@
             .leaflet-popup-content:has(> .spot-popup) { max-height: 75dvh; }
             #map-wrapper:is(:fullscreen, .is-pseudo-fullscreen) .leaflet-popup-content:has(> .spot-popup) { max-height: 75dvh; }
         }
+        .map-distance-indicator {
+            position: absolute;
+            inset: 0;
+            z-index: 450;
+            display: none;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .map-distance-indicator.is-visible { display: block; }
+        .map-distance-line {
+            fill: none;
+            stroke: #d3483e;
+            stroke-width: 2px;
+            stroke-dasharray: 5 5;
+            stroke-linecap: round;
+            opacity: 0.82;
+        }
+        .map-distance-center {
+            fill: #c62828;
+            stroke: rgba(255, 255, 255, 0.75);
+            stroke-width: 0.75px;
+        }
+        .map-distance-label {
+            fill: #b42318;
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            text-anchor: middle;
+            filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.45));
+        }
 
         .weather-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; cursor: pointer; }
         .weather-card-header h2 { margin: 0; font-size: 1.1rem; border-left: 3px solid var(--color-primary); padding-left: 10px; }

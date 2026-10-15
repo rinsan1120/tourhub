@@ -1,6 +1,11 @@
 // --- 地図制御（聖域：ロジック改変厳禁） ---
 // setViewの第1引数は初期中心、第2引数は初期ズーム。変更するとサイトを開いた直後の地図位置と縮尺が変わります。
 const map = L.map('map', { tap: false, doubleClickZoom: true }).setView([35.6895, 139.6917], 11);
+const MAP_DISTANCE_HIDE_THRESHOLD_METERS = 50;
+const MAP_DISTANCE_KILOMETER_THRESHOLD_METERS = 1000;
+const MAP_DISTANCE_KILOMETER_DECIMAL_LIMIT_METERS = 10000;
+const MAP_DISTANCE_CENTER_RADIUS_PX = 5;
+const MAP_DISTANCE_LABEL_OFFSET_PX = 12;
 let hasReceivedInitialLocation = false;
 let hasUserInteractedWithMap = false;
 
@@ -481,7 +486,92 @@ function updateMyLocation() {
         updateLocationHeading(pos.coords, latlng);
         if (isLocationTracking) map.panTo(latlng, { animate: false });
         else if (isFirstLocation && !hasUserInteractedWithMap) map.panTo(latlng, { animate: false });
+        scheduleMapDistanceIndicatorUpdate();
     }, null, { enableHighAccuracy: true });
+}
+
+let mapDistanceIndicator = null;
+let mapDistanceLine = null;
+let mapDistanceCenter = null;
+let mapDistanceLabel = null;
+let mapDistanceUpdateFrame = null;
+
+function formatMapCenterDistance(distanceMeters) {
+    if (distanceMeters >= MAP_DISTANCE_KILOMETER_DECIMAL_LIMIT_METERS) {
+        return `${Math.round(distanceMeters / 1000)} km`;
+    }
+    if (distanceMeters >= MAP_DISTANCE_KILOMETER_THRESHOLD_METERS) return `${(distanceMeters / 1000).toFixed(1)} km`;
+    return `${Math.round(distanceMeters)} m`;
+}
+
+function updateMapDistanceIndicator() {
+    if (!mapDistanceIndicator || !myLocMarker) {
+        mapDistanceIndicator?.classList.remove('is-visible');
+        return;
+    }
+
+    const mapSize = map.getSize();
+    if (mapSize.x <= 0 || mapSize.y <= 0) return;
+
+    const center = map.getCenter();
+    const distanceMeters = map.distance(myLocMarker.getLatLng(), center);
+    if (!Number.isFinite(distanceMeters) || distanceMeters <= MAP_DISTANCE_HIDE_THRESHOLD_METERS) {
+        mapDistanceIndicator.classList.remove('is-visible');
+        return;
+    }
+
+    const centerPoint = mapSize.divideBy(2);
+    const locationPoint = map.latLngToContainerPoint(myLocMarker.getLatLng());
+    const deltaX = locationPoint.x - centerPoint.x;
+    const deltaY = locationPoint.y - centerPoint.y;
+    const edgeScale = Math.min(
+        1,
+        deltaX === 0 ? 1 : mapSize.x / 2 / Math.abs(deltaX),
+        deltaY === 0 ? 1 : mapSize.y / 2 / Math.abs(deltaY)
+    );
+    mapDistanceIndicator.setAttribute('viewBox', `0 0 ${mapSize.x} ${mapSize.y}`);
+    mapDistanceLine.setAttribute('x1', centerPoint.x);
+    mapDistanceLine.setAttribute('y1', centerPoint.y);
+    mapDistanceLine.setAttribute('x2', centerPoint.x + deltaX * edgeScale);
+    mapDistanceLine.setAttribute('y2', centerPoint.y + deltaY * edgeScale);
+    mapDistanceCenter.setAttribute('cx', centerPoint.x);
+    mapDistanceCenter.setAttribute('cy', centerPoint.y);
+    mapDistanceLabel.setAttribute('x', centerPoint.x);
+    mapDistanceLabel.setAttribute('y', centerPoint.y - MAP_DISTANCE_LABEL_OFFSET_PX);
+    mapDistanceLabel.textContent = formatMapCenterDistance(distanceMeters);
+    mapDistanceIndicator.classList.add('is-visible');
+}
+
+function scheduleMapDistanceIndicatorUpdate() {
+    if (!mapDistanceIndicator || mapDistanceUpdateFrame !== null) return;
+    mapDistanceUpdateFrame = requestAnimationFrame(() => {
+        mapDistanceUpdateFrame = null;
+        updateMapDistanceIndicator();
+    });
+}
+
+function initMapDistanceIndicator() {
+    const svgNamespace = 'http://www.w3.org/2000/svg';
+    mapDistanceIndicator = document.createElementNS(svgNamespace, 'svg');
+    mapDistanceIndicator.classList.add('map-distance-indicator');
+    mapDistanceIndicator.setAttribute('aria-hidden', 'true');
+    mapDistanceIndicator.setAttribute('focusable', 'false');
+
+    mapDistanceLine = document.createElementNS(svgNamespace, 'line');
+    mapDistanceLine.classList.add('map-distance-line');
+    mapDistanceIndicator.appendChild(mapDistanceLine);
+
+    mapDistanceCenter = document.createElementNS(svgNamespace, 'circle');
+    mapDistanceCenter.classList.add('map-distance-center');
+    mapDistanceCenter.setAttribute('r', MAP_DISTANCE_CENTER_RADIUS_PX);
+    mapDistanceIndicator.appendChild(mapDistanceCenter);
+
+    mapDistanceLabel = document.createElementNS(svgNamespace, 'text');
+    mapDistanceLabel.classList.add('map-distance-label');
+    mapDistanceIndicator.appendChild(mapDistanceLabel);
+
+    map.getContainer().appendChild(mapDistanceIndicator);
+    map.on('move zoom resize', scheduleMapDistanceIndicatorUpdate);
 }
 
 // flyToの第2引数は現在地へ移動するときのズーム値。大きくすると現在地周辺をより詳細に表示します。
@@ -1347,6 +1437,7 @@ function initMap() {
     updateGuideText();
     initOneFingerZoomControl();
     initCoordJumpControl();
+    initMapDistanceIndicator();
     initViewportFeatureGeneration();
     updateMyLocation();
     loadUmapData();
