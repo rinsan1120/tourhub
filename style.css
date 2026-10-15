@@ -822,3 +822,146 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
     white-space: nowrap;
     pointer-events: none;
 }
+
+/* Scenic Utility: 地図の既存トークン・寸法・セレクタには触れない。 */
+.hub-site {
+    --hub-ink: #192f35;
+    --hub-deep: #203d43;
+    --hub-paper: #f0efe9;
+    --hub-accent: #326875;
+    --hub-sand: #c9a46c;
+    --hub-surface: #ffffff;
+    --hub-line: #d2d7cf;
+    --hub-muted: #53656a;
+    background: var(--hub-paper);
+}
+.hub-header { background: var(--hub-ink); }
+.hub-header .header-logo { border-radius: 3px; background: var(--hub-surface); }
+.hub-header h1 { font-weight: 500; }
+.hub-header .menu-toggle {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 3px;
+    background: transparent;
+    color: #fff;
+    font-size: 1.35rem;
+}
+.hub-header .menu-toggle::before { content: ''; position: absolute; inset: -4px 0; }
+.hub-below-map { min-width: 0; color: var(--hub-ink); }
+.hub-below-map .content-card { margin: 0; border: 0; border-radius: 0; padding: 0; background: transparent; box-shadow: none; }
+.hub-below-map h2 { margin: 0 0 20px; border: 0; padding: 0; font-size: 1.2rem; font-weight: 600; line-height: 1.6; color: var(--hub-ink); }
+.hub-below-map .spot-contribution { margin: 0 0 24px; text-align: right; }
+.hub-below-map .spot-contribution-link { min-height: 44px; box-sizing: border-box; padding: 8px 0; border-radius: 0; color: var(--hub-muted); font-size: 0.85rem; }
+.hub-below-map .spot-contribution-link span { font-size: 0.75rem; }
+.hub-below-map .hub-nearby { padding: 28px; background: var(--hub-deep); color: #fff; border-radius: 4px; }
+.hub-below-map .hub-nearby h2 { color: #fff; margin-bottom: 20px; }
+.hub-below-map .nearby-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.hub-below-map .btn-nearby {
+    min-width: 0;
+    min-height: 84px;
+    padding: 8px 6px;
+    gap: 6px;
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 3px;
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+.hub-below-map .btn-nearby i { font-size: 1.35rem; color: var(--hub-sand); }
+.hub-below-map .hub-weather { margin-top: 32px; padding: 28px; background: var(--hub-surface); border-top: 3px solid var(--hub-sand); }
+.hub-below-map .hub-weather-search { padding-bottom: 24px; border-bottom: 1px solid var(--hub-line); }
+.hub-below-map .hub-weather-search-controls { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.hub-below-map .weather-search-input { min-width: 0; margin: 0; min-height: 48px; background: var(--hub-paper); border-color: var(--hub-line); border-radius: 3px; font-size: 16px; color: var(--hub-ink); }
+.hub-below-map .weather-search-btn { min-height: 48px; background: var(--hub-accent); border-radius: 3px; font: inherit; font-weight: 600; }
+.hub-below-map .weather-card { padding-top: 24px; }
+.hub-below-map .weather-card-header { min-height: 48px; gap: 12px; margin-bottom: 16px; }
+.hub-below-map .weather-card-header.collapsed { margin-bottom: 0; }
+.hub-below-map .weather-card-header h2 { margin: 0; padding: 0; border: 0; font-size: 1rem; }
+.hub-below-map .toggle-icon { color: var(--hub-accent); }
+.hub-below-map .refresh-area { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; }
+.hub-below-map .refresh-hint { font-size: 0.75rem; margin: 0; color: var(--hub-muted); }
+.hub-below-map #refresh-weather-btn { min-height: 44px; border-radius: 3px; border-color: var(--hub-line); background: var(--hub-paper); color: var(--hub-ink); }
+.hub-below-map .weather-tabs { gap: 4px; margin-bottom: 12px; }
+.hub-below-map .weather-tab { min-height: 44px; padding: 10px 14px; border-radius: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--hub-muted); }
+.hub-below-map .weather-tab.active { border-bottom-color: var(--hub-accent); background: var(--hub-paper); color: var(--hub-ink); }
+.hub-below-map .weather-table-container { max-width: 100%; border-radius: 0; border-color: var(--hub-line); overflow-x: auto; overscroll-behavior-x: contain; }
+.hub-below-map .weather-header,
+.hub-below-map .weather-row { min-width: 360px; grid-template-columns: 120px repeat(3, minmax(80px, 1fr)); }
+.hub-below-map .weather-header { background: var(--hub-paper); border-bottom: 1px solid var(--hub-line); }
+.hub-below-map .header-cell { font-size: 0.8rem; }
+.hub-below-map .weather-row { padding: 14px 0; border-color: var(--hub-line); }
+.hub-below-map .city-name { font-size: 0.875rem; overflow-wrap: anywhere; }
+.hub-below-map .city-name a { color: var(--hub-ink) !important; }
+.hub-below-map .pref-name { margin-top: 4px; font-size: 0.75rem; color: var(--hub-muted); }
+.hub-below-map .forecast-unit { font-size: 0.75rem; line-height: 1.6; }
+.hub-below-map .forecast-unit > span { color: var(--hub-accent) !important; }
+.hub-below-map .forecast-unit > div { font-size: 0.75rem !important; }
+.hub-below-map #weather-warning { padding: 12px !important; font-size: 0.75rem !important; line-height: 1.6 !important; color: #77542a !important; background: #f7f1e6 !important; border-color: var(--hub-line) !important; }
+.hub-below-map .hub-plan { margin-top: 48px; padding-top: 28px; border-top: 1px solid var(--hub-line); }
+.hub-below-map .link-category + .link-category { margin-top: 28px; }
+.hub-below-map .link-category h3 { margin: 0 0 10px; padding-bottom: 10px; border-bottom: 1px solid var(--hub-line); color: var(--hub-muted); font-size: 0.875rem; line-height: 1.6; }
+.hub-below-map .link-category h3 i { color: var(--hub-sand); }
+.hub-below-map .link-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 18px; row-gap: 0; }
+.hub-below-map .link-card { display: block; min-width: 0; min-height: 64px; padding: 16px 4px; border: 0; border-bottom: 1px solid var(--hub-line); border-radius: 0; background: transparent; color: var(--hub-ink); font-size: 0.875rem; font-weight: 500; text-align: left; line-height: 1.7; overflow-wrap: anywhere; }
+.hub-below-map .hub-updates { margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--hub-line); }
+.hub-below-map .hub-updates h2 { font-size: 1rem; }
+.hub-below-map .update-list { font-size: 0.85rem; color: var(--hub-muted); }
+.hub-below-map .update-list li { display: grid; gap: 6px; padding: 12px 0; margin: 0; border-color: var(--hub-line); line-height: 1.7; overflow-wrap: anywhere; }
+.hub-update-date { font-variant-numeric: tabular-nums; font-size: 0.75rem; color: var(--hub-accent); }
+.hub-drawer-overlay { background: rgba(25,47,53,0.55); }
+.hub-drawer { width: min(360px, 100vw); right: -360px; visibility: hidden; padding: 24px; background: var(--hub-paper); color: var(--hub-ink); box-shadow: -12px 0 40px rgba(25,47,53,0.2); }
+.hub-drawer.open { visibility: visible; }
+.hub-drawer .drawer-close { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; margin-left: auto; border: 1px solid var(--hub-line); border-radius: 3px; background: transparent; color: var(--hub-ink); }
+.hub-drawer .hub-drawer-category { margin: 28px 0 12px; padding-bottom: 10px; border-bottom: 1px solid var(--hub-line); color: var(--hub-muted); font-size: 0.9rem; }
+.hub-drawer .drawer-link-card { min-height: 48px; box-sizing: border-box; padding: 14px 0; margin: 0; border: 0; border-bottom: 1px solid var(--hub-line); border-radius: 0; background: transparent; color: var(--hub-ink); text-align: left; font-weight: 500; overflow-wrap: anywhere; }
+.hub-site .site-footer { margin-top: 24px; padding: 32px 20px; border-top: 1px solid var(--hub-line); background: var(--hub-ink); color: #d2d7cf; line-height: 1.8; }
+.hub-site .site-footer .footer-sources { max-width: 1000px; }
+.hub-site .site-footer a { color: #fff; text-underline-offset: 4px; }
+.hub-site .site-footer .footer-social { width: 44px; height: 44px; border: 1px solid #65777b; border-radius: 3px; }
+.hub-below-map :is(a, button, input):focus-visible,
+.hub-header .menu-toggle:focus-visible,
+.hub-drawer :is(a, button):focus-visible,
+.hub-site .site-footer a:focus-visible { outline: 3px solid var(--hub-sand); outline-offset: 3px; }
+@media (hover: hover) {
+    .hub-below-map .btn-nearby:hover { background: rgba(255,255,255,0.12); color: #fff; border-color: var(--hub-sand); }
+    .hub-below-map .weather-search-btn:hover { background: var(--hub-ink); }
+    .hub-below-map .link-card:hover,
+    .hub-drawer .drawer-link-card:hover { background: rgba(50,104,117,0.06); color: var(--hub-accent); }
+    .hub-below-map .spot-contribution-link:hover { background: transparent; color: var(--hub-accent); text-decoration: underline; }
+}
+@media (min-width: 768px) {
+    .hub-below-map .hub-weather-search { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(0, 2fr); align-items: center; gap: 32px; }
+    .hub-below-map .hub-weather-search h2 { margin: 0; }
+    .hub-below-map .hub-weather-search-controls { grid-template-columns: minmax(0, 1fr) 160px; }
+    .hub-below-map .hub-plan,
+    .hub-below-map .hub-updates { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 32px; }
+    .hub-below-map .link-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .hub-below-map .update-list li { grid-template-columns: 100px minmax(0, 1fr); }
+}
+@media (min-width: 1100px) {
+    .hub-below-map .nearby-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .hub-below-map .link-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+    .hub-header .menu-toggle { height: 36px; }
+    .hub-below-map .hub-nearby { padding: 20px 16px; }
+    .hub-below-map .nearby-grid { gap: 8px; }
+    .hub-below-map .hub-weather { padding: 20px 16px; }
+    .hub-below-map .spot-contribution { text-align: left; }
+    .hub-below-map h2 { font-size: 1.1rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .hub-drawer, .hub-drawer-overlay,
+    .hub-below-map .toggle-icon,
+    .hub-below-map .weather-collapsible-content { transition: none; }
+}

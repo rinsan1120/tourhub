@@ -7,21 +7,21 @@
     <title>Rin’s Touring Hub</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <link rel="stylesheet" href="style.css?t=20261015-standard-mobile">
+    <link rel="stylesheet" href="style.css?t=20261015-scenic-hub">
     
 </head>
-<body>
-<header>
+<body class="hub-site">
+<header class="hub-header">
     <div class="header-content">
         <img src="./images/logo.jpg" alt="Logo" class="header-logo">
         <h1>Rin’s Touring Hub</h1>
-        <i class="fa-solid fa-bars menu-toggle" onclick="toggleDrawer()"></i>
+        <button type="button" class="menu-toggle" onclick="toggleDrawer()" aria-label="管理者メニュー"><i class="fa-solid fa-bars"></i></button>
     </div>
 </header>
 <!-- ▼追加：ドロワー要素▼ -->
-<div id="drawer-overlay" class="drawer-overlay" onclick="toggleDrawer()"></div>
-<div id="drawer-menu" class="drawer-menu">
-    <div class="drawer-close" onclick="toggleDrawer()"><i class="fa-solid fa-xmark"></i></div>
+<div id="drawer-overlay" class="drawer-overlay hub-drawer-overlay" onclick="toggleDrawer()"></div>
+<div id="drawer-menu" class="drawer-menu hub-drawer">
+    <button type="button" class="drawer-close" onclick="toggleDrawer()" aria-label="閉じる"><i class="fa-solid fa-xmark"></i></button>
     <div id="drawer-content">読み込み中...</div>
 </div>
 <!-- ▲追加ここまで▲ -->
@@ -86,6 +86,7 @@
         </div>
         <div id="legend" class="legend"><div class="legend-title">表示レイヤー切り替え</div><div id="legend-items"></div></div>
     </div>
+    <div class="hub-below-map">
     <div class="spot-contribution">
         <a href="https://docs.google.com/forms/d/e/1FAIpQLSdehrB_duWjjHXZBbfdP06jWxHQDwBeP20cQBR3OMX3DVtLZw/viewform?usp=sharing&ouid=106460317115165638365" 
            target="_blank" 
@@ -93,16 +94,18 @@
             <i class="fa-solid fa-plus"></i> 地図にスポットを追加する <span>（Googleフォーム）</span>
         </a>
     </div>
-    <div class="tool-grid">
-        <div class="content-card">
+        <section class="content-card hub-nearby">
             <h2>周辺施設検索</h2>
             <div id="nearby-container" class="nearby-grid">読み込み中...</div>
-        </div>
-        <div class="content-card">
+        </section>
+    <section class="hub-weather">
+        <div class="content-card hub-weather-search">
             <h2>地名で天気検索</h2>
+            <div class="hub-weather-search-controls">
             <input type="text" id="weather-input" placeholder="例：阿蘇山" class="weather-search-input">
-            <button class="btn-full weather-search-btn" onclick="searchWeather()">天気を検索</button>        </div>
-    </div>
+            <button class="btn-full weather-search-btn" onclick="searchWeather()">天気を検索</button>
+            </div>
+        </div>
 
     <div class="content-card weather-card">
         <div class="weather-card-header collapsed" onclick="toggleWeather()">
@@ -118,13 +121,15 @@
             </div>
         </div>
     </div>
+    </section>
 
-    <div class="content-card">
+    <section class="content-card hub-plan">
         <h2>旅の計画</h2>
         <div id="category-container">読み込み中...</div>
-    </div>
+    </section>
 
-    <div class="content-card updates-card"><h2>Update Log</h2><ul id="dynamic-update-list" class="update-list"></ul></div>
+    <section class="content-card updates-card hub-updates"><h2>Update Log</h2><ul id="dynamic-update-list" class="update-list"></ul></section>
+    </div>
 </main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -204,7 +209,7 @@
                 const line = cleanLine(rawLine);
                 if(!line) return;
                 const p = line.split('|'); if(p.length === 2) {
-                    const li = document.createElement('li'); li.innerHTML = `<span style="font-family:monospace; font-weight:bold; background:#e2e8f0; padding:2px 6px; border-radius:4px; margin-right:10px; font-size:0.8rem;">${p[0].trim()}</span><span>${p[1].trim()}</span>`;
+                    const li = document.createElement('li'); li.innerHTML = `<span class="hub-update-date">${p[0].trim()}</span><span>${p[1].trim()}</span>`;
                     list.appendChild(li);
                 }
             });
@@ -224,7 +229,7 @@
                 if(!line) return;
                 if(line.startsWith('※')) {
                     const h3 = document.createElement('h3');
-                    h3.style.cssText = "margin-top: 15px; margin-bottom: 10px; font-size: 1rem; border-left: 4px solid #3182ce; padding-left: 8px;";
+                    h3.className = 'hub-drawer-category';
                     h3.innerHTML = line.substring(1);
                     container.appendChild(h3);
                 } else if(line.includes(',')) {
@@ -268,7 +273,7 @@
     </div>
     <div class="footer-credit">
         <span>© 2026 Created by rinsan1120</span>
-        <a href="https://x.com/rinsan11201" target="_blank" class="footer-social" onmouseover="this.style.color='#1a202c'" onmouseout="this.style.color='#a0aec0'">
+        <a href="https://x.com/rinsan11201" target="_blank" class="footer-social">
             <i class="fa-brands fa-x-twitter"></i>
         </a>
     </div>
