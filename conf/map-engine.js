@@ -609,17 +609,18 @@ function createPopupContent(name, lat, lng, description = "", category = "", sho
     const gmapUrl = `https://www.google.com/maps/search/?api=1&query=${coords}`;
     const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=driving`;
     const localUrl = `${baseUrl}&avoid=tolls,highways`;
+    const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
     let html = `<div class="spot-popup">`;
-    html += `<div class="popup-heading"><span class="popup-title">${name}</span>`;
-    if (category) html += `<span class="popup-category">${category}</span>`;
+    html += `<div class="popup-heading"><span class="popup-title">${escapeHtml(name)}</span>`;
+    if (category) html += `<span class="popup-category">${escapeHtml(category)}</span>`;
+    if (description) html += `<button type="button" class="popup-description-trigger" data-description="${escapeHtml(description)}" data-category="${escapeHtml(category)}" aria-expanded="false">ⓘ 説明</button>`;
     html += `</div>`;
-    if (description) html += `<p class="popup-description">${description.replace(/\n/g, '<br>')}</p>`;
 
     html += `<div class="popup-actions">`;
     html += `<a class="popup-action popup-action-primary" href="${gmapUrl}" target="_blank">Googleマップで開く</a>`;
     html += `<div class="popup-route-actions">`;
-    html += `<a class="popup-action popup-action-secondary" href="${baseUrl}" target="_blank">ルート検索（高速）</a>`;
-    html += `<a class="popup-action popup-action-secondary" href="${localUrl}" target="_blank">ルート検索（下道）</a>`;
+    html += `<a class="popup-action popup-action-secondary" href="${baseUrl}" target="_blank">通常ルート</a>`;
+    html += `<a class="popup-action popup-action-secondary" href="${localUrl}" target="_blank">下道優先</a>`;
     html += `</div>`;
     if (showCopyCoords) {
         html += `<button type="button" class="copy-coords-btn popup-action popup-action-copy" data-lat="${lat}" data-lng="${lng}">緯度・経度をコピー</button>`;
@@ -651,7 +652,100 @@ function attachCopyCoordsHandler(e) {
             }
         });
     });
+    popupElement.querySelectorAll('.popup-description-trigger').forEach(button => {
+        button.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            openMapDescription(button);
+        }, { once: true });
+    });
 }
+
+let mapDescriptionLayer = null;
+let activeDescriptionTrigger = null;
+let descriptionPositionFrame = null;
+function ensureMapDescriptionLayer() {
+    if (mapDescriptionLayer) return mapDescriptionLayer;
+    const wrapper = document.getElementById('map-wrapper');
+    const layer = document.createElement('div');
+    layer.className = 'map-description-layer';
+    layer.hidden = true;
+    layer.innerHTML = '<button type="button" class="map-description-backdrop" aria-label="説明を閉じる" tabindex="-1"></button><section class="map-description-panel" role="dialog" aria-modal="false" aria-labelledby="map-description-title"><header class="map-description-header"><div class="map-description-heading"><h2 id="map-description-title"></h2><span class="map-description-category"></span></div><button type="button" class="map-description-close" aria-label="説明を閉じる">×</button></header><div class="map-description-body"></div></section>';
+    wrapper.appendChild(layer);
+    layer.querySelector('.map-description-backdrop').addEventListener('click', () => closeMapDescription());
+    layer.querySelector('.map-description-close').addEventListener('click', () => closeMapDescription({ restoreFocus: true }));
+    layer.querySelector('.map-description-panel').addEventListener('click', event => event.stopPropagation());
+    mapDescriptionLayer = layer;
+    return layer;
+}
+function positionMapDescription() {
+    if (!activeDescriptionTrigger || !mapDescriptionLayer || mapDescriptionLayer.hidden) return;
+    const panel = mapDescriptionLayer.querySelector('.map-description-panel');
+    const wrapper = document.getElementById('map-wrapper');
+    mapDescriptionLayer.classList.toggle('is-mobile', isMobileMapUI());
+    panel.setAttribute('aria-modal', String(isMobileMapUI()));
+    if (isMobileMapUI()) { panel.style.removeProperty('left'); panel.style.removeProperty('top'); panel.style.removeProperty('width'); return; }
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const triggerRect = activeDescriptionTrigger.closest('.leaflet-popup').getBoundingClientRect();
+    const gap = 12;
+    const maxWidth = Math.min(360, wrapperRect.width - 24);
+    panel.style.width = `${maxWidth}px`;
+    const leftSpace = triggerRect.left - wrapperRect.left - gap;
+    const rightSpace = wrapperRect.right - triggerRect.right - gap;
+    const placeRight = rightSpace >= Math.min(maxWidth, 260) || rightSpace >= leftSpace;
+    const available = Math.max(Math.min(240, maxWidth), Math.min(maxWidth, placeRight ? rightSpace : leftSpace));
+    panel.style.width = `${available}px`;
+    const left = placeRight ? triggerRect.right - wrapperRect.left + gap : triggerRect.left - wrapperRect.left - gap - available;
+    const top = Math.max(12, Math.min(triggerRect.top - wrapperRect.top, wrapperRect.height - panel.offsetHeight - 12));
+    panel.style.left = `${Math.max(12, Math.min(left, wrapperRect.width - available - 12))}px`;
+    panel.style.top = `${top}px`;
+}
+function scheduleMapDescriptionPosition() {
+    if (descriptionPositionFrame !== null) return;
+    descriptionPositionFrame = requestAnimationFrame(() => { descriptionPositionFrame = null; positionMapDescription(); });
+}
+function openMapDescription(trigger) {
+    closeMapDescription();
+    const layer = ensureMapDescriptionLayer();
+    activeDescriptionTrigger = trigger;
+    trigger.setAttribute('aria-expanded', 'true');
+    layer.querySelector('#map-description-title').textContent = trigger.closest('.spot-popup').querySelector('.popup-title')?.textContent || '';
+    const category = trigger.dataset.category || '';
+    const categoryNode = layer.querySelector('.map-description-category');
+    categoryNode.textContent = category;
+    categoryNode.hidden = !category;
+    layer.querySelector('.map-description-body').textContent = trigger.dataset.description || '';
+    layer.hidden = false;
+    positionMapDescription();
+    map.on('move', scheduleMapDescriptionPosition);
+    window.addEventListener('resize', scheduleMapDescriptionPosition);
+    window.addEventListener('orientationchange', scheduleMapDescriptionPosition);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleMapDescriptionPosition);
+}
+function closeMapDescription({ restoreFocus = false } = {}) {
+    if (!activeDescriptionTrigger) return;
+    const previousTrigger = activeDescriptionTrigger;
+    activeDescriptionTrigger = null;
+    previousTrigger.setAttribute('aria-expanded', 'false');
+    if (mapDescriptionLayer) mapDescriptionLayer.hidden = true;
+    map.off('move', scheduleMapDescriptionPosition);
+    window.removeEventListener('resize', scheduleMapDescriptionPosition);
+    window.removeEventListener('orientationchange', scheduleMapDescriptionPosition);
+    if (window.visualViewport) window.visualViewport.removeEventListener('resize', scheduleMapDescriptionPosition);
+    if (restoreFocus && previousTrigger.isConnected) previousTrigger.focus();
+}
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && activeDescriptionTrigger) {
+        event.preventDefault();
+        closeMapDescription({ restoreFocus: true });
+    }
+});
+document.addEventListener('click', event => {
+    if (!activeDescriptionTrigger || mapDescriptionLayer?.contains(event.target)) return;
+    const popup = activeDescriptionTrigger.closest('.leaflet-popup');
+    if (popup?.contains(event.target)) closeMapDescription();
+    else if (!document.getElementById('map-wrapper').contains(event.target)) closeMapDescription();
+}, true);
 
 const mapFullscreenWrapper = document.getElementById('map-wrapper');
 let pseudoFullscreenSnapshot = null;
@@ -1048,6 +1142,7 @@ function isMobileFullscreenMapUI() {
 
 map.on('contextmenu', (e) => { placeTempPin(e.latlng); return false; });
 map.on('popupopen', attachCopyCoordsHandler);
+map.on('popupclose', () => closeMapDescription());
 let pressTimer;
 // ダブルタップとみなす最大間隔。大きくするとゆっくりした2回タップでもズーム扱いになりやすくなります。
 const ONE_FINGER_ZOOM_TAP_INTERVAL = 350;
