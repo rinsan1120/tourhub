@@ -1,6 +1,21 @@
 // --- 地図制御（聖域：ロジック改変厳禁） ---
 // setViewの第1引数は初期中心、第2引数は初期ズーム。変更するとサイトを開いた直後の地図位置と縮尺が変わります。
 const map = L.map('map', { tap: false, doubleClickZoom: true }).setView([35.6895, 139.6917], 11);
+let hasReceivedInitialLocation = false;
+let hasUserInteractedWithMap = false;
+
+function markUserMapInteraction() {
+    hasUserInteractedWithMap = true;
+}
+
+const mapContainer = map.getContainer();
+['pointerdown', 'touchstart', 'wheel', 'keydown'].forEach(eventName => {
+    mapContainer.addEventListener(eventName, markUserMapInteraction, { capture: true, passive: true });
+});
+const poiSearchResults = document.getElementById('poi-search-results');
+['pointerdown', 'keydown'].forEach(eventName => {
+    poiSearchResults?.addEventListener(eventName, markUserMapInteraction, { capture: true, passive: true });
+});
 // ベース地図タイルの取得先。変更すると背景地図の提供元や見た目、利用条件が変わります。
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -368,6 +383,7 @@ function handleCoordJumpToggle(e) {
 }
 
 function jumpToInputCoordinates() {
+    markUserMapInteraction();
     const input = document.getElementById('coord-jump-input');
     if (!input) return;
 
@@ -455,16 +471,24 @@ function updateMyLocation() {
     if (!navigator.geolocation) return;
     navigator.geolocation.watchPosition((pos) => {
         const latlng = [pos.coords.latitude, pos.coords.longitude];
+        if (!Number.isFinite(latlng[0]) || latlng[0] < -90 || latlng[0] > 90 ||
+            !Number.isFinite(latlng[1]) || latlng[1] < -180 || latlng[1] > 180) return;
+        const isFirstLocation = !hasReceivedInitialLocation;
+        hasReceivedInitialLocation = true;
         if (!myLocMarker) {
             myLocMarker = L.marker(latlng, { icon: L.divIcon({ className: 'my-loc-con', html: '<div class="my-location-heading"><div class="my-location-marker"></div></div>', iconSize:[14,14], iconAnchor:[7,7] }) }).addTo(map);
         } else { myLocMarker.setLatLng(latlng); }
         updateLocationHeading(pos.coords, latlng);
         if (isLocationTracking) map.panTo(latlng, { animate: false });
+        else if (isFirstLocation && !hasUserInteractedWithMap) map.panTo(latlng, { animate: false });
     }, null, { enableHighAccuracy: true });
 }
 
 // flyToの第2引数は現在地へ移動するときのズーム値。大きくすると現在地周辺をより詳細に表示します。
-function goToMyLocation() { if (myLocMarker) map.flyTo(myLocMarker.getLatLng(), 14); }
+function goToMyLocation() {
+    markUserMapInteraction();
+    if (myLocMarker) map.flyTo(myLocMarker.getLatLng(), 14);
+}
 
 function setLocationTracking(enabled) {
     isLocationTracking = enabled;
@@ -479,6 +503,7 @@ function setLocationTracking(enabled) {
 }
 
 function toggleLocationTracking() {
+    markUserMapInteraction();
     setLocationTracking(!isLocationTracking);
     // panToはズームを指定せず、現在の倍率のまま中心だけを移動します。
     if (isLocationTracking && myLocMarker) map.panTo(myLocMarker.getLatLng(), { animate: false });
