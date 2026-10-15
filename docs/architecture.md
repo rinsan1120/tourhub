@@ -141,7 +141,7 @@ HTML内インラインJSの主な責務:
 
 ### `conf/poi-search.js`（2026-10-03追加）
 
-`map-engine.js` の直後に読み込み、「場所を検索」内のOpenPOI通信、300ms debounce、日本語変換、候補描画・選択を担当します。共有 `map`、`COORD_JUMP_ZOOM`、`placeTempPin()`、`toggleCoordJumpPanel()` を再利用します。中核ファイルの変更はパネル開閉文言のみです。
+`map-engine.js` の直後に読み込み、「場所を検索」内のOpenPOI通信、300ms debounce、日本語変換、候補描画・選択を担当します。共有 `map`、`COORD_JUMP_ZOOM`、`placeTempPin()`、`toggleCoordJumpPanel()` を再利用します。全画面UIの表示判定はmap-engine.jsの共通関数を参照します。
 
 入力中は全国対象の `/v1/suggest`、検索ボタン・入力欄のEnterは `/v1/search` へ分けます。通信のmodeと応答配列（suggestions / results）、検索結果見出し・0件文言を分離し、中断・世代番号・候補描画・選択処理は共有します。地図範囲や中心は検索条件へ取得・送信しません。suggestは最大5件、本検索は15件取得して有効な座標を持つ施設を最大15件表示します。本検索一覧は最大320px・画面高さ40%に制限し、通常の高さの画面では一覧を主なスクロール領域にします。小さい画面では既存パネルの高さ制限も維持します。
 
@@ -275,3 +275,11 @@ conf/weather-engine.js
 `resizeFullscreenMap()` はrequestAnimationFrameで集約し、疑似全画面のVisualViewport寸法をCSS変数へ反映してからLeafletをinvalidateSizeします。非アニメーションpanで中心を維持し、`mapfullscreenresize` で検索パネルの高さを再計算します。resize・orientationchange・pageshow・visible復帰を処理し、疑似全画面ではVisualViewportのresize/scrollも監視します。
 
 疑似全画面は既存 `map-wrapper` と地図インスタンスを再利用します。bodyのインラインスタイル、ルートのoverflow、スクロール座標、凡例のDOM位置を保存・復元します。レイヤー凡例だけを既存文言のdetailsへ一時移動し、解除で元の位置へ戻します。雨雲通信・キャッシュ・自動更新、検索通信、現在地追従、ジェスチャ、レイヤー生成は変更していません。
+
+## スマホ全画面の表示調整（2026-10-15、Issue #1）
+
+全画面の状態管理は既存実装を維持し、map-engine.jsの `isMobileFullscreenMapUI()` を検索と操作列が共有します。HTMLへ追加した `map-action-buttons` は既存5ボタンの親で、通常/PCはdisplay:contents、スマホ全画面は縦flexです。ボタンの複製・イベント再登録はありません。
+
+map-engine.jsの表示用IIFEはmapfullscreenchange/mapfullscreenresize、resize/orientationchange、VisualViewport、既存の幅query・coarse/hover query、hidden/aria-pressed/open属性の変化を監視します。requestAnimationFrameで集約して可用高さ・実表示数から段階を選び、`--map-ui-*` CSS変数へボタン寸法・間隔・列の高さ・パネル制限を反映します。新しい全画面状態遷移は追加せず、既存のLeaflet invalidateSizeやWake Lock取得/解除も変更しません。
+
+poi-search.jsは同じ表示判定で検索終了・非表示を同期し、既存closePanel/cancelSearchのAbortController・世代番号・debounceを再利用します。全画面解除後は検索だけを閉じた状態で復元します。OpenPOIの通信仕様に変更はありません。rain-engine.js、地図データ、レイヤー生成、GPS・ジェスチャの処理は変更していません。

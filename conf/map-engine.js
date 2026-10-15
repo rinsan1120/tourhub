@@ -796,6 +796,108 @@ if (screenWakeLockMobileQuery.addEventListener) {
 }
 renderScreenWakeLock();
 
+// 全画面の状態遷移とは独立した表示調整。Wake Lock・ズームの既存幅条件は変更しない。
+const MAP_FULLSCREEN_UI_PHONE_SHORT_SIDE_MAX = 767;
+const mapFullscreenTouchQuery = window.matchMedia('(pointer: coarse) and (hover: none)');
+function isMobileFullscreenMapUI() {
+    const screenShortSide = Math.min(window.screen.width, window.screen.height);
+    return isMapFullscreen() && (screenWakeLockMobileQuery.matches ||
+        (mapFullscreenTouchQuery.matches && screenShortSide > 0 &&
+            screenShortSide <= MAP_FULLSCREEN_UI_PHONE_SHORT_SIDE_MAX));
+}
+
+(() => {
+    const wrapper = mapFullscreenWrapper;
+    const column = document.getElementById('map-action-buttons');
+    const guide = document.getElementById('operation-guide');
+    const wakeStatus = document.getElementById('screen-wake-lock-status');
+    const BUTTON_STAGES = [
+        { size: 56, gap: 8 }, { size: 52, gap: 6 },
+        { size: 48, gap: 6 }, { size: 44, gap: 4 }
+    ];
+    const TOP_MARGIN = 18;
+    const BOTTOM_MARGIN = 24; // Leaflet帰属表示を避ける。
+    const SIDE_MARGIN = 10;
+    const PANEL_GAP = 8;
+    const COLUMN_PADDING = 4;
+    const SCROLLBAR_SPACE = 16;
+    let frame = null;
+
+    function layout() {
+        frame = null;
+        if (!isMobileFullscreenMapUI()) return;
+        const rect = wrapper.getBoundingClientRect();
+        const viewport = window.visualViewport;
+        const visibleTop = Math.max(rect.top, viewport ? viewport.offsetTop : 0) - rect.top;
+        const visibleBottom = Math.min(rect.bottom, viewport ? viewport.offsetTop + viewport.height : window.innerHeight) - rect.top;
+        const style = getComputedStyle(wrapper);
+        const safe = edge => parseFloat(style.getPropertyValue(`--map-ui-safe-${edge}`)) || 0;
+        const top = visibleTop + safe('top') + TOP_MARGIN;
+        const available = Math.max(0, visibleBottom - safe('bottom') - BOTTOM_MARGIN - top);
+        const count = Array.from(column.children).filter(button => !button.hidden && getComputedStyle(button).display !== 'none').length;
+        const columnHeight = stage => count * stage.size + Math.max(0, count - 1) * stage.gap;
+        const stage = BUTTON_STAGES.find(item => columnHeight(item) <= available - COLUMN_PADDING * 2) || BUTTON_STAGES[BUTTON_STAGES.length - 1];
+        const scrolling = columnHeight(stage) > available - COLUMN_PADDING * 2;
+        column.classList.toggle('is-scrollable', scrolling);
+        column.classList.toggle('is-exit-pinned', scrolling && available >= stage.size * 2 + stage.gap + COLUMN_PADDING * 2);
+        const columnWidth = stage.size + COLUMN_PADDING * 2 + (scrolling ? SCROLLBAR_SPACE : 0);
+        const set = (name, value) => wrapper.style.setProperty(`--map-ui-${name}`, `${value}px`);
+        set('button-size', stage.size);
+        set('button-gap', stage.gap);
+        set('column-width', columnWidth);
+        set('column-top', top);
+        set('column-height', available);
+        const zoom = wrapper.querySelector('.leaflet-control-zoom');
+        const zoomRight = zoom ? zoom.getBoundingClientRect().right - rect.left : safe('left');
+        set('content-left', Math.max(safe('left'), zoomRight) + SIDE_MARGIN);
+        set('content-right', safe('right') + SIDE_MARGIN + columnWidth + PANEL_GAP);
+        set('guide-top', visibleTop + safe('top') + TOP_MARGIN);
+        const guideBottom = guide.getBoundingClientRect().bottom - rect.top;
+        set('status-top', guideBottom + PANEL_GAP);
+        const statusBottom = wakeStatus.hidden ? guideBottom : wakeStatus.getBoundingClientRect().bottom - rect.top;
+        const legend = wrapper.querySelector('.pseudo-fullscreen-legend');
+        const footer = legend ? Math.max(BOTTOM_MARGIN, rect.bottom - legend.getBoundingClientRect().top + PANEL_GAP) : safe('bottom') + BOTTOM_MARGIN;
+        set('panel-bottom', rect.height - visibleBottom + footer);
+        set('panel-height', Math.max(0, visibleBottom - footer - statusBottom - PANEL_GAP));
+    }
+
+    function sync() {
+        const active = isMobileFullscreenMapUI();
+        wrapper.classList.toggle('is-mobile-fullscreen-ui', active);
+        if (frame !== null) cancelAnimationFrame(frame);
+        frame = null;
+        if (active) frame = requestAnimationFrame(layout);
+        else {
+            column.classList.remove('is-scrollable');
+            column.classList.remove('is-exit-pinned');
+            column.scrollTop = 0;
+            Array.from(wrapper.style).filter(name => name.startsWith('--map-ui-')).forEach(name => wrapper.style.removeProperty(name));
+        }
+    }
+
+    // 列は地図の兄弟DOM。スクロールの既定動作を残して地図へは伝播させない。
+    L.DomEvent.disableClickPropagation(column);
+    L.DomEvent.disableScrollPropagation(column);
+    L.DomEvent.on(column, 'touchmove', L.DomEvent.stopPropagation);
+    document.addEventListener('mapfullscreenchange', sync);
+    document.addEventListener('mapfullscreenresize', sync);
+    window.addEventListener('resize', sync);
+    window.addEventListener('orientationchange', sync);
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', sync);
+        window.visualViewport.addEventListener('scroll', sync);
+    }
+    [screenWakeLockMobileQuery, mapFullscreenTouchQuery].forEach(query => {
+        if (query.addEventListener) query.addEventListener('change', sync);
+        else query.addListener(sync);
+    });
+    new MutationObserver(sync).observe(wrapper, {
+        subtree: true, attributes: true,
+        attributeFilter: ['hidden', 'aria-pressed', 'open']
+    });
+    sync();
+})();
+
 map.on('contextmenu', (e) => { placeTempPin(e.latlng); return false; });
 map.on('popupopen', attachCopyCoordsHandler);
 let pressTimer;

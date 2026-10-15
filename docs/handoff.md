@@ -108,3 +108,9 @@ http://localhost:8000/
 Fullscreen API優先＋非対応時だけ疑似全画面を追加しました。全画面を参照する機能はisMapFullscreen()/mapfullscreenchangeを使います。標準fullscreenchangeはmap-engine.jsが受けます。疑似全画面中のVisualViewport寸法変更後はmapfullscreenresizeで検索高さを同期します。
 
 ネイティブ経路、追従・ジェスチャ・雨雲通信・レイヤー生成、原本2ファイルを保護しています。実機iPhone / AndroidとGitHub Pages公開後は未確認です。検証の詳細・既存のネイティブ全画面凡例の制約は docs/verification.md と docs/map-behavior.md を参照してください。
+
+## スマホ全画面UI（2026-10-15、Issue #1）
+
+スマホ全画面では検索を閉じて非表示にし、操作ガイドだけを維持します。isMobileFullscreenMapUI()が既存isMapFullscreen()とスマホ向け表示条件を共有します。map-action-buttonsは同じ5ボタンの親で、通常/PCではdisplay:contentsです。56→52→48→44px、実表示個数とVisualViewport・セーフエリアによる段階縮小、不足時の縦列スクロールを実装しています。
+
+既存の全画面遷移・地図サイズ更新・元スクロール復元・Wake Lock・ズーム配置・雨雲通信は保護しています。最新仕様はmap-behavior.mdの第16節、検証の範囲と実機未確認事項はverification.mdのIssue #1の節を参照してください。ユーザー指示によりコミットまで実施し、プッシュはしません。

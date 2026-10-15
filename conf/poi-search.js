@@ -218,11 +218,23 @@
             panel.getBoundingClientRect().top - VIEWPORT_BOTTOM_MARGIN_PX;
         guide.style.setProperty('--poi-panel-max-height', `${Math.max(MIN_PANEL_HEIGHT_PX, available)}px`);
     }
+    let searchHiddenForMobileFullscreen = false;
+    function syncSearchVisibility() {
+        const hide = isMobileFullscreenMapUI();
+        if (hide || searchHiddenForMobileFullscreen) {
+            if (guide.contains(document.activeElement)) document.activeElement.blur();
+            closePanel(); // 既存のAbortController・debounce・世代番号を再利用。
+            composing = false;
+        }
+        document.getElementById('coord-jump-toggle').hidden = hide;
+        searchHiddenForMobileFullscreen = hide;
+        updatePanelHeight();
+    }
     new MutationObserver(() => {
         if (panel.hidden) { cancelSearch(); clearResults(); }
         else updatePanelHeight();
     }).observe(panel, { attributes: true, attributeFilter: ['hidden'] });
-    window.addEventListener('resize', updatePanelHeight);
+    window.addEventListener('resize', syncSearchVisibility);
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', updatePanelHeight);
         window.visualViewport.addEventListener('scroll', updatePanelHeight);
@@ -231,8 +243,13 @@
     document.addEventListener('mapfullscreenchange', () => {
         if (isMapFullscreen()) wrapper.append(guide);
         else guideAnchor.after(guide);
-        updatePanelHeight();
+        syncSearchVisibility();
     });
-    document.addEventListener('mapfullscreenresize', updatePanelHeight);
+    document.addEventListener('mapfullscreenresize', syncSearchVisibility);
+    [screenWakeLockMobileQuery, mapFullscreenTouchQuery].forEach(query => {
+        if (query.addEventListener) query.addEventListener('change', syncSearchVisibility);
+        else query.addListener(syncSearchVisibility);
+    });
+    syncSearchVisibility();
     window.addEventListener('pagehide', () => { cancelSearch(); clearResults(); });
 })();

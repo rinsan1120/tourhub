@@ -624,3 +624,93 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .pseudo-fullscreen-legend .legend-title { display: none; }
 #map-wrapper.is-pseudo-fullscreen .rain-panel,
 #map-wrapper.is-pseudo-fullscreen .rain-error { bottom: calc(env(safe-area-inset-bottom, 0px) + 64px); }
+
+/* 通常・PCでは既存の絶対配置の包含関係を維持する。 */
+#map-action-buttons { display: contents; }
+#map-wrapper.is-mobile-fullscreen-ui {
+    --map-ui-safe-top: env(safe-area-inset-top, 0px);
+    --map-ui-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --map-ui-safe-left: env(safe-area-inset-left, 0px);
+    --map-ui-safe-right: env(safe-area-inset-right, 0px);
+    --map-ui-button-size: 56px;
+    --map-ui-button-gap: 8px;
+    --map-ui-column-width: 64px;
+    --map-ui-text-ratio: 0.25;
+    --map-ui-icon-ratio: 0.43;
+}
+#map-wrapper.is-mobile-fullscreen-ui #coord-jump-toggle,
+#map-wrapper.is-mobile-fullscreen-ui #coord-jump-panel { display: none; }
+#map-wrapper.is-mobile-fullscreen-ui #map-action-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--map-ui-button-gap);
+    position: absolute;
+    top: var(--map-ui-column-top, calc(var(--map-ui-safe-top) + 18px));
+    right: calc(var(--map-ui-safe-right) + 10px);
+    width: var(--map-ui-column-width);
+    max-height: var(--map-ui-column-height, calc(100% - 42px));
+    box-sizing: border-box;
+    padding: 4px;
+    z-index: 1004;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+}
+#map-wrapper.is-mobile-fullscreen-ui #map-action-buttons.is-scrollable {
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+#map-wrapper.is-mobile-fullscreen-ui #map-action-buttons > button {
+    position: static;
+    inset: auto !important;
+    flex: 0 0 var(--map-ui-button-size);
+    width: var(--map-ui-button-size);
+    height: var(--map-ui-button-size);
+    min-width: var(--map-ui-button-size);
+    min-height: var(--map-ui-button-size);
+    box-sizing: border-box;
+    padding: 2px;
+    font-size: calc(var(--map-ui-button-size) * var(--map-ui-text-ratio));
+    line-height: 1.2;
+    touch-action: pan-y;
+}
+#map-wrapper.is-mobile-fullscreen-ui #map-action-buttons > :is(.loc-btn, .fullscreen-btn) { font-size: calc(var(--map-ui-button-size) * var(--map-ui-icon-ratio)); }
+#map-wrapper.is-mobile-fullscreen-ui #map-action-buttons > [hidden] { display: none; }
+#map-wrapper.is-mobile-fullscreen-ui #map-action-buttons.is-scrollable.is-exit-pinned > .fullscreen-btn {
+    position: sticky;
+    top: 0 !important;
+    bottom: 0 !important;
+    z-index: 1;
+    background: var(--color-surface);
+}
+#map-wrapper.is-mobile-fullscreen-ui #operation-guide {
+    left: var(--map-ui-content-left, 100px);
+    right: var(--map-ui-content-right, 82px);
+    top: var(--map-ui-guide-top, 18px);
+    max-width: 230px;
+    width: auto;
+    box-sizing: border-box;
+}
+#map-wrapper.is-mobile-fullscreen-ui .screen-wake-lock-status:not([hidden]) {
+    left: var(--map-ui-content-left, 100px);
+    right: var(--map-ui-content-right, 82px);
+    top: var(--map-ui-status-top, 50px);
+    width: auto;
+    max-width: none;
+    transform: none;
+}
+#map-wrapper.is-mobile-fullscreen-ui :is(.rain-panel, .rain-error) {
+    left: calc((100% + var(--map-ui-content-left, 100px) - var(--map-ui-content-right, 82px)) / 2);
+    right: auto;
+    bottom: var(--map-ui-panel-bottom, 24px);
+    width: max-content;
+    max-width: calc(100% - var(--map-ui-content-left, 100px) - var(--map-ui-content-right, 82px));
+    max-height: var(--map-ui-panel-height, calc(100% - 100px));
+    transform: translateX(-50%);
+    overflow-y: auto;
+}
+#map-wrapper.is-mobile-fullscreen-ui .rain-time-options { display: flex; }
+#map-wrapper.is-mobile-fullscreen-ui .pseudo-fullscreen-legend {
+    max-width: calc(100% - var(--map-ui-content-right, 82px) - var(--map-ui-safe-left) - 10px);
+}
