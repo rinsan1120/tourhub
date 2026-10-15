@@ -111,6 +111,6 @@ Fullscreen API優先＋非対応時だけ疑似全画面を追加しました。
 
 ## スマホ全画面UI（2026-10-15、Issue #1）
 
-スマホ全画面では検索を閉じて非表示にし、操作ガイドだけを維持します。isMobileFullscreenMapUI()が既存isMapFullscreen()とスマホ向け表示条件を共有します。map-action-buttonsは同じ5ボタンの親で、通常/PCではdisplay:contentsです。56→52→48→44px、実表示個数とVisualViewport・セーフエリアによる段階縮小、不足時の縦列スクロールを実装しています。
+スマホ全画面では検索を閉じて非表示にし、操作ガイドだけを維持します。Issue #6でisMobileMapUI()へ表示条件を共通化し、map-action-buttonsは雨雲・画面ON・追従・全画面の4ボタンの親へ変更しました。現在地は同じDOMを地図右下へ独立配置。スマホ通常表示も縦flex、PCだけdisplay:contentsです。全画面は現在地の予約領域も考慮して56→52→48→44pxへ段階縮小し、不足時は列だけスクロールします。通常表示は44pxで地図に対する絶対配置です。
 
-既存の全画面遷移・地図サイズ更新・元スクロール復元・Wake Lock・ズーム配置・雨雲通信は保護しています。最新仕様はmap-behavior.mdの第16節、検証の範囲と実機未確認事項はverification.mdのIssue #1の節を参照してください。ユーザー指示によりコミットまで実施し、プッシュはしません。
+既存の全画面遷移・地図サイズ更新・元スクロール復元・Wake Lock・ズーム配置・雨雲通信は保護しています。最新配置はmap-behavior.mdの第16節、検証範囲と実機未確認事項はverification.mdのIssue #6の節を参照してください。Issue #6ではCommit・Push後にIssueをCloseする明示指示があります。Issue #7のロック機能や空枠は追加していません。

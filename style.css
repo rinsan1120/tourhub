@@ -625,9 +625,9 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 #map-wrapper.is-pseudo-fullscreen .rain-panel,
 #map-wrapper.is-pseudo-fullscreen .rain-error { bottom: calc(env(safe-area-inset-bottom, 0px) + 64px); }
 
-/* 通常・PCでは既存の絶対配置の包含関係を維持する。 */
+/* PCでは既存の絶対配置を維持する。現在地は列の外にある同じDOMを使用。 */
 #map-action-buttons { display: contents; }
-#map-wrapper.is-mobile-fullscreen-ui {
+#map-wrapper.is-mobile-map-ui {
     --map-ui-safe-top: env(safe-area-inset-top, 0px);
     --map-ui-safe-bottom: env(safe-area-inset-bottom, 0px);
     --map-ui-safe-left: env(safe-area-inset-left, 0px);
@@ -640,7 +640,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 }
 #map-wrapper.is-mobile-fullscreen-ui #coord-jump-toggle,
 #map-wrapper.is-mobile-fullscreen-ui #coord-jump-panel { display: none; }
-#map-wrapper.is-mobile-fullscreen-ui #map-action-buttons {
+#map-wrapper.is-mobile-map-ui #map-action-buttons {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -651,17 +651,18 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
     width: var(--map-ui-column-width);
     max-height: var(--map-ui-column-height, calc(100% - 42px));
     box-sizing: border-box;
-    padding: 4px;
+    padding: var(--map-ui-column-padding, 4px);
     z-index: 1004;
     touch-action: pan-y;
     overscroll-behavior: contain;
 }
-#map-wrapper.is-mobile-fullscreen-ui #map-action-buttons.is-scrollable {
+#map-wrapper.is-mobile-map-ui #map-action-buttons.is-scrollable {
     overflow-x: hidden;
     overflow-y: auto;
     scrollbar-width: thin;
 }
-#map-wrapper.is-mobile-fullscreen-ui #map-action-buttons > button {
+#map-wrapper.is-mobile-map-ui #map-action-buttons > button,
+#map-wrapper.is-mobile-map-ui > .loc-btn {
     position: static;
     inset: auto !important;
     flex: 0 0 var(--map-ui-button-size);
@@ -675,14 +676,46 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
     line-height: 1.2;
     touch-action: pan-y;
 }
-#map-wrapper.is-mobile-fullscreen-ui #map-action-buttons > :is(.loc-btn, .fullscreen-btn) { font-size: calc(var(--map-ui-button-size) * var(--map-ui-icon-ratio)); }
-#map-wrapper.is-mobile-fullscreen-ui #map-action-buttons > [hidden] { display: none; }
-#map-wrapper.is-mobile-fullscreen-ui #map-action-buttons.is-scrollable.is-exit-pinned > .fullscreen-btn {
+#map-wrapper.is-mobile-map-ui #map-action-buttons > .fullscreen-btn,
+#map-wrapper.is-mobile-map-ui > .loc-btn { font-size: calc(var(--map-ui-button-size) * var(--map-ui-icon-ratio)); }
+#map-wrapper.is-mobile-map-ui > .loc-btn {
+    position: absolute;
+    top: auto !important;
+    left: auto !important;
+    right: var(--map-ui-location-right, 14px) !important;
+    bottom: var(--map-ui-location-bottom, 24px) !important;
+    touch-action: manipulation;
+    z-index: 1004;
+}
+#map-wrapper.is-mobile-map-ui #map-action-buttons > [hidden] { display: none; }
+#map-wrapper.is-mobile-map-ui:not(.is-mobile-fullscreen-ui) #map-action-buttons > .tracking-btn { font-size: 0.75rem; }
+#map-wrapper.is-mobile-map-ui:not(.is-mobile-fullscreen-ui) #map-action-buttons > .rain-toggle-btn { font-size: 0.7rem; }
+#map-wrapper.is-mobile-map-ui:not(.is-mobile-fullscreen-ui) #map-action-buttons > .fullscreen-btn,
+#map-wrapper.is-mobile-map-ui:not(.is-mobile-fullscreen-ui) > .loc-btn { font-size: 1.2rem; }
+#map-wrapper.is-mobile-map-ui #map-action-buttons.is-scrollable.is-exit-pinned > .fullscreen-btn {
     position: sticky;
     top: 0 !important;
     bottom: 0 !important;
-    z-index: 1;
+    z-index: 1001; /* 同じ列の通常ボタン（1000）より前面に固定する。 */
     background: var(--color-surface);
+}
+/* 通常表示のガイドはZoomバッジの下、右上列の左に置く。検索機能は維持。 */
+.map-section:has(> #map-wrapper.is-mobile-map-ui:not(.is-mobile-fullscreen-ui)) > #operation-guide {
+    top: 44px;
+    right: var(--map-mobile-controls-right, 78px);
+    max-width: min(230px, calc(100% - var(--map-mobile-controls-right, 78px) - 10px));
+    box-sizing: border-box;
+}
+#map-wrapper.is-mobile-map-ui .map-loading-status {
+    left: var(--map-ui-content-left, 50px);
+    right: var(--map-ui-content-right, 78px);
+    bottom: var(--map-ui-location-bottom, 24px);
+    transform: none;
+    max-width: none;
+    white-space: normal;
+}
+#map-wrapper.is-mobile-map-ui:not(.is-mobile-fullscreen-ui) .rain-error {
+    right: var(--map-ui-content-right, 78px);
 }
 #map-wrapper.is-mobile-fullscreen-ui #operation-guide {
     left: var(--map-ui-content-left, 100px);

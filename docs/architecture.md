@@ -286,8 +286,8 @@ conf/weather-engine.js
 
 ## スマホ全画面の表示調整（2026-10-15、Issue #1）
 
-全画面の状態管理は既存実装を維持し、map-engine.jsの `isMobileFullscreenMapUI()` を検索と操作列が共有します。HTMLへ追加した `map-action-buttons` は既存5ボタンの親で、通常/PCはdisplay:contents、スマホ全画面は縦flexです。ボタンの複製・イベント再登録はありません。
+全画面の状態管理は既存実装を維持し、map-engine.jsの `isMobileFullscreenMapUI()` を検索と操作列が共有します。Issue #6で表示条件を `isMobileMapUI()` に共通化し、通常スマホの操作列にも適用しました。`map-action-buttons` は雨雲・画面ON・追従・全画面の4ボタンの親で、スマホ通常/全画面は縦flex、PCはdisplay:contentsです。現在地は同じDOMを列の外のmap-wrapper直下へ移し、スマホでは右下に絶対配置します。ボタンの複製・イベント再登録はありません。
 
-map-engine.jsの表示用IIFEはmapfullscreenchange/mapfullscreenresize、resize/orientationchange、VisualViewport、既存の幅query・coarse/hover query、hidden/aria-pressed/open属性の変化を監視します。requestAnimationFrameで集約して可用高さ・実表示数から段階を選び、`--map-ui-*` CSS変数へボタン寸法・間隔・列の高さ・パネル制限を反映します。新しい全画面状態遷移は追加せず、既存のLeaflet invalidateSizeやWake Lock取得/解除も変更しません。
+map-engine.jsの表示用IIFEはmapfullscreenchange/mapfullscreenresize、resize/orientationchange、VisualViewport、既存の幅query・coarse/hover query、hidden/aria-pressed/open属性の変化を監視します。requestAnimationFrameで集約して可用高さ・列内の実表示数と独立現在地の予約領域から段階を選び、`--map-ui-*` CSS変数へボタン寸法・間隔・列の高さ・現在地の位置・パネル制限を反映します。通常表示は地図全体、全画面はVisualViewportとの交差範囲を使います。新しい全画面状態遷移は追加せず、既存のLeaflet invalidateSizeやWake Lock取得/解除も変更しません。
 
 poi-search.jsは同じ表示判定で検索終了・非表示を同期し、既存closePanel/cancelSearchのAbortController・世代番号・debounceを再利用します。全画面解除後は検索だけを閉じた状態で復元します。OpenPOIの通信仕様に変更はありません。rain-engine.js、地図データ、レイヤー生成、GPS・ジェスチャの処理は変更していません。
