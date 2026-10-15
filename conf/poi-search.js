@@ -228,10 +228,11 @@
         window.visualViewport.addEventListener('scroll', updatePanelHeight);
     }
     // 全画面要素の子へ同じガイドを移し、解除時は元のDOM位置へ戻す。
-    document.addEventListener('fullscreenchange', () => {
-        if (document.fullscreenElement === wrapper) wrapper.append(guide);
+    document.addEventListener('mapfullscreenchange', () => {
+        if (isMapFullscreen()) wrapper.append(guide);
         else guideAnchor.after(guide);
         updatePanelHeight();
     });
+    document.addEventListener('mapfullscreenresize', updatePanelHeight);
     window.addEventListener('pagehide', () => { cancelSearch(); clearResults(); });
 })();

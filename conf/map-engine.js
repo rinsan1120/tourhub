@@ -536,20 +536,146 @@ function attachCopyCoordsHandler(e) {
     });
 }
 
-function toggleFullScreen() {
-    if (!document.fullscreenElement) document.getElementById('map-wrapper').requestFullscreen().catch(err => console.log(err));
-    else document.exitFullscreen();
+const mapFullscreenWrapper = document.getElementById('map-wrapper');
+let pseudoFullscreenSnapshot = null;
+let mapFullscreenRequestPending = false;
+let mapFullscreenResizeFrame = null;
+
+// ネイティブの状態を優先し、他機能はこの関数から全画面相当の状態を参照する。
+function getMapFullscreenMode() {
+    if (document.fullscreenElement === mapFullscreenWrapper) return 'native';
+    return pseudoFullscreenSnapshot ? 'pseudo' : 'none';
 }
 
-document.addEventListener('fullscreenchange', () => {
-    const isFullscreen = document.fullscreenElement === document.getElementById('map-wrapper');
+function isMapFullscreen() {
+    return getMapFullscreenMode() !== 'none';
+}
+
+function resizeFullscreenMap() {
+    if (mapFullscreenResizeFrame !== null) cancelAnimationFrame(mapFullscreenResizeFrame);
+    mapFullscreenResizeFrame = requestAnimationFrame(() => {
+        mapFullscreenResizeFrame = null;
+        if (pseudoFullscreenSnapshot) {
+            const viewport = window.visualViewport;
+            const values = {
+                top: viewport ? viewport.offsetTop : 0,
+                left: viewport ? viewport.offsetLeft : 0,
+                width: viewport ? viewport.width : window.innerWidth,
+                height: viewport ? viewport.height : window.innerHeight
+            };
+            Object.entries(values).forEach(([name, value]) => {
+                mapFullscreenWrapper.style.setProperty(`--map-viewport-${name}`, `${value}px`);
+            });
+        }
+        // Leafletの非アニメーションpanで、サイズ変更前の中心を維持する。
+        map.invalidateSize({ animate: false, pan: true, debounceMoveend: true });
+        document.dispatchEvent(new Event('mapfullscreenresize'));
+    });
+}
+
+function syncMapFullscreen() {
+    const isFullscreen = isMapFullscreen();
     const button = document.querySelector('.fullscreen-btn');
     const label = isFullscreen ? '全画面解除' : '全画面表示';
     button.setAttribute('aria-label', label);
     button.title = label;
     button.querySelector('i').className = isFullscreen ? 'fa-solid fa-compress' : 'fa-solid fa-expand';
-    requestAnimationFrame(() => map.invalidateSize({ pan: false }));
+    resizeFullscreenMap();
+    document.dispatchEvent(new CustomEvent('mapfullscreenchange', {
+        detail: { mode: getMapFullscreenMode() }
+    }));
+}
+
+function enterPseudoFullscreen() {
+    if (pseudoFullscreenSnapshot) return;
+    const legend = document.getElementById('legend');
+    const legendAnchor = document.createComment('legend original position');
+    legend.before(legendAnchor);
+    const legendPanel = document.createElement('details');
+    legendPanel.className = 'pseudo-fullscreen-legend';
+    const summary = document.createElement('summary');
+    summary.textContent = legend.querySelector('.legend-title').textContent;
+    legendPanel.append(summary, legend);
+    mapFullscreenWrapper.append(legendPanel);
+    L.DomEvent.disableClickPropagation(legendPanel);
+    L.DomEvent.disableScrollPropagation(legendPanel);
+    pseudoFullscreenSnapshot = {
+        x: window.scrollX,
+        y: window.scrollY,
+        bodyStyle: document.body.getAttribute('style'),
+        rootOverflow: document.documentElement.style.overflow,
+        legendAnchor,
+        legendPanel
+    };
+    const { x, y } = pseudoFullscreenSnapshot;
+    document.documentElement.style.overflow = 'hidden';
+    Object.assign(document.body.style, {
+        position: 'fixed', top: `${-y}px`, left: `${-x}px`, width: '100%', overflow: 'hidden'
+    });
+    mapFullscreenWrapper.classList.add('is-pseudo-fullscreen');
+    syncMapFullscreen();
+}
+
+function exitPseudoFullscreen() {
+    if (!pseudoFullscreenSnapshot) return;
+    const snapshot = pseudoFullscreenSnapshot;
+    pseudoFullscreenSnapshot = null;
+    snapshot.legendAnchor.replaceWith(document.getElementById('legend'));
+    snapshot.legendPanel.remove();
+    mapFullscreenWrapper.classList.remove('is-pseudo-fullscreen');
+    ['top', 'left', 'width', 'height'].forEach(name => {
+        mapFullscreenWrapper.style.removeProperty(`--map-viewport-${name}`);
+    });
+    if (snapshot.bodyStyle === null) document.body.removeAttribute('style');
+    else document.body.setAttribute('style', snapshot.bodyStyle);
+    document.documentElement.style.overflow = snapshot.rootOverflow;
+    // ガイド・雨雲のDOM位置も戻した後にスクロール位置を復元する。
+    syncMapFullscreen();
+    window.scrollTo({ left: snapshot.x, top: snapshot.y, behavior: 'instant' });
+}
+
+async function toggleFullScreen() {
+    if (mapFullscreenRequestPending) return;
+    if (pseudoFullscreenSnapshot) {
+        exitPseudoFullscreen();
+        return;
+    }
+    const exiting = !!document.fullscreenElement;
+    if (!exiting && typeof mapFullscreenWrapper.requestFullscreen !== 'function') {
+        enterPseudoFullscreen();
+        return;
+    }
+    mapFullscreenRequestPending = true;
+    try {
+        if (exiting) await document.exitFullscreen();
+        else await mapFullscreenWrapper.requestFullscreen();
+    } catch (err) {
+        // 拒否(TypeError/NotAllowedError等)を非対応として扱わない。
+        if (!exiting && err.name === 'NotSupportedError') enterPseudoFullscreen();
+        else {
+            console.error('地図の全画面切り替えに失敗しました:', err);
+            document.dispatchEvent(new CustomEvent('mapfullscreenerror', { detail: err }));
+        }
+    } finally {
+        mapFullscreenRequestPending = false;
+    }
+}
+
+document.addEventListener('fullscreenchange', syncMapFullscreen);
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && pseudoFullscreenSnapshot && !event.defaultPrevented) exitPseudoFullscreen();
 });
+window.addEventListener('resize', () => { if (isMapFullscreen()) resizeFullscreenMap(); });
+window.addEventListener('orientationchange', () => { if (isMapFullscreen()) resizeFullscreenMap(); });
+window.addEventListener('pageshow', () => { if (isMapFullscreen()) syncMapFullscreen(); });
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && isMapFullscreen()) syncMapFullscreen();
+});
+if (window.visualViewport) {
+    ['resize', 'scroll'].forEach(type => window.visualViewport.addEventListener(type, () => {
+        if (pseudoFullscreenSnapshot) resizeFullscreenMap();
+    }));
+}
 
 // 画面ONのユーザー設定と、OSが解除する実際のWake Lockは別に保持します。
 const screenWakeLockMobileQuery = window.matchMedia(MAP_ZOOM_CONTROL_MOBILE_MEDIA_QUERY);
@@ -560,7 +686,7 @@ let screenWakeLockRequest = null;
 function getScreenWakeLockContext() {
     return {
         isMobile: screenWakeLockMobileQuery.matches,
-        isFullscreen: document.fullscreenElement === document.getElementById('map-wrapper'),
+        isFullscreen: isMapFullscreen(),
         isVisible: document.visibilityState === 'visible'
     };
 }
@@ -659,7 +785,7 @@ screenWakeLockButton.addEventListener('click', () => {
 // 地図の既存タッチ/長押し処理へ、新しいボタン操作を流しません。
 L.DomEvent.disableClickPropagation(screenWakeLockButton);
 L.DomEvent.disableScrollPropagation(screenWakeLockButton);
-document.addEventListener('fullscreenchange', syncScreenWakeLockContext);
+document.addEventListener('mapfullscreenchange', syncScreenWakeLockContext);
 document.addEventListener('visibilitychange', syncScreenWakeLockContext);
 window.addEventListener('pagehide', () => releaseScreenWakeLock(false));
 window.addEventListener('pageshow', syncScreenWakeLockContext);

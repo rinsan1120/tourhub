@@ -126,7 +126,7 @@
     }
 
     function syncRainLayout() {
-        const compact = compactQuery.matches && document.fullscreenElement !== mapWrapper;
+        const compact = compactQuery.matches && !isMapFullscreen();
         timeListOpen = false;
         panel.classList.toggle('is-compact', compact);
         // 通常表示では地図の外へ出し、既存の地図上ボタンの位置を維持する。
@@ -341,7 +341,7 @@
             currentTime.focus();
         }
     });
-    document.addEventListener('fullscreenchange', syncRainLayout);
+    document.addEventListener('mapfullscreenchange', syncRainLayout);
     if (compactQuery.addEventListener) compactQuery.addEventListener('change', syncRainLayout);
     else compactQuery.addListener(syncRainLayout);
     // 自動更新の既存描画を監視し、コンパクト表示だけを同期する。

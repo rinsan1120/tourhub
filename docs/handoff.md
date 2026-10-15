@@ -1,6 +1,6 @@
 # TouringHub Handoff
 
-更新日: 2026-10-03
+更新日: 2026-10-15
 
 次回作業者/Codex向けの短い引き継ぎです。
 
@@ -102,3 +102,9 @@ http://localhost:8000/
 同日の追加修正で、地図範囲・中心・radiusを検索条件から除去しました。入力補完は全国suggest、右側の検索ボタン・入力欄Enterは全国searchです。Enterによるサジェスト先頭の即選択は廃止し、「小作」等の2文字語も本検索できる構成にしました。
 
 通常・全画面のPC/スマホ表示、実API、通信競合・失敗、タッチ再現の確認結果は `docs/verification.md` を参照してください。実機GPS、Wake Lock、ソフトウェアキーボード、長押し、GitHub Pages公開後の確認は別途必要です。
+
+## iPhone Safari全画面対応（2026-10-15）
+
+Fullscreen API優先＋非対応時だけ疑似全画面を追加しました。全画面を参照する機能はisMapFullscreen()/mapfullscreenchangeを使います。標準fullscreenchangeはmap-engine.jsが受けます。疑似全画面中のVisualViewport寸法変更後はmapfullscreenresizeで検索高さを同期します。
+
+ネイティブ経路、追従・ジェスチャ・雨雲通信・レイヤー生成、原本2ファイルを保護しています。実機iPhone / AndroidとGitHub Pages公開後は未確認です。検証の詳細・既存のネイティブ全画面凡例の制約は docs/verification.md と docs/map-behavior.md を参照してください。

@@ -1,6 +1,6 @@
 # TouringHub Architecture
 
-更新日: 2026-10-03
+更新日: 2026-10-15
 
 TouringHub の画面構成、JavaScript責務、データ読み込み、地図初期化、主要イベントフローをまとめる設計メモです。
 
@@ -267,3 +267,11 @@ conf/weather-engine.js
 - `道の駅` は `map-engine.js` の設定にも存在するため、将来uMap側に同名レイヤーが追加される場合は重複に注意が必要です。
 - `index.html` 内インラインJSは設定txtの描画を持っており、責務が完全には分離されていません。
 - ローカル確認はHTTPサーバー経由で行う必要があります。
+
+## 全画面状態の共通参照（2026-10-15）
+
+`conf/map-engine.js` の `getMapFullscreenMode()` は `native` / `pseudo` / `none`、`isMapFullscreen()` は全画面相当かを返します。標準 `fullscreenchange` を起点とする従来のネイティブ全画面経路は維持し、両方式の同期後に `mapfullscreenchange`（detail.mode）を通知します。画面ON、雨雲配置、検索ガイドがこの共通イベントを受けます。
+
+`resizeFullscreenMap()` はrequestAnimationFrameで集約し、疑似全画面のVisualViewport寸法をCSS変数へ反映してからLeafletをinvalidateSizeします。非アニメーションpanで中心を維持し、`mapfullscreenresize` で検索パネルの高さを再計算します。resize・orientationchange・pageshow・visible復帰を処理し、疑似全画面ではVisualViewportのresize/scrollも監視します。
+
+疑似全画面は既存 `map-wrapper` と地図インスタンスを再利用します。bodyのインラインスタイル、ルートのoverflow、スクロール座標、凡例のDOM位置を保存・復元します。レイヤー凡例だけを既存文言のdetailsへ一時移動し、解除で元の位置へ戻します。雨雲通信・キャッシュ・自動更新、検索通信、現在地追従、ジェスチャ、レイヤー生成は変更していません。
