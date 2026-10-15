@@ -1046,6 +1046,15 @@ function initOneFingerZoomControl() {
     container.addEventListener('touchcancel', handleOneFingerZoomEnd, { passive: false });
 }
 
+// ロック開始前に残った長押し・片指ズームだけを終了し、GPS追従には触れない。
+function cancelMapGestureForInteractionLock() {
+    clearLongPressTimer();
+    if (oneFingerZoomState && oneFingerZoomState.active) {
+        handleOneFingerZoomEnd(new Event('touchcancel', { cancelable: true }));
+    }
+    oneFingerZoomState = null;
+}
+
 // setTimeoutの800msは長押しピン設置までの待ち時間。大きくすると長押し判定が遅く、小さくすると誤設置しやすくなります。
 map.on('touchstart', (e) => { if (e.originalEvent.touches.length === 1) pressTimer = setTimeout(() => placeTempPin(e.latlng), 800); });
 map.on('touchend dblclick touchmove', clearLongPressTimer);

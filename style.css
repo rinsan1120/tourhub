@@ -94,7 +94,7 @@
         }
 
         /* ▼ 現在地ボタンと全画面ボタンの共通スタイル（両方とも右側に固定） ▼ */
-        .loc-btn, .tracking-btn, .fullscreen-btn, .screen-wake-lock-btn, .rain-toggle-btn {
+        .loc-btn, .tracking-btn, .fullscreen-btn, .screen-wake-lock-btn, .rain-toggle-btn, .map-lock-btn {
             position: absolute; 
             right: 10px; 
             z-index: 1000; 
@@ -746,4 +746,56 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 #map-wrapper.is-mobile-fullscreen-ui .rain-time-options { display: flex; }
 #map-wrapper.is-mobile-fullscreen-ui .pseudo-fullscreen-legend {
     max-width: calc(100% - var(--map-ui-content-right, 82px) - var(--map-ui-safe-left) - 10px);
+}
+
+/* スマホ全画面専用の入力ロック。地図の描画や自動追従は止めない。 */
+.map-lock-btn { display: none; font-size: 0.75rem; font-weight: bold; }
+#map-wrapper.is-mobile-fullscreen-ui #map-lock-btn:not([hidden]) { display: flex; }
+#map-lock-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2000;
+    touch-action: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    background: transparent;
+    cursor: default;
+}
+#map-lock-overlay[hidden] { display: none; }
+#map-wrapper.is-interaction-locked #map-action-buttons,
+#map-wrapper.is-interaction-locked > .loc-btn { visibility: hidden; }
+#map-unlock-btn {
+    position: absolute;
+    top: var(--map-ui-column-top, calc(env(safe-area-inset-top, 0px) + 18px));
+    right: calc(var(--map-ui-safe-right, env(safe-area-inset-right, 0px)) + 14px);
+    width: 64px;
+    height: 64px;
+    box-sizing: border-box;
+    padding: 4px;
+    border: 2px solid var(--color-primary);
+    border-radius: 8px;
+    background: var(--color-header);
+    color: white;
+    box-shadow: var(--shadow-map);
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 1.2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    touch-action: none;
+    -webkit-touch-callout: none;
+}
+#map-unlock-btn:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 2px; }
+#map-unlock-progress { letter-spacing: 2px; }
+.map-lock-status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    pointer-events: none;
 }
