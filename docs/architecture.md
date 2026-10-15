@@ -256,6 +256,14 @@ conf/weather-engine.js
 
 `popupopen` で座標コピー用ボタンにクリックハンドラを付与します。
 
+### 名道の連携座標（2026-10-15、Issue #4）
+
+`map-engine.js` のisValidScenicRouteCoordinate()で名道の数値・座標範囲を検証し、getNearestScenicRouteLatLng()が現在のLeaflet投影上でクリック地点から対象座標列への最近接点を返します。欠損頂点では隣接関係を切り、線分がない場合だけ有効頂点へフォールバックします。原本を変更せず、描画用の名道座標からは不正頂点を除外します。前段のgetFeatureExtent()でもLineStringの無効頂点を読み飛ばし、混在時の例外やNaNによる範囲判定失敗を防ぎます。範囲の最小/最大計算とFeature生成の制御は維持します。
+
+名道の透明ポリラインへ一度だけclickリスナーを登録し、計算結果で既存createPopupContent()のHTMLを用意します。その後に登録するbindPopup()の内容関数は最新HTMLを返すだけです。計算はクリック時に限定し、Leaflet標準の位置更新・開閉・レイヤー削除時の閉鎖を維持します。クリックごとのPopup生成・ハンドラ追加・独自openPopup呼び出しはありません。名道以外の線・点の登録処理は従来どおりです。
+
+標準処理の順序は [Leaflet 1.9.4 Popup](https://github.com/Leaflet/Leaflet/blob/v1.9.4/src/layer/Popup.js) と [DivOverlay](https://github.com/Leaflet/Leaflet/blob/v1.9.4/src/layer/DivOverlay.js) を確認しています。
+
 ### モバイル操作
 
 地図コンテナに `touchstart`、`touchmove`、`touchend`、`touchcancel` を登録し、独自のダブルタップ/片指ズームを処理します。

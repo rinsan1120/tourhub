@@ -143,12 +143,14 @@ function getFeatureExtent(feature) {
         };
     }
 
-    if (feature.geometry.type === "LineString" && coordinates.length > 0) {
+    if (feature.geometry.type === "LineString" && Array.isArray(coordinates) && coordinates.length > 0) {
         let minLat = Infinity;
         let maxLat = -Infinity;
         let minLng = Infinity;
         let maxLng = -Infinity;
-        coordinates.forEach(([lng, lat]) => {
+        coordinates.forEach(coordinate => {
+            if (!isValidScenicRouteCoordinate(coordinate)) return;
+            const [lng, lat] = coordinate;
             minLat = Math.min(minLat, lat);
             maxLat = Math.max(maxLat, lat);
             minLng = Math.min(minLng, lng);
@@ -1068,6 +1070,47 @@ function updateZoomBadge() {
     badge.innerText = `Zoom: ${map.getZoom()}`;
 }
 
+function isValidScenicRouteCoordinate(coordinate) {
+    return Array.isArray(coordinate) && coordinate.length >= 2 &&
+        Number.isFinite(coordinate[0]) && Math.abs(coordinate[0]) <= 180 &&
+        Number.isFinite(coordinate[1]) && Math.abs(coordinate[1]) <= 90;
+}
+
+// クリックされた名道だけを現在の投影で調べる。無効な頂点を挟む区間は線分にしない。
+function getNearestScenicRouteLatLng(latlng, coordinates) {
+    if (!latlng || !isValidScenicRouteCoordinate([latlng.lng, latlng.lat]) || !Array.isArray(coordinates)) return null;
+    const clickPoint = map.latLngToLayerPoint(latlng);
+    let previous = null;
+    let nearestPoint = null;
+    let nearestDistance = Infinity;
+    let nearestVertex = null;
+    let vertexDistance = Infinity;
+    for (const coordinate of coordinates) {
+        if (!isValidScenicRouteCoordinate(coordinate)) {
+            previous = null;
+            continue;
+        }
+        const vertex = L.latLng(coordinate[1], coordinate[0]);
+        const point = map.latLngToLayerPoint(vertex);
+        const distance = clickPoint.distanceTo(point);
+        if (distance < vertexDistance) {
+            nearestVertex = vertex;
+            vertexDistance = distance;
+        }
+        if (previous) {
+            const candidate = L.LineUtil.closestPointOnSegment(clickPoint, previous, point);
+            const candidateDistance = clickPoint.distanceTo(candidate);
+            if (candidateDistance < nearestDistance) {
+                nearestPoint = candidate;
+                nearestDistance = candidateDistance;
+            }
+        }
+        previous = point;
+    }
+    const result = nearestPoint ? map.layerPointToLatLng(nearestPoint) : nearestVertex;
+    return result && isValidScenicRouteCoordinate([result.lng, result.lat]) ? result : null;
+}
+
 async function loadUmapData() {
     const legend = document.getElementById('legend-items');
     const loadingTaskId = "umap";
@@ -1168,12 +1211,28 @@ async function loadUmapData() {
                         marker.bindPopup(createPopupContent(popupName, c[1], c[0], f.properties.description, n));
                         group.addLayer(marker);
                     } else if (f.geometry.type === "LineString") {
-                        const latlngs = c.map(p => [p[1], p[0]]);
+                        // 名道の不正な頂点は描画へ渡さず、原本と最近接計算用の座標列は保持する。
+                        const routeCoordinates = n === "名道"
+                            ? (Array.isArray(c) ? c.filter(isValidScenicRouteCoordinate) : []) : c;
+                        if (n === "名道" && routeCoordinates.length === 0) return;
+                        const latlngs = routeCoordinates.map(p => [p[1], p[0]]);
                         // weightを変えるとルート線の太さ、opacityを変えると線の濃さが変わります。
                         L.polyline(latlngs, { color: color, weight: 4, opacity: 0.8, interactive: false }).addTo(group);
                         // 透明なクリック領域です。weightを大きくすると線をタップ/クリックしやすくなります。
                         const touchLine = L.polyline(latlngs, { color: 'transparent', weight: 24, opacity: 0, interactive: true }).addTo(group);
-                        touchLine.bindPopup(createPopupContent(f.properties.name || "名道", c[0][1], c[0][0], f.properties.description, n, false));
+                        if (n === "名道") {
+                            let popupContent = createPopupContent(f.properties.name || "名道",
+                                routeCoordinates[0][1], routeCoordinates[0][0], f.properties.description, n, false);
+                            // bindPopupの標準click処理より先に内容を用意し、開閉・配置はLeafletへ任せる。
+                            touchLine.on('click', event => {
+                                const nearest = getNearestScenicRouteLatLng(event.latlng, c);
+                                popupContent = nearest ? createPopupContent(f.properties.name || "名道",
+                                    nearest.lat, nearest.lng, f.properties.description, n, false) : '';
+                            });
+                            touchLine.bindPopup(() => popupContent);
+                        } else {
+                            touchLine.bindPopup(createPopupContent(f.properties.name || "名道", c[0][1], c[0][0], f.properties.description, n, false));
+                        }
                     }
                 }
             });
