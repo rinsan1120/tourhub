@@ -519,20 +519,20 @@ function createPopupContent(name, lat, lng, description = "", category = "", sho
     const gmapUrl = `https://www.google.com/maps/search/?api=1&query=${coords}`;
     const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${coords}&travelmode=driving`;
     const localUrl = `${baseUrl}&avoid=tolls,highways`;
-    
-    const btnStyle = "display: block; width: 100%; padding: 10px; margin-bottom: 8px; text-decoration: none; border-radius: 8px; font-weight: bold; text-align: center; font-size: 0.9rem; box-sizing: border-box;";
+    let html = `<div class="spot-popup">`;
+    html += `<div class="popup-heading"><span class="popup-title">${name}</span>`;
+    if (category) html += `<span class="popup-category">${category}</span>`;
+    html += `</div>`;
+    if (description) html += `<p class="popup-description">${description.replace(/\n/g, '<br>')}</p>`;
 
-    let html = `<div class="spot-popup" style="text-align: center; min-width: 200px;">`;
-    html += `<span style="font-weight: bold; font-size: 1.1rem; display: block; margin-bottom: 5px;">${name}</span>`;
-    if (category) html += `<span style="font-size: 0.75rem; color: #3182ce; background: #ebf8ff; padding: 2px 8px; border-radius: 4px; margin-bottom: 10px; display: inline-block;">${category}</span>`;
-    if (description) html += `<p class="popup-description" style="font-size:0.85rem; color:#444; margin-bottom:12px; text-align: left; line-height: 1.4;">${description.replace(/\n/g, '<br>')}</p>`;
-    
-    html += `<div class="popup-actions" style="display: flex; flex-direction: column; gap: 4px;">`;
-    html += `<a href="${gmapUrl}" target="_blank" style="${btnStyle} background: #f6ad55; color: white;">Googleマップで開く</a>`;
-    html += `<a href="${baseUrl}" target="_blank" style="${btnStyle} background: #4285F4; color: white;">ルート検索（高速）</a>`;
-    html += `<a href="${localUrl}" target="_blank" style="${btnStyle} background: #34A853; color: white;">ルート検索（下道）</a>`;
+    html += `<div class="popup-actions">`;
+    html += `<a class="popup-action popup-action-primary" href="${gmapUrl}" target="_blank">Googleマップで開く</a>`;
+    html += `<div class="popup-route-actions">`;
+    html += `<a class="popup-action popup-action-secondary" href="${baseUrl}" target="_blank">ルート検索（高速）</a>`;
+    html += `<a class="popup-action popup-action-secondary" href="${localUrl}" target="_blank">ルート検索（下道）</a>`;
+    html += `</div>`;
     if (showCopyCoords) {
-        html += `<button type="button" class="copy-coords-btn" data-lat="${lat}" data-lng="${lng}">緯度・経度をコピー</button>`;
+        html += `<button type="button" class="copy-coords-btn popup-action popup-action-copy" data-lat="${lat}" data-lng="${lng}">緯度・経度をコピー</button>`;
     }
     return html + `</div></div>`;
 }
