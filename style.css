@@ -202,7 +202,6 @@
         }
         #map-wrapper:is(:fullscreen, .is-pseudo-fullscreen) { width: 100%; height: 100%; }
         #map-wrapper:is(:fullscreen, .is-pseudo-fullscreen) #map { height: 100%; }
-        #stats-badge { position: absolute; top: 10px; left: 50px; z-index: 1000; background: rgba(255,255,255,0.8); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; color: #666; border: 1px solid #ddd; pointer-events: none; }
         .map-loading-status { position: absolute; bottom: 20px; left: 50%; z-index: 1001; transform: translateX(-50%); max-width: calc(100% - 140px); padding: 7px 12px; border-radius: 6px; background: rgba(26,32,44,0.88); color: white; font-size: 0.75rem; font-weight: bold; text-align: center; white-space: nowrap; pointer-events: none; opacity: 1; transition: opacity 0.2s ease; }
         .map-loading-status.is-hidden { opacity: 0; visibility: hidden; }
         .map-loading-status.is-error { background: rgba(197,48,48,0.92); }
@@ -379,12 +378,12 @@
 .legend-item { border-radius: var(--radius-sm); }
 .legend-item input { accent-color: var(--color-primary); }
 .legend-item:has(input:checked) { background: #edf4fa; }
-.loc-btn, .tracking-btn, .fullscreen-btn, .screen-wake-lock-btn, #stats-badge, #operation-guide, .map-loading-status {
+.loc-btn, .tracking-btn, .fullscreen-btn, .screen-wake-lock-btn, #operation-guide, .map-loading-status {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow-map);
 }
-#stats-badge, #operation-guide { background: var(--color-map-surface); color: var(--color-text); }
+#operation-guide { background: var(--color-map-surface); color: var(--color-text); }
 .coord-jump-toggle { color: var(--color-text); }
 .coord-jump-input { border-color: var(--color-border); border-radius: var(--radius-sm); }
 .map-loading-status { background: var(--color-header); }
@@ -688,10 +687,23 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
     z-index: 1004;
 }
 #map-wrapper.is-mobile-map-ui #map-action-buttons > [hidden] { display: none; }
-#map-wrapper.is-mobile-map-ui:not(.is-mobile-fullscreen-ui) #map-action-buttons > .tracking-btn { font-size: 0.75rem; }
+#map-wrapper.is-mobile-map-ui:not(.is-mobile-fullscreen-ui) #map-action-buttons { display: contents; }
+#map-wrapper.is-mobile-map-ui:not(.is-mobile-fullscreen-ui) #map-action-buttons > :is(.tracking-btn, .screen-wake-lock-btn, .map-lock-btn) { display: none; }
+#map-wrapper.is-mobile-map-ui:not(.is-mobile-fullscreen-ui) #map-action-buttons > .rain-toggle-btn {
+    position: absolute;
+    top: calc(var(--map-ui-safe-top) + 14px) !important;
+    right: calc(var(--map-ui-safe-right) + 14px) !important;
+}
 #map-wrapper.is-mobile-map-ui:not(.is-mobile-fullscreen-ui) #map-action-buttons > .rain-toggle-btn { font-size: 0.7rem; }
 #map-wrapper.is-mobile-map-ui:not(.is-mobile-fullscreen-ui) #map-action-buttons > .fullscreen-btn,
 #map-wrapper.is-mobile-map-ui:not(.is-mobile-fullscreen-ui) > .loc-btn { font-size: 1.2rem; }
+#map-wrapper.is-mobile-map-ui:not(.is-mobile-fullscreen-ui) #map-action-buttons > .fullscreen-btn {
+    position: absolute !important;
+    top: auto !important;
+    right: var(--map-ui-location-right, 14px) !important;
+    bottom: calc(var(--map-ui-location-bottom, 24px) + var(--map-ui-button-size) + var(--map-ui-button-gap)) !important;
+    touch-action: manipulation;
+}
 #map-wrapper.is-mobile-map-ui #map-action-buttons.is-scrollable.is-exit-pinned > .fullscreen-btn {
     position: sticky;
     top: 0 !important;
@@ -699,12 +711,23 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
     z-index: 1001; /* 同じ列の通常ボタン（1000）より前面に固定する。 */
     background: var(--color-surface);
 }
-/* 通常表示のガイドはZoomバッジの下、右上列の左に置く。検索機能は維持。 */
+/* スマホ通常表示だけ左上へ。雨雲の右上領域と標準ズームを避ける。 */
 .map-section:has(> #map-wrapper.is-mobile-map-ui:not(.is-mobile-fullscreen-ui)) > #operation-guide {
-    top: 44px;
+    top: calc(env(safe-area-inset-top, 0px) + 10px);
+    left: calc(env(safe-area-inset-left, 0px) + 10px);
     right: var(--map-mobile-controls-right, 78px);
+    width: max-content;
     max-width: min(230px, calc(100% - var(--map-mobile-controls-right, 78px) - 10px));
     box-sizing: border-box;
+}
+.map-section:has(> #map-wrapper.is-mobile-map-ui:not(.is-mobile-fullscreen-ui)) > #operation-guide .coord-jump-panel {
+    max-height: min(400px, 50dvh, var(--map-mobile-panel-height, calc(65vh - 160px)), var(--poi-panel-max-height, 400px));
+}
+@media (orientation: landscape) and (max-height: 500px) {
+    .map-section:has(> #map-wrapper.is-mobile-map-ui:not(.is-mobile-fullscreen-ui)) > #operation-guide {
+        left: calc(env(safe-area-inset-left, 0px) + 100px);
+        max-width: min(230px, calc(100% - var(--map-mobile-controls-right, 78px) - 110px));
+    }
 }
 #map-wrapper.is-mobile-map-ui .map-loading-status {
     left: var(--map-ui-content-left, 50px);

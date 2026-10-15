@@ -132,7 +132,6 @@ HTML内インラインJSの主な責務:
 - レイヤー生成
 - レイヤー表示/非表示
 - 高速道路ICのズーム制限
-- Zoomバッジ更新
 - 表示範囲に応じたFeature生成
 - Featureの優先度付き段階生成
 - 地図データ読み込み状態の集約
@@ -181,7 +180,6 @@ HTML内インラインJSの主な責務:
 - ヘッダー
 - 地図コンテナ
 - 現在地/全画面ボタン
-- Zoomバッジ
 - 操作ガイド/座標移動
 - レイヤー凡例
 - 天気カード/天気表
@@ -218,7 +216,7 @@ conf/weather-engine.js
 2. `L.tileLayer()` でOSMタイルを追加します。
 3. `window.load` から `initMap()` が呼ばれます。
 4. `initMap()` は二重初期化を防ぎます。
-5. 操作ガイド、Zoomバッジ、タッチ操作、座標移動、現在地監視、uMap読み込みを初期化します。
+5. 操作ガイド、タッチ操作、座標移動、現在地監視、uMap読み込みを初期化します。
 6. `conf/michi-no-eki.js` は `DOMContentLoaded` または即時で道の駅読み込みを開始します。
 7. uMapと道の駅のFeatureを生成元として登録し、初期表示範囲を即時生成します。
 8. 地図移動後は1.5秒停止した時点の表示範囲を1.4倍した先読み範囲だけを生成対象にします。
@@ -245,7 +243,6 @@ conf/weather-engine.js
 
 ### 地図ズーム
 
-- `zoomend` でZoomバッジを更新します。
 - 高速道路ICは `zoomend` と `resize` で表示条件を再評価します。
 - `movestart` で待機中または実行中のFeature生成を中断します。
 - `moveend` から1.5秒後に、その時点の先読み範囲を生成します。
@@ -288,7 +285,7 @@ conf/weather-engine.js
 
 ## スマホ全画面の表示調整（2026-10-15、Issue #1）
 
-全画面の状態管理は既存実装を維持し、map-engine.jsの `isMobileFullscreenMapUI()` を検索と操作列が共有します。Issue #6で表示条件を `isMobileMapUI()` に共通化し、通常スマホの操作列にも適用しました。`map-action-buttons` は雨雲・ロック（Issue #7で追加）・画面ON・追従・全画面の5ボタンの親で、スマホ通常/全画面は縦flex、PCはdisplay:contentsです。ロックはスマホ全画面だけ表示します。現在地は同じDOMを列の外のmap-wrapper直下へ移し、スマホでは右下に絶対配置します。ボタンの複製・イベント再登録はありません。
+全画面の状態管理は既存実装を維持し、map-engine.jsの `isMobileFullscreenMapUI()` を検索と操作列が共有します。Issue #6で表示条件を `isMobileMapUI()` に共通化しました。`map-action-buttons` は雨雲・ロック・画面ON・追従・全画面の5ボタンの親で、スマホ全画面は縦flexです。Issue #10で通常表示はdisplay:contentsとし、雨雲を右上、同じ全画面ボタンを右下現在地の上へ絶対配置します。追従・ロック・画面ONは通常表示でCSS非表示にし、全画面のhidden条件や状態管理には触れません。PCの配置は維持します。Zoom数値バッジと専用更新関数・zoomend登録は削除しました。ボタンの複製・イベント再登録はありません。
 
 map-engine.jsの表示用IIFEはmapfullscreenchange/mapfullscreenresize、resize/orientationchange、VisualViewport、既存の幅query・coarse/hover query、hidden/aria-pressed/open属性の変化を監視します。requestAnimationFrameで集約して可用高さ・列内の実表示数と独立現在地の予約領域から段階を選び、`--map-ui-*` CSS変数へボタン寸法・間隔・列の高さ・現在地の位置・パネル制限を反映します。通常表示は地図全体、全画面はVisualViewportとの交差範囲を使います。新しい全画面状態遷移は追加せず、既存のLeaflet invalidateSizeやWake Lock取得/解除も変更しません。
 

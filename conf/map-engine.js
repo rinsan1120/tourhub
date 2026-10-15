@@ -873,6 +873,12 @@ function isMobileFullscreenMapUI() {
         set('content-right', safe('right') + SIDE_MARGIN + columnWidth + PANEL_GAP);
         if (!fullscreen) {
             guide.style.setProperty('--map-mobile-controls-right', `${safe('right') + SIDE_MARGIN + columnWidth + PANEL_GAP}px`);
+            const panel = document.getElementById('coord-jump-panel');
+            const headerHeight = guide.getBoundingClientRect().height - (panel.hidden ? 0 : panel.getBoundingClientRect().height);
+            const zoomTop = zoom && guide.getBoundingClientRect().left < zoom.getBoundingClientRect().right
+                ? zoom.getBoundingClientRect().top - rect.top : rect.height;
+            guide.style.setProperty('--map-mobile-panel-height', `${Math.max(0,
+                zoomTop - safe('top') - NORMAL_TOP_MARGIN - headerHeight - PANEL_GAP)}px`);
             return;
         }
         set('guide-top', visibleTop + safe('top') + TOP_MARGIN);
@@ -894,6 +900,7 @@ function isMobileFullscreenMapUI() {
         if (active) frame = requestAnimationFrame(layout);
         else {
             guide.style.removeProperty('--map-mobile-controls-right');
+            guide.style.removeProperty('--map-mobile-panel-height');
             column.classList.remove('is-scrollable');
             column.classList.remove('is-exit-pinned');
             column.scrollTop = 0;
@@ -1095,12 +1102,6 @@ function updateZoomLimitedLayer(name, group, minZoom) {
     } else if (map.hasLayer(group)) {
         map.removeLayer(group);
     }
-}
-
-function updateZoomBadge() {
-    const badge = document.getElementById('stats-badge');
-    if (!badge) return;
-    badge.innerText = `Zoom: ${map.getZoom()}`;
 }
 
 function isValidScenicRouteCoordinate(coordinate) {
@@ -1319,8 +1320,6 @@ function initMap() {
     mapInitialized = true;
     initResponsiveZoomControl();
     updateGuideText();
-    updateZoomBadge();
-    map.on('zoomend', updateZoomBadge);
     initOneFingerZoomControl();
     initCoordJumpControl();
     initViewportFeatureGeneration();
