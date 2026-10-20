@@ -1,6 +1,6 @@
 # TouringHub Handoff
 
-更新日: 2026-10-15
+更新日: 2026-10-20
 
 次回作業者/Codex向けの短い引き継ぎです。
 
@@ -14,8 +14,10 @@
 6. `docs/data-formats.md`
 7. `docs/verification.md`
 8. `docs/decisions.md`
+9. `docs/Owner_Intent.md`（目的・価値判断）
+10. `docs/User_Scenarios.md`（利用場面・成功条件・機能対応表）
 
-また、機能・UI/UX・操作フロー・文言の設計や優先順位の判断では、承認済みの `docs/Owner_Intent.md` を参照してください。これはオーナーの目的・価値判断をまとめた正本であり、個別仕様や実装ルールを上書きするものではありません。
+新機能・UI/UX・操作フロー・文言や機能の優先順位を検討する際は、承認済みの `docs/Owner_Intent.md` で目的と判断基準を確認し、`docs/User_Scenarios.md` の該当シナリオで利用者が達成したいこと・迷い・成功条件と照合してください。現行仕様に合うことや機能対応表の網羅だけで使いやすいと判断せず、仮説を観察事実と混同しません。両文書とも実装仕様・承認手順の代替ではありません。
 
 ドキュメントは必ずUTF-8指定で読んでください。
 
@@ -88,6 +90,8 @@ http://localhost:8000/
 - `docs/handoff.md`
 
 `AGENTS.md` の Source of Truth も、この構成に同期済みです。
+
+2026-10-20に `docs/Owner_Intent.md` と `docs/User_Scenarios.md` を承認済みの参照文書として追加しました。技術仕様とは分け、設計・UI/UXレビューで必要な場面に参照します。
 
 ## 7. 要確認事項
 
