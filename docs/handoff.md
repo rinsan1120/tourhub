@@ -15,6 +15,8 @@
 7. `docs/verification.md`
 8. `docs/decisions.md`
 
+また、機能・UI/UX・操作フロー・文言の設計や優先順位の判断では、承認済みの `docs/Owner_Intent.md` を参照してください。これはオーナーの目的・価値判断をまとめた正本であり、個別仕様や実装ルールを上書きするものではありません。
+
 ドキュメントは必ずUTF-8指定で読んでください。
 
 ```powershell
