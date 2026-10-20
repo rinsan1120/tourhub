@@ -1161,7 +1161,10 @@ function isMobileFullscreenMapUI() {
     sync();
 })();
 
-map.on('contextmenu', (e) => { placeTempPin(e.latlng); return false; });
+map.on('contextmenu', (e) => {
+    if (!shouldSuppressIPhoneGesturePin()) placeTempPin(e.latlng);
+    return false;
+});
 map.on('popupopen', attachCopyCoordsHandler);
 map.on('popupclose', () => closeMapDescription());
 let pressTimer;
@@ -1173,7 +1176,19 @@ const ONE_FINGER_ZOOM_TAP_DISTANCE = 40;
 const ONE_FINGER_ZOOM_STEP_DISTANCE = 70;
 // タップではなく移動操作とみなす距離。小さくすると微小な指ぶれでも移動扱いになりやすくなります。
 const ONE_FINGER_ZOOM_MOVE_DISTANCE = 10;
+// 共通のモバイル判定とは独立させ、iPad・Android・PCの経路を維持する。
+const IS_IPHONE_MAP_GESTURE = /iPhone/i.test(navigator.userAgent);
+// 指を離した直後に届く互換contextmenuも同じジェスチャとして扱う。
+const IPHONE_GESTURE_COMPATIBILITY_MS = 700;
+let iPhoneGesturePinSuppressUntil = 0;
 let oneFingerZoomState = null;
+
+function shouldSuppressIPhoneGesturePin() {
+    return IS_IPHONE_MAP_GESTURE && (
+        (oneFingerZoomState && oneFingerZoomState.active) ||
+        Date.now() < iPhoneGesturePinSuppressUntil
+    );
+}
 
 function clearLongPressTimer() {
     clearTimeout(pressTimer);
@@ -1195,6 +1210,18 @@ function clampZoom(zoom) {
 }
 
 function handleOneFingerZoomStart(e) {
+    if (IS_IPHONE_MAP_GESTURE) {
+        if (e.touches.length !== 1) {
+            clearLongPressTimer();
+            if (oneFingerZoomState && oneFingerZoomState.active) {
+                handleOneFingerZoomEnd(new Event('touchcancel', { cancelable: true }));
+            }
+            oneFingerZoomState = null;
+            return;
+        }
+        // 新しい通常長押しには、直前のジェスチャの抑止を持ち越さない。
+        iPhoneGesturePinSuppressUntil = 0;
+    }
     if (!isMobileMapView() || e.touches.length !== 1) return;
 
     const touch = e.touches[0];
@@ -1255,6 +1282,12 @@ function handleOneFingerZoomMove(e) {
 }
 
 function handleOneFingerZoomEnd(e) {
+    if (IS_IPHONE_MAP_GESTURE) {
+        clearLongPressTimer();
+        if (e.type === 'touchcancel' && !(oneFingerZoomState && oneFingerZoomState.active)) {
+            oneFingerZoomState = null;
+        }
+    }
     if (oneFingerZoomState && oneFingerZoomState.active) {
         const { draggingWasEnabled } = oneFingerZoomState;
         clearLongPressTimer();
@@ -1266,6 +1299,9 @@ function handleOneFingerZoomEnd(e) {
                 }
             }
         } finally {
+            if (IS_IPHONE_MAP_GESTURE) {
+                iPhoneGesturePinSuppressUntil = Date.now() + IPHONE_GESTURE_COMPATIBILITY_MS;
+            }
             oneFingerZoomState = null;
             if (draggingWasEnabled) {
                 map.dragging.enable();
@@ -1278,7 +1314,8 @@ function handleOneFingerZoomEnd(e) {
 
 function initOneFingerZoomControl() {
     const container = map.getContainer();
-    container.addEventListener('touchstart', handleOneFingerZoomStart, { passive: false });
+    // iPhoneだけはLeafletが長押しタイマーを作る前にジェスチャを判定する。
+    container.addEventListener('touchstart', handleOneFingerZoomStart, { passive: false, capture: IS_IPHONE_MAP_GESTURE });
     container.addEventListener('touchmove', handleOneFingerZoomMove, { passive: false });
     container.addEventListener('touchend', handleOneFingerZoomEnd, { passive: false });
     container.addEventListener('touchcancel', handleOneFingerZoomEnd, { passive: false });
@@ -1291,10 +1328,17 @@ function cancelMapGestureForInteractionLock() {
         handleOneFingerZoomEnd(new Event('touchcancel', { cancelable: true }));
     }
     oneFingerZoomState = null;
+    if (IS_IPHONE_MAP_GESTURE) iPhoneGesturePinSuppressUntil = 0;
 }
 
 // setTimeoutの800msは長押しピン設置までの待ち時間。大きくすると長押し判定が遅く、小さくすると誤設置しやすくなります。
-map.on('touchstart', (e) => { if (e.originalEvent.touches.length === 1) pressTimer = setTimeout(() => placeTempPin(e.latlng), 800); });
+map.on('touchstart', (e) => {
+    if (e.originalEvent.touches.length === 1 && !shouldSuppressIPhoneGesturePin()) {
+        pressTimer = setTimeout(() => {
+            if (!shouldSuppressIPhoneGesturePin()) placeTempPin(e.latlng);
+        }, 800);
+    }
+});
 map.on('touchend dblclick touchmove', clearLongPressTimer);
 
 function placeTempPin(latlng, name = "指定した地点") {
