@@ -17,10 +17,6 @@ const mapContainer = map.getContainer();
 ['pointerdown', 'touchstart', 'wheel', 'keydown'].forEach(eventName => {
     mapContainer.addEventListener(eventName, markUserMapInteraction, { capture: true, passive: true });
 });
-const poiSearchResults = document.getElementById('poi-search-results');
-['pointerdown', 'keydown'].forEach(eventName => {
-    poiSearchResults?.addEventListener(eventName, markUserMapInteraction, { capture: true, passive: true });
-});
 // ベース地図タイルの取得先。変更すると背景地図の提供元や見た目、利用条件が変わります。
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -375,7 +371,7 @@ function toggleCoordJumpPanel() {
 
     const willOpen = panel.hidden;
     panel.hidden = !willOpen;
-    toggle.innerText = willOpen ? "場所を検索 ▲" : "場所を検索 ▼";
+    toggle.innerText = willOpen ? "座標移動 ▲" : "座標移動 ▼";
     toggle.setAttribute('aria-expanded', String(willOpen));
 }
 
@@ -1040,6 +1036,70 @@ function isMobileMapUI() {
 function isMobileFullscreenMapUI() {
     return isMapFullscreen() && isMobileMapUI();
 }
+
+// 座標移動パネルの配置・表示条件は通常表示と全画面で共通管理する。
+(() => {
+    const VIEWPORT_BOTTOM_MARGIN_PX = 80;
+    const MIN_PANEL_HEIGHT_PX = 100;
+    const guide = document.getElementById('operation-guide');
+    const panel = document.getElementById('coord-jump-panel');
+    const wrapper = document.getElementById('map-wrapper');
+    if (!guide || !panel || !wrapper) return;
+    const guideAnchor = document.createComment('operation-guide original position');
+    guide.before(guideAnchor);
+
+    function closePanel() {
+        document.getElementById('coord-jump-input').blur();
+        if (!panel.hidden) toggleCoordJumpPanel();
+    }
+
+    guide.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !panel.hidden) {
+            event.preventDefault();
+            event.stopPropagation();
+            closePanel();
+            document.getElementById('coord-jump-toggle').focus();
+        }
+    });
+
+    function updatePanelHeight() {
+        const viewport = window.visualViewport;
+        const available = (viewport ? viewport.height + viewport.offsetTop : window.innerHeight) -
+            panel.getBoundingClientRect().top - VIEWPORT_BOTTOM_MARGIN_PX;
+        guide.style.setProperty('--coord-panel-max-height', `${Math.max(MIN_PANEL_HEIGHT_PX, available)}px`);
+    }
+    let coordHiddenForMobileFullscreen = false;
+    function syncCoordVisibility() {
+        const hide = isMobileFullscreenMapUI();
+        if (hide || coordHiddenForMobileFullscreen) {
+            if (guide.contains(document.activeElement)) document.activeElement.blur();
+            closePanel();
+        }
+        document.getElementById('coord-jump-toggle').hidden = hide;
+        coordHiddenForMobileFullscreen = hide;
+        updatePanelHeight();
+    }
+    new MutationObserver(() => {
+        if (!panel.hidden) updatePanelHeight();
+    }).observe(panel, { attributes: true, attributeFilter: ['hidden'] });
+    window.addEventListener('resize', syncCoordVisibility);
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', updatePanelHeight);
+        window.visualViewport.addEventListener('scroll', updatePanelHeight);
+    }
+    // 全画面要素の子へ同じガイドを移し、解除時は元のDOM位置へ戻す。
+    document.addEventListener('mapfullscreenchange', () => {
+        if (isMapFullscreen()) wrapper.append(guide);
+        else guideAnchor.after(guide);
+        syncCoordVisibility();
+    });
+    document.addEventListener('mapfullscreenresize', syncCoordVisibility);
+    [screenWakeLockMobileQuery, mapFullscreenTouchQuery].forEach(query => {
+        if (query.addEventListener) query.addEventListener('change', syncCoordVisibility);
+        else query.addListener(syncCoordVisibility);
+    });
+    syncCoordVisibility();
+})();
 
 (() => {
     const wrapper = mapFullscreenWrapper;
