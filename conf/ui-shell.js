@@ -2,7 +2,23 @@
 (() => {
     const MOBILE_QUERY = '(max-width: 767px), (pointer: coarse) and (max-width: 1023px)';
     const SHEET_STATES = ['peek', 'half', 'full'];
-    const SHEET_SWIPE_THRESHOLD_PX = 32;
+    const DRAG_THRESHOLD_PX = 8;
+    const SNAP_DURATION_MS = 220;
+    const VELOCITY_PROJECTION_MS = 180;
+    const sheetContainer = document.querySelector('.map-container');
+    const sheetBody = document.querySelector('.hub-panel-body');
+    let drag = null, animation = null, suppressClickUntil = 0;
+    function stops() {
+        const height = sheetContainer.clientHeight;
+        return [104, Math.max(104, height * .46), Math.max(104, height * (innerHeight <= 500 ? 1 : .72))];
+    }
+    function paintHeight(height) {
+        sheetContainer.style.setProperty('--sheet-height', `${height}px`);
+    }
+    function cancelAnimation() {
+        if (animation !== null) cancelAnimationFrame(animation);
+        animation = null;
+    }
     const mobile = window.matchMedia(MOBILE_QUERY);
     const wrapper = document.getElementById('map-wrapper');
     const panel = document.getElementById('map-panel');
@@ -25,7 +41,10 @@
     }
     new ResizeObserver(resizeMap).observe(wrapper);
 
-    function setSheet(state) {
+    function setSheet(state, smooth = false) {
+        cancelAnimation();
+        const startHeight = panel.getBoundingClientRect().height;
+        const target = stops()[SHEET_STATES.indexOf(state)];
         panel.dataset.sheet = state;
         document.querySelector('.map-container').dataset.sheet = state;
         handle.setAttribute('aria-expanded', String(state !== 'peek'));
@@ -33,6 +52,16 @@
         // A collapsed sheet must not retain keyboard focus in its clipped content.
         if (state === 'peek' && panel.querySelector('.hub-panel-body').contains(document.activeElement)) handle.focus();
         panel.querySelector('.hub-panel-body').inert = mobile.matches && state === 'peek';
+        if (mobile.matches && smooth && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            const started = performance.now();
+            function step(now) {
+                const progress = Math.min(1, (now - started) / SNAP_DURATION_MS);
+                paintHeight(startHeight + (target - startHeight) * (1 - (1 - progress) ** 3));
+                if (progress < 1) animation = requestAnimationFrame(step);
+                else { animation = null; sheetContainer.style.removeProperty('--sheet-height'); }
+            }
+            animation = requestAnimationFrame(step);
+        } else sheetContainer.style.removeProperty('--sheet-height');
         resizeMap();
     }
     function selectPanel(name, expand = true) {
@@ -42,7 +71,7 @@
             tab.tabIndex = selected ? 0 : -1;
             document.getElementById(tab.getAttribute('aria-controls')).hidden = !selected;
         });
-        if (mobile.matches && expand && panel.dataset.sheet === 'peek') setSheet('half');
+        if (mobile.matches && expand && panel.dataset.sheet === 'peek') setSheet('half', true);
     }
     tabs.forEach((tab, index) => {
         tab.addEventListener('click', () => selectPanel(tab.dataset.panel));
@@ -72,25 +101,68 @@
         });
     });
 
-    handle.addEventListener('click', () => {
-        if (handle.dataset.swiped) { delete handle.dataset.swiped; return; }
-        setSheet(SHEET_STATES[(SHEET_STATES.indexOf(panel.dataset.sheet) + 1) % SHEET_STATES.length]);
+    handle.addEventListener('click', event => {
+        if (performance.now() < suppressClickUntil) { event.preventDefault(); return; }
+        setSheet(SHEET_STATES[(SHEET_STATES.indexOf(panel.dataset.sheet) + 1) % SHEET_STATES.length], true);
     });
-    let dragStart = null;
+    function beginDrag(y, fromBody) {
+        if (!mobile.matches || isMapFullscreen()) return;
+        suppressClickUntil = 0;
+        cancelAnimation();
+        drag = { y, lastY:y, time:performance.now(), height:panel.getBoundingClientRect().height, velocity:0, active:false, fromBody };
+    }
+    function moveDrag(y, event) {
+        if (!drag) return;
+        const delta = drag.y - y;
+        if (!drag.active) {
+            if (Math.abs(delta) < DRAG_THRESHOLD_PX) return;
+            // Native content scrolling owns upward gestures and gestures away from its top.
+            if (drag.fromBody && (sheetBody.scrollTop > 0 || delta > 0)) { drag = null; return; }
+            drag.active = true;
+            sheetBody.inert = false;
+            panel.classList.add('is-dragging');
+        }
+        if (event.cancelable) event.preventDefault();
+        const now = performance.now();
+        drag.velocity = (drag.lastY - y) / Math.max(1, now - drag.time);
+        drag.lastY = y; drag.time = now;
+        const heights = stops();
+        paintHeight(Math.max(heights[0], Math.min(heights[2], drag.height + delta)));
+    }
+    function endDrag(cancelled = false) {
+        if (!drag) return;
+        const previous = drag; drag = null;
+        panel.classList.remove('is-dragging');
+        if (!previous.active) return;
+        suppressClickUntil = performance.now() + 400;
+        const velocity = performance.now() - previous.time < 100 && !cancelled ? previous.velocity : 0;
+        const projected = panel.getBoundingClientRect().height + velocity * VELOCITY_PROJECTION_MS;
+        const heights = stops();
+        const closest = heights.reduce((best, height, index) => Math.abs(height - projected) < Math.abs(heights[best] - projected) ? index : best, 0);
+        setSheet(SHEET_STATES[closest], true);
+    }
     handle.addEventListener('pointerdown', event => {
-        if (!mobile.matches || !event.isPrimary) return;
-        dragStart = event.clientY; handle.setPointerCapture(event.pointerId);
+        if (event.pointerType === 'touch' || !event.isPrimary || event.button !== 0) return;
+        beginDrag(event.clientY, false); handle.setPointerCapture(event.pointerId);
     });
-    handle.addEventListener('pointerup', event => {
-        if (dragStart === null) return;
-        const distance = dragStart - event.clientY; dragStart = null;
-        if (Math.abs(distance) < SHEET_SWIPE_THRESHOLD_PX) return;
-        const index = SHEET_STATES.indexOf(panel.dataset.sheet);
-        setSheet(SHEET_STATES[Math.max(0, Math.min(SHEET_STATES.length - 1, index + (distance > 0 ? 1 : -1)))]);
-        handle.dataset.swiped = 'true';
-        setTimeout(() => { delete handle.dataset.swiped; }, 0);
+    handle.addEventListener('pointermove', event => { if (event.pointerType !== 'touch') moveDrag(event.clientY, event); });
+    handle.addEventListener('pointerup', event => { if (event.pointerType !== 'touch') endDrag(); });
+    handle.addEventListener('pointercancel', () => endDrag(true));
+    [handle, sheetBody].forEach(surface => {
+        surface.addEventListener('touchstart', event => {
+            if (event.touches.length !== 1) { endDrag(true); return; }
+            if (surface === sheetBody && event.target.closest('a,button,input,select,textarea,label,summary')) return;
+            beginDrag(event.touches[0].clientY, surface === sheetBody);
+        }, { passive:true });
+        surface.addEventListener('touchmove', event => {
+            if (event.touches.length !== 1) { endDrag(true); return; }
+            moveDrag(event.touches[0].clientY, event);
+        }, { passive:false });
+        surface.addEventListener('touchend', () => endDrag());
+        surface.addEventListener('touchcancel', () => endDrag(true));
     });
-    handle.addEventListener('pointercancel', () => { dragStart = null; });
+    window.addEventListener('resize', () => { endDrag(true); setSheet(panel.dataset.sheet); });
+    document.addEventListener('mapfullscreenchange', () => { endDrag(true); cancelAnimation(); sheetContainer.style.removeProperty('--sheet-height'); });
     handle.addEventListener('keydown', event => {
         if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
         event.preventDefault();
@@ -158,6 +230,7 @@
     }
     document.addEventListener('mapfullscreenchange', syncFullscreen);
     syncFullscreen();
+    layerPanel.querySelector('.hub-layer-close').addEventListener('click', () => { layerPanel.open = false; layerPanel.querySelector('summary').focus(); });
     L.DomEvent.disableClickPropagation(layerPanel);
     L.DomEvent.disableScrollPropagation(layerPanel);
 

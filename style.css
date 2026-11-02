@@ -1189,3 +1189,25 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .hub-below-map .hub-updates .update-list { box-sizing:border-box; max-height:min(190px,40dvh); overflow-y:auto; overscroll-behavior:contain; margin:0; padding:0 18px; border:0; border-top:1px solid var(--hub-line); background:transparent; }
 .hub-below-map .hub-updates .update-list li { overflow-wrap:anywhere; }
 @media (max-width:767px), (pointer:coarse) and (max-width:1023px) { .hub-below-map .hub-updates { width:calc(100% - 36px); margin:0 18px 20px; } }
+
+/* Normal mobile map controls only; native/pseudo fullscreen retains its legend. */
+.hub-layer-icon, .hub-layer-close { display:none; }
+@media (max-width:767px), (pointer:coarse) and (max-width:1023px) {
+    .hub-site .map-container { --sheet-height:104px; }
+    .hub-sheet-handle { height:44px; min-height:44px; }
+    .hub-panel-body { padding-bottom:28px; -webkit-overflow-scrolling:touch; }
+    .hub-map-panel.is-dragging .hub-panel-body { visibility:visible; }
+    .hub-site .hub-normal-map .hub-layer-panel { left:10px; bottom:104px; width:48px; box-sizing:border-box; }
+    .hub-normal-map .hub-layer-panel > summary { display:flex; justify-content:center; align-items:center; width:46px; height:46px; padding:0; list-style:none; }
+    .hub-normal-map .hub-layer-panel > summary::-webkit-details-marker { display:none; }
+    .hub-normal-map .hub-layer-icon { display:inline; font-size:1.2rem; }
+    .hub-normal-map .hub-layer-label { display:none; }
+    .hub-site .hub-normal-map .hub-layer-panel[open] { width:min(270px,calc(100% - 86px)); max-height:calc(100% - 114px); overflow:auto; }
+    .hub-normal-map .hub-layer-panel[open] > summary { justify-content:flex-start; padding-left:14px; box-sizing:border-box; }
+    .hub-normal-map .hub-layer-panel[open] .hub-layer-close { display:block; position:absolute; right:8px; top:4px; min-height:40px; padding:8px; border:1px solid var(--hub-line); border-radius:6px; background:white; color:var(--hub-ink); }
+    .hub-normal-map .hub-layer-panel #legend-items { max-height:none; }
+}
+@media (max-height:500px) and (max-width:767px), (max-height:500px) and (pointer:coarse) and (max-width:1023px) {
+    .hub-site .hub-normal-map .hub-layer-panel { left:60px; bottom:26px; }
+    .hub-site .hub-normal-map .hub-layer-panel[open] { max-height:calc(100% - 36px); }
+}
