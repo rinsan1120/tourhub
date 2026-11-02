@@ -176,11 +176,5 @@
     });
     new MutationObserver(() => weatherHeading.setAttribute('aria-expanded', String(!weatherHeading.classList.contains('collapsed'))))
         .observe(weatherHeading, { attributes: true, attributeFilter: ['class'] });
-    const updates = document.getElementById('updates-dialog');
-    document.getElementById('open-updates').addEventListener('click', () => updates.showModal());
-    document.getElementById('close-updates').addEventListener('click', () => updates.close());
-    updates.addEventListener('click', event => { if (event.target === updates) {
-        const rect = updates.getBoundingClientRect();
-        if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) updates.close();
-    } });
+
 })();
