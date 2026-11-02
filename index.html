@@ -3,11 +3,11 @@
 <head>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Rin’s Touring Hub</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <link rel="stylesheet" href="style.css?t=20261026-coordinate-only">
+    <link rel="stylesheet" href="style.css?v=20261102-map-shell">
     
 </head>
 <body class="hub-site">
@@ -15,21 +15,20 @@
     <div class="header-content">
         <img src="./images/logo.jpg" alt="Logo" class="header-logo">
         <h1>Rin’s Touring Hub</h1>
-        <button type="button" class="menu-toggle" onclick="toggleDrawer()" aria-label="管理者メニュー"><i class="fa-solid fa-bars"></i></button>
+        <nav class="hub-navigation" aria-label="メインナビゲーション">
+            <button type="button" data-screen="map" aria-current="page"><i class="fa-solid fa-map" aria-hidden="true"></i><span>地図</span></button>
+            <button type="button" data-screen="weather"><i class="fa-solid fa-cloud-sun" aria-hidden="true"></i><span>天気</span></button>
+            <button type="button" data-screen="tools"><i class="fa-solid fa-compass" aria-hidden="true"></i><span>旅のツール</span></button>
+        </nav>
     </div>
 </header>
-<!-- ▼追加：ドロワー要素▼ -->
-<div id="drawer-overlay" class="drawer-overlay hub-drawer-overlay" onclick="toggleDrawer()"></div>
-<div id="drawer-menu" class="drawer-menu hub-drawer">
-    <button type="button" class="drawer-close" onclick="toggleDrawer()" aria-label="閉じる"><i class="fa-solid fa-xmark"></i></button>
-    <div id="drawer-content">読み込み中...</div>
-</div>
-<!-- ▲追加ここまで▲ -->
 <main>
+    <section id="screen-map" class="hub-screen" aria-label="地図">
     <div class="map-container">
         <div class="map-section">
                 <div id="map-wrapper">
                 <div id="map"></div>
+                <details class="hub-layer-panel"><summary>表示レイヤー切り替え</summary><div id="legend" class="legend"><div class="legend-title">表示レイヤー切り替え</div><div id="legend-items"></div></div></details>
                 <div id="map-loading-status" class="map-loading-status" role="status" aria-live="polite">地図データを読み込み中...</div>
                 <button type="button" class="loc-btn" onclick="goToMyLocation()" aria-label="現在地へ移動" title="現在地へ移動"><i class="fa-solid fa-crosshairs"></i></button>
                 <div id="map-action-buttons">
@@ -73,31 +72,43 @@
                 </div>
             </div>
         </div>
-        <div id="legend" class="legend"><div class="legend-title">表示レイヤー切り替え</div><div id="legend-items"></div></div>
+
+        <aside id="map-panel" class="hub-map-panel" data-sheet="peek" aria-label="地図の操作パネル">
+            <button type="button" id="sheet-handle" class="hub-sheet-handle" aria-label="操作パネルを広げる" aria-expanded="false"><span></span></button>
+            <div class="hub-panel-tabs" role="tablist" aria-label="地図の情報">
+                <button type="button" id="tab-place" role="tab" data-panel="place" aria-controls="panel-place" aria-selected="true">地点情報</button>
+                <button type="button" id="tab-nearby" role="tab" data-panel="nearby" aria-controls="panel-nearby" aria-selected="false" tabindex="-1">周辺施設</button>
+                <button type="button" id="tab-map-weather" role="tab" data-panel="map-weather" aria-controls="panel-map-weather" aria-selected="false" tabindex="-1">天気</button>
+            </div>
+            <div class="hub-panel-body">
+                <section id="panel-place" role="tabpanel" aria-labelledby="tab-place">
+                    <div id="selected-place" aria-live="polite"><div class="hub-empty-place"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i><h2>地図から、気になる場所へ。</h2><p>名道やスポットを選ぶと、地点情報とGoogleマップへの連携操作を表示します。</p><p>任意の地点は、PCでは右クリック、スマートフォンでは長押しで選べます。</p></div></div>
+                </section>
+                <section id="panel-nearby" role="tabpanel" aria-labelledby="tab-nearby" hidden>
+                    <h2>周辺施設検索</h2><div id="nearby-container" class="nearby-grid">読み込み中...</div>
+                </section>
+                <section id="panel-map-weather" role="tabpanel" aria-labelledby="tab-map-weather" hidden>
+                    <h2>地名で天気検索</h2>
+                    <form id="map-weather-form"><label class="hub-field-label" for="map-weather-input">地名</label><input type="text" id="map-weather-input" placeholder="例：阿蘇山" class="weather-search-input"><button class="btn-full weather-search-btn" type="submit">天気を検索</button></form>
+                    <button type="button" class="hub-forecast-link" data-screen="weather">全国エリア別天気（3日間） →</button>
+                </section>
+            </div>
+        </aside>
     </div>
+    </section>
     <div class="hub-below-map">
-    <div class="spot-contribution">
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdehrB_duWjjHXZBbfdP06jWxHQDwBeP20cQBR3OMX3DVtLZw/viewform?usp=sharing&ouid=106460317115165638365" 
-           target="_blank" 
-           class="spot-contribution-link">
-            <i class="fa-solid fa-plus"></i> 地図にスポットを追加する <span>（Googleフォーム）</span>
-        </a>
-    </div>
-        <section class="content-card hub-nearby">
-            <h2>周辺施設検索</h2>
-            <div id="nearby-container" class="nearby-grid">読み込み中...</div>
-        </section>
-    <section class="hub-weather">
+    <section id="screen-weather" class="hub-weather hub-screen" aria-label="天気" hidden>
+        <h2 class="hub-screen-title" tabindex="-1">天気</h2>
         <div class="content-card hub-weather-search">
             <h2>地名で天気検索</h2>
             <div class="hub-weather-search-controls">
-            <input type="text" id="weather-input" placeholder="例：阿蘇山" class="weather-search-input">
+            <label class="hub-field-label" for="weather-input">地名</label><input type="text" id="weather-input" placeholder="例：阿蘇山" class="weather-search-input">
             <button class="btn-full weather-search-btn" onclick="searchWeather()">天気を検索</button>
             </div>
         </div>
 
     <div class="content-card weather-card">
-        <div class="weather-card-header collapsed" onclick="toggleWeather()">
+        <div class="weather-card-header collapsed" role="button" tabindex="0" aria-expanded="false" onclick="toggleWeather()">
             <h2>全国エリア別天気（3日間）</h2>
             <i class="fa-solid fa-chevron-down toggle-icon"></i>
         </div>
@@ -112,12 +123,22 @@
     </div>
     </section>
 
-    <section class="content-card hub-plan">
+    <section id="screen-tools" class="content-card hub-plan hub-screen" aria-label="旅のツール" hidden>
+        <h2 class="hub-screen-title" tabindex="-1">旅のツール</h2>
         <h2>旅の計画</h2>
         <div id="category-container">読み込み中...</div>
     </section>
 
-    <section class="content-card updates-card hub-updates"><h2>Update Log</h2><ul id="dynamic-update-list" class="update-list"></ul></section>
+    <div class="hub-utility-links">
+    <div class="spot-contribution">
+        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdehrB_duWjjHXZBbfdP06jWxHQDwBeP20cQBR3OMX3DVtLZw/viewform?usp=sharing&ouid=106460317115165638365"
+           target="_blank"
+           class="spot-contribution-link">
+            <i class="fa-solid fa-plus"></i> 地図にスポットを追加する <span>（Googleフォーム）</span>
+        </a>
+    </div>
+<button type="button" id="open-updates">Update Log <span aria-hidden="true">↗</span></button></div>
+    <dialog id="updates-dialog" class="hub-updates"><div class="hub-dialog-heading"><h2>Update Log</h2><button type="button" id="close-updates" aria-label="閉じる">×</button></div><ul id="dynamic-update-list" class="update-list"></ul></dialog>
     </div>
 </main>
 
@@ -128,11 +149,12 @@
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
 <script src="conf/common.js"></script>
-<script src="conf/map-engine.js?v=20261026-coordinate-only"></script>
+<script src="conf/map-engine.js?v=20261102-map-shell"></script>
 <script src="conf/rain-engine.js?v=20261015-fullscreen"></script>
 <script src="conf/map-interaction-lock.js?v=20261015-interaction-lock"></script>
 <script src="conf/michi-no-eki.js"></script>
 <script src="conf/weather-engine.js"></script>
+<script src="conf/ui-shell.js?v=20261102-map-shell"></script>
 
 <script>
     // 周辺検索の読み込み
@@ -203,38 +225,6 @@
             });
         } catch (e) {}
     }
-    function toggleDrawer() {
-        document.getElementById('drawer-menu').classList.toggle('open');
-        document.getElementById('drawer-overlay').classList.toggle('open');
-    }
-    async function loadDrawerLinks() {
-        const container = document.getElementById('drawer-content');
-        try {
-            const res = await fetch('conf/drawer-links.txt?t=' + Date.now()), text = await res.text();
-            container.innerHTML = '';
-            text.split('\n').forEach(rawLine => {
-                const line = cleanLine(rawLine);
-                if(!line) return;
-                if(line.startsWith('※')) {
-                    const h3 = document.createElement('h3');
-                    h3.className = 'hub-drawer-category';
-                    h3.innerHTML = line.substring(1);
-                    container.appendChild(h3);
-                } else if(line.includes(',')) {
-                    const firstCommaIdx = line.indexOf(',');
-                    const n = line.substring(0, firstCommaIdx).trim();
-                    const u = line.substring(firstCommaIdx + 1).replace(/[\r\n]/g, '').trim();
-                    
-                    const a = document.createElement('a');
-                    a.href = u; a.className = 'drawer-link-card'; a.target = '_blank';
-                    a.innerHTML = n;
-                    container.appendChild(a);
-                }
-            });
-        } catch (e) { container.innerHTML = 'drawer-links.txt 読込失敗'; }
-    }
-    // ▲追加ここまで▲
-
     // すべてを起動するメイン処理
     window.addEventListener('load', () => {
         // 1. 地図を初期化（土台を作ってからマーカーを呼ぶ）
@@ -251,7 +241,6 @@
         loadNearbyConfig();
         loadLinks();
         loadUpdateLog();
-        loadDrawerLinks(); // ← 追加：ドロワーの読み込み
     });
 </script>
 <footer class="site-footer">

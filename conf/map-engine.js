@@ -670,11 +670,13 @@ function attachCopyCoordsHandler(e) {
         });
     });
     popupElement.querySelectorAll('.popup-description-trigger').forEach(button => {
+        if (button.dataset.descriptionHandlerAttached === 'true') return;
+        button.dataset.descriptionHandlerAttached = 'true';
         button.addEventListener('click', event => {
             event.preventDefault();
             event.stopPropagation();
             openMapDescription(button);
-        }, { once: true });
+        });
     });
 }
 
