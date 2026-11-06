@@ -99,9 +99,12 @@
             window.scrollTo({ top: 0, behavior: 'instant' });
             if (name === 'map') resizeMap();
             else document.querySelector(`#screen-${name} .hub-screen-title`).focus({ preventScroll: true });
+            document.dispatchEvent(new Event('hubscreenchange'));
             if (name === 'weather' && document.querySelector('.weather-card-header').classList.contains('collapsed')) toggleWeather();
         });
     });
+
+    if (location.hash === '#radio') document.querySelector('.hub-navigation [data-screen=radio]').click();
 
     handle.addEventListener('click', event => {
         if (performance.now() < suppressClickUntil) { event.preventDefault(); return; }

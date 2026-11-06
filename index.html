@@ -7,7 +7,7 @@
     <title>Rin’s Touring Hub</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <link rel="stylesheet" href="style.css?v=20261107-mobile-balloon">
+    <link rel="stylesheet" href="style.css?v=20261107-radio">
     <style>
     .hub-navigation a.hub-nav-link { display:flex; align-items:center; justify-content:center; gap:9px; padding:0 22px; border-bottom:3px solid transparent; color:#dae5dc; font-weight:600; min-height:48px; text-decoration:none; }
     @media (hover:hover) { .hub-navigation a.hub-nav-link:hover { background:#ffffff12; } }
@@ -27,10 +27,15 @@
             <button type="button" data-screen="map" aria-current="page"><i class="fa-solid fa-map" aria-hidden="true"></i><span>地図</span></button>
             <button type="button" data-screen="weather"><i class="fa-solid fa-cloud-sun" aria-hidden="true"></i><span>天気</span></button>
             <button type="button" data-screen="tools"><i class="fa-solid fa-compass" aria-hidden="true"></i><span>旅のツール</span></button>
-            <a class="hub-nav-link" href="radio.html"><i class="fa-solid fa-radio" aria-hidden="true"></i><span>ラジオ</span></a>
+            <button type="button" data-screen="radio"><i class="fa-solid fa-radio" aria-hidden="true"></i><span>ラジオ</span></button>
         </nav>
     </div>
 </header>
+<div id="radio-mini" class="radio-mini" aria-label="ラジオのミニプレイヤー" hidden>
+    <button type="button" class="radio-mini-title" data-screen="radio" aria-label="ラジオ画面に戻る"><span id="mini-title"></span></button>
+    <button type="button" id="mini-toggle" aria-label="再生">▶</button>
+    <button type="button" id="mini-next" aria-label="次へ">⏭</button>
+</div>
 <main>
     <section id="screen-map" class="hub-screen" aria-label="地図">
     <div class="map-container">
@@ -138,6 +143,27 @@
         <div id="category-container">読み込み中...</div>
     </section>
 
+    <section id="screen-radio" class="hub-screen radio-wrap" aria-label="ラジオ" hidden>
+        <h2 class="hub-screen-title" tabindex="-1">ラジオ</h2>
+        <p class="radio-intro">バイクと道にまつわるコラム対談です。エピソードを選ぶと再生が始まり、終わると自動で次へ進むので、続けて聞けます。</p>
+
+        <div class="radio-player">
+            <p class="radio-now"><span class="radio-now-label">再生中</span><span id="now-title">未選択</span></p>
+            <audio id="player" controls preload="none"></audio>
+            <div class="radio-controls">
+                <button type="button" id="btn-prev"><i class="fa-solid fa-backward-step" aria-hidden="true"></i> 前へ</button>
+                <button type="button" id="btn-next">次へ <i class="fa-solid fa-forward-step" aria-hidden="true"></i></button>
+            </div>
+        </div>
+
+        <ol class="radio-list" id="episode-list"></ol>
+
+        <p class="radio-note">
+            過去の放送は <a href="https://github.com/rinsan1120/radio-columns/releases" target="_blank" rel="noopener noreferrer">GitHub Releases</a> にも置いています。<br>
+            音声：COEIROINK／アメノちゃん・つくよみちゃん
+        </p>
+    </section>
+
     <div class="hub-utility-links">
     <div class="spot-contribution">
         <a href="https://docs.google.com/forms/d/e/1FAIpQLSdehrB_duWjjHXZBbfdP06jWxHQDwBeP20cQBR3OMX3DVtLZw/viewform?usp=sharing&ouid=106460317115165638365"
@@ -163,7 +189,107 @@
 <script src="conf/map-interaction-lock.js?v=20261015-interaction-lock"></script>
 <script src="conf/michi-no-eki.js"></script>
 <script src="conf/weather-engine.js"></script>
-<script src="conf/ui-shell.js?v=20261107-mobile-balloon"></script>
+<script>// 放送データ。新しい放送はこの配列の先頭に追加する。
+    const RELEASE_BASE = 'https://github.com/rinsan1120/radio-columns/releases/download/2026-11-06/';
+    const episodes = [
+        {
+            title: '水平対向はなぜ100年生き残れたのか',
+            genre: 'バイク', duration: '3分40秒',
+            file: '2026-11-06-column-01-boxer.mp3',
+            script: '2026-11-06-column-01-boxer-script.md',
+            summary: '生産撤退の窮地を救ったのは、パリダカの活躍とファンの購買運動だった。BMWボクサー100年の物語。'
+        },
+        {
+            title: 'ビーナスラインという道の物語',
+            genre: '旅の読み物', duration: '4分10秒',
+            file: '2026-11-06-column-02-venusline.mp3',
+            script: '2026-11-06-column-02-venusline-script.md',
+            summary: '茅野から美ヶ原へ、全長75.2kmの高原道路。名前の由来と4つのエリアの見どころを辿る。'
+        },
+        {
+            title: 'Museの活用事例、みんな何に使っている？',
+            genre: 'AI・Muse', duration: '3分41秒',
+            file: '2026-11-06-column-03-muse.mp3',
+            script: '2026-11-06-column-03-muse-script.md',
+            summary: 'Xで話題の活用法30選から、頼み方のコツと使うときの注意点まで。'
+        }
+    ];
+
+    const player = document.getElementById('player');
+    const nowTitle = document.getElementById('now-title');
+    const listEl = document.getElementById('episode-list');
+    let current = -1;
+
+    episodes.forEach((ep, i) => {
+        const li = document.createElement('li');
+        li.className = 'radio-item';
+        li.setAttribute('role', 'button');
+        li.setAttribute('tabindex', '0');
+        li.innerHTML =
+            '<div class="radio-item-head"><span class="radio-item-title"></span>' +
+            '<span class="radio-item-meta">' + ep.genre + ' ・ ' + ep.duration + '</span></div>' +
+            '<p class="radio-item-summary"></p>' +
+            '<div class="radio-item-links"><a class="radio-script-link" target="_blank" rel="noopener noreferrer">台本を読む</a></div>';
+        li.querySelector('.radio-item-title').textContent = ep.title;
+        li.querySelector('.radio-item-summary').textContent = ep.summary;
+        const link = li.querySelector('.radio-script-link');
+        link.href = RELEASE_BASE + ep.script;
+        link.addEventListener('click', (e) => e.stopPropagation());
+        li.addEventListener('click', () => playAt(i));
+        li.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); playAt(i); } });
+        listEl.appendChild(li);
+    });
+
+    function playAt(i) {
+        if (i < 0 || i >= episodes.length) return;
+        current = i;
+        const ep = episodes[i];
+        player.src = RELEASE_BASE + ep.file;
+        player.play();
+        nowTitle.textContent = ep.title;
+        document.getElementById('mini-title').textContent = ep.title;
+        syncMini();
+        document.querySelectorAll('.radio-item').forEach((el, j) => {
+            el.classList.toggle('active', j === i);
+        });
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: ep.title,
+                artist: 'Rin’s Touring Hub ラジオ',
+                album: 'コラム対談'
+            });
+        }
+    }
+
+    document.getElementById('btn-prev').addEventListener('click', () => playAt(current - 1));
+    document.getElementById('btn-next').addEventListener('click', () => playAt(current + 1));
+    player.addEventListener('ended', () => {
+        if (current >= 0 && current < episodes.length - 1) playAt(current + 1);
+    });
+    if ('mediaSession' in navigator) {
+        navigator.mediaSession.setActionHandler('previoustrack', () => playAt(current - 1));
+        navigator.mediaSession.setActionHandler('nexttrack', () => playAt(current + 1));
+    }
+
+    const mini = document.getElementById('radio-mini');
+    const miniToggle = document.getElementById('mini-toggle');
+    function syncMini() {
+        const visible = current >= 0 && document.getElementById('screen-radio').hidden;
+        mini.hidden = !visible;
+        document.body.classList.toggle('has-radio-mini', visible);
+        miniToggle.textContent = player.paused ? '▶' : '❚❚';
+        miniToggle.setAttribute('aria-label', player.paused ? '再生' : '一時停止');
+        document.getElementById('mini-next').disabled = current >= episodes.length - 1;
+    }
+    miniToggle.addEventListener('click', () => { if (player.paused) player.play(); else player.pause(); });
+    document.getElementById('mini-next').addEventListener('click', () => playAt(current + 1));
+    player.addEventListener('play', syncMini);
+    player.addEventListener('pause', syncMini);
+    player.addEventListener('ended', syncMini);
+    document.addEventListener('hubscreenchange', syncMini);
+
+</script>
+<script src="conf/ui-shell.js?v=20261107-radio"></script>
 
 <script>
     // 周辺検索の読み込み
