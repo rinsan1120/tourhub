@@ -73,16 +73,18 @@
         });
         if (mobile.matches && expand && panel.dataset.sheet === 'peek') setSheet('half', true);
     }
-    tabs.forEach((tab, index) => {
+    tabs.forEach(tab => {
         tab.addEventListener('click', () => selectPanel(tab.dataset.panel));
         tab.addEventListener('keydown', event => {
+            const availableTabs = mobile.matches ? tabs.filter(item => item.dataset.panel !== 'place') : tabs;
+            const current = availableTabs.indexOf(tab);
             let next;
-            if (event.key === 'ArrowRight') next = (index + 1) % tabs.length;
-            if (event.key === 'ArrowLeft') next = (index + tabs.length - 1) % tabs.length;
+            if (event.key === 'ArrowRight') next = (current + 1) % availableTabs.length;
+            if (event.key === 'ArrowLeft') next = (current + availableTabs.length - 1) % availableTabs.length;
             if (event.key === 'Home') next = 0;
-            if (event.key === 'End') next = tabs.length - 1;
+            if (event.key === 'End') next = availableTabs.length - 1;
             if (next === undefined) return;
-            event.preventDefault(); tabs[next].focus(); selectPanel(tabs[next].dataset.panel);
+            event.preventDefault(); availableTabs[next].focus(); selectPanel(availableTabs[next].dataset.panel);
         });
     });
     document.querySelectorAll('[data-screen]').forEach(button => {
@@ -169,18 +171,21 @@
         const index = SHEET_STATES.indexOf(panel.dataset.sheet);
         setSheet(event.key === 'Home' ? 'peek' : event.key === 'End' ? 'full' : SHEET_STATES[Math.max(0, Math.min(SHEET_STATES.length - 1, index + (event.key === 'ArrowUp' ? 1 : -1)))]);
     });
-    mobile.addEventListener('change', () => setSheet(panel.dataset.sheet));
+    mobile.addEventListener('change', () => {
+        setSheet(panel.dataset.sheet);
+        if (mobile.matches && document.getElementById('tab-place').getAttribute('aria-selected') === 'true') selectPanel('nearby', false);
+    });
     setSheet('peek');
+    if (mobile.matches) selectPanel('nearby', false);
 
-    // Leaflet's contentupdate precedes auto-pan. Normal panels need no map movement;
-    // fullscreen retains Leaflet's original popup auto-pan and description controls.
+    // Leaflet's contentupdate precedes auto-pan. Mobile and fullscreen popups use auto-pan.
     let selectedPopup = null;
     let selectedContent = null;
     L.Popup.addInitHook(function () {
         this.on('contentupdate', () => {
-            this.options.autoPan = isMapFullscreen();
+            this.options.autoPan = isMapFullscreen() || mobile.matches;
             attachCopyCoordsHandler({ popup: this });
-            if (this.isOpen() && (this !== selectedPopup || this.getContent() !== selectedContent)) showPlace(this);
+            if (!mobile.matches && this.isOpen() && (this !== selectedPopup || this.getContent() !== selectedContent)) showPlace(this);
         });
     });
     function showPlace(popup) {
@@ -216,7 +221,7 @@
         attachCopyCoordsHandler({ popup: { getElement: () => place } });
         if (!isMapFullscreen()) selectPanel('place');
     }
-    map.on('popupopen', event => showPlace(event.popup));
+    map.on('popupopen', event => { if (!mobile.matches) showPlace(event.popup); });
     map.on('popupclose', () => { selectedPopup = null; selectedContent = null; place.innerHTML = emptyPlace; });
     function syncFullscreen() {
         const fullscreen = isMapFullscreen();

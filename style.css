@@ -1148,7 +1148,9 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
     .hub-map-panel { position:absolute; bottom:0; left:0; right:0; height:var(--sheet-height); box-sizing:border-box; border:0; border-top:1px solid var(--hub-line); border-radius:18px 18px 0 0; box-shadow:0 -4px 18px #183b3214; overflow:hidden; }
     .hub-sheet-handle { display:flex; justify-content:center; align-items:center; width:100%; height:28px; min-height:28px; padding:0; border:0; background:transparent; touch-action:none; }
     .hub-sheet-handle span { width:38px; height:4px; border-radius:4px; background:#b1bdb2; }
-    .hub-panel-tabs { padding:0 16px; }
+    .hub-panel-tabs { padding:0 16px; grid-template-columns:repeat(2,minmax(0,1fr)); }
+    #tab-place, #panel-place { display:none; }
+    .hub-normal-map .leaflet-popup:has(.spot-popup) { display:block; }
     .hub-panel-tabs button { min-height:54px; font-size:.85rem; }
     .hub-panel-body { padding:18px 20px; }
     .hub-map-panel[data-sheet=peek] .hub-panel-body { visibility:hidden; }
