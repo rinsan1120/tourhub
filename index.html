@@ -8,6 +8,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <link rel="stylesheet" href="style.css?v=20261102-mobile-panels">
+    <style>
+    .hub-navigation a.hub-nav-link { display:flex; align-items:center; justify-content:center; gap:9px; padding:0 22px; border-bottom:3px solid transparent; color:#dae5dc; font-weight:600; min-height:48px; text-decoration:none; }
+    @media (hover:hover) { .hub-navigation a.hub-nav-link:hover { background:#ffffff12; } }
+    @media (max-width:767px), (pointer:coarse) and (max-width:1023px) {
+        .hub-navigation a.hub-nav-link { flex:1; flex-direction:column; gap:5px; border:0; border-top:3px solid transparent; padding:6px 2px; color:var(--hub-muted); font-size:.7rem; min-height:0; }
+        .hub-navigation a.hub-nav-link i { font-size:1.1rem; }
+    }
+    </style>
     
 </head>
 <body class="hub-site">
@@ -19,6 +27,7 @@
             <button type="button" data-screen="map" aria-current="page"><i class="fa-solid fa-map" aria-hidden="true"></i><span>地図</span></button>
             <button type="button" data-screen="weather"><i class="fa-solid fa-cloud-sun" aria-hidden="true"></i><span>天気</span></button>
             <button type="button" data-screen="tools"><i class="fa-solid fa-compass" aria-hidden="true"></i><span>旅のツール</span></button>
+            <a class="hub-nav-link" href="radio.html"><i class="fa-solid fa-radio" aria-hidden="true"></i><span>ラジオ</span></a>
         </nav>
     </div>
 </header>
