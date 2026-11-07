@@ -146,13 +146,13 @@
 
     <section id="screen-radio" class="hub-screen radio-wrap" aria-label="ラジオ" hidden>
         <h2 class="hub-screen-title" tabindex="-1">ラジオ</h2>
-        <p class="radio-intro">バイクと道にまつわるコラム対談です。エピソードを選ぶと再生が始まり、終わると自動で次へ進むので、続けて聞けます。</p>
+        <p class="radio-intro">バイクと道にまつわるコラム対談です。エピソードを選ぶと再生が始まり、以降は3秒間隔でシャッフル再生します。</p>
 
         <div class="radio-player">
             <p class="radio-now"><span class="radio-now-label">再生中</span><span id="now-title">未選択</span></p>
             <audio id="player" controls preload="none"></audio>
             <div class="radio-controls">
-                <button type="button" id="btn-prev"><i class="fa-solid fa-backward-step" aria-hidden="true"></i> 前へ</button>
+                <button type="button" id="btn-prev" disabled><i class="fa-solid fa-backward-step" aria-hidden="true"></i> 前へ</button>
                 <button type="button" id="btn-next">次へ <i class="fa-solid fa-forward-step" aria-hidden="true"></i></button>
             </div>
         </div>
@@ -302,7 +302,48 @@
     const player = document.getElementById('player');
     const nowTitle = document.getElementById('now-title');
     const listEl = document.getElementById('episode-list');
+    const AUTO_ADVANCE_DELAY_MS = 3000;
     let current = -1;
+    let remaining = [], history = [], forward = [], autoTimer = null;
+
+    function shuffleRemaining(exclude) {
+        const order = episodes.map((_, i) => i).filter(i => i !== exclude);
+        for (let i = order.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [order[i], order[j]] = [order[j], order[i]];
+        }
+        return order;
+    }
+    function cancelAutoAdvance() {
+        if (autoTimer !== null) clearTimeout(autoTimer);
+        autoTimer = null;
+    }
+    function selectEpisode(i) {
+        cancelAutoAdvance();
+        if (current >= 0 && current !== i) history.push(current);
+        forward = [];
+        remaining = shuffleRemaining(i);
+        playAt(i);
+    }
+    function nextEpisode() {
+        cancelAutoAdvance();
+        if (current < 0) return;
+        let next;
+        if (forward.length) next = forward.pop();
+        else {
+            if (!remaining.length) remaining = shuffleRemaining(current);
+            next = remaining.shift();
+            if (next === undefined) next = current;
+        }
+        history.push(current);
+        playAt(next);
+    }
+    function previousEpisode() {
+        cancelAutoAdvance();
+        if (!history.length) { syncMini(); return; }
+        forward.push(current);
+        playAt(history.pop());
+    }
 
     episodes.forEach((ep, i) => {
         const li = document.createElement('li');
@@ -315,8 +356,8 @@
             '<p class="radio-item-summary"></p>';
         li.querySelector('.radio-item-title').textContent = ep.title;
         li.querySelector('.radio-item-summary').textContent = ep.summary;
-        li.addEventListener('click', () => playAt(i));
-        li.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); playAt(i); } });
+        li.addEventListener('click', () => selectEpisode(i));
+        li.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectEpisode(i); } });
         listEl.appendChild(li);
     });
 
@@ -341,14 +382,22 @@
         }
     }
 
-    document.getElementById('btn-prev').addEventListener('click', () => playAt(current - 1));
-    document.getElementById('btn-next').addEventListener('click', () => playAt(current + 1));
+    document.getElementById('btn-prev').addEventListener('click', previousEpisode);
+    document.getElementById('btn-next').addEventListener('click', nextEpisode);
     player.addEventListener('ended', () => {
-        if (current >= 0 && current < episodes.length - 1) playAt(current + 1);
+        cancelAutoAdvance();
+        if (current < 0) return;
+        autoTimer = setTimeout(() => { autoTimer = null; nextEpisode(); }, AUTO_ADVANCE_DELAY_MS);
+        syncMini();
     });
     if ('mediaSession' in navigator) {
-        navigator.mediaSession.setActionHandler('previoustrack', () => playAt(current - 1));
-        navigator.mediaSession.setActionHandler('nexttrack', () => playAt(current + 1));
+        navigator.mediaSession.setActionHandler('previoustrack', previousEpisode);
+        navigator.mediaSession.setActionHandler('nexttrack', nextEpisode);
+        navigator.mediaSession.setActionHandler('pause', () => {
+            cancelAutoAdvance();
+            player.pause();
+            syncMini();
+        });
     }
 
     const mini = document.getElementById('radio-mini');
@@ -357,16 +406,23 @@
         const visible = current >= 0 && document.getElementById('screen-radio').hidden;
         mini.hidden = !visible;
         document.body.classList.toggle('has-radio-mini', visible);
-        miniToggle.textContent = player.paused ? '▶' : '❚❚';
-        miniToggle.setAttribute('aria-label', player.paused ? '再生' : '一時停止');
-        document.getElementById('mini-next').disabled = current >= episodes.length - 1;
+        const active = !player.paused || autoTimer !== null;
+        miniToggle.textContent = active ? '❚❚' : '▶';
+        miniToggle.setAttribute('aria-label', active ? '一時停止' : '再生');
+        document.getElementById('btn-prev').disabled = history.length === 0;
+        document.getElementById('btn-next').disabled = current < 0;
+        document.getElementById('mini-next').disabled = current < 0;
     }
-    miniToggle.addEventListener('click', () => { if (player.paused) player.play(); else player.pause(); });
-    document.getElementById('mini-next').addEventListener('click', () => playAt(current + 1));
-    player.addEventListener('play', syncMini);
-    player.addEventListener('pause', syncMini);
-    player.addEventListener('ended', syncMini);
+    miniToggle.addEventListener('click', () => {
+        if (autoTimer !== null) { cancelAutoAdvance(); syncMini(); }
+        else if (player.paused) player.play();
+        else player.pause();
+    });
+    document.getElementById('mini-next').addEventListener('click', nextEpisode);
+    player.addEventListener('play', () => { cancelAutoAdvance(); syncMini(); });
+    player.addEventListener('pause', () => { if (autoTimer !== null) cancelAutoAdvance(); syncMini(); });
     document.addEventListener('hubscreenchange', syncMini);
+    syncMini();
 
 </script>
 <script src="conf/ui-shell.js?v=20261107-map-ui"></script>
