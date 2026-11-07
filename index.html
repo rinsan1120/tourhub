@@ -179,7 +179,120 @@
 <script>// 放送データ。新しい放送はこの配列の先頭に追加する。
     const RELEASE_BASE = 'https://github.com/rinsan1120/radio-columns/releases/download/2026-11-06/';
     const RELEASE_BASE_20261107 = 'https://github.com/rinsan1120/radio-columns/releases/download/2026-11-07/';
+    const RELEASE_BASE_20261108 = 'https://github.com/rinsan1120/radio-columns/releases/download/2026-11-08/';
     const episodes = [
+        {
+            title: '四国カルスト — 天空の道、県道383号',
+            genre: '旅の読み物', duration: '4分33秒',
+            file: '2026-11-07-column-21-shikoku-karst.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: '標高約1,400mの尾根を東西約25kmに縦断する「日本のスイス」。石灰岩と草原と放牧牛の景色。'
+        },
+        {
+            title: 'GSの系譜 — R80 G/SからR1300GS Adventureまで',
+            genre: 'バイク', duration: '4分46秒',
+            file: '2026-11-07-column-22-gs-lineage.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: '1980年のR80 G/Sから、愛車R1300GS Adventureまで。アドベンチャーという概念を生んだ系譜をたどる。'
+        },
+        {
+            title: '伊豆スカイライン — 両側が海の尾根道',
+            genre: '旅の読み物', duration: '4分33秒',
+            file: '2026-11-07-column-23-izu-skyline.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: '熱海峠から天城高原まで約40.6km。駿河湾と相模湾を両側に見る稜線と、富士山の話。125cc以下は通行不可の注意つき。'
+        },
+        {
+            title: '阿蘇ミルクロード — 牛乳を運んだ道',
+            genre: '旅の読み物', duration: '4分24秒',
+            file: '2026-11-07-column-24-aso-milkroad.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: '外輪山の稜線を走る約45km。農道だった道がなぜライダーの聖地になったのか、大観峰とかぶと岩とともに。'
+        },
+        {
+            title: '千里浜なぎさドライブウェイ — 砂浜を走る道',
+            genre: '旅の読み物', duration: '4分55秒',
+            file: '2026-11-07-column-25-chirihama.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: '日本で唯一、波打ち際の砂浜を走れる約8kmの観光道路。砂が固くなる理由と、浸食で通行止めになる今。'
+        },
+        {
+            title: '角島大橋 — 海の上をまっすぐ渡る',
+            genre: '旅の読み物', duration: '4分45秒',
+            file: '2026-11-07-column-28-kakushima.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: '山口・下関から角島へ、全長1,780mの海上橋。コバルトブルーの海と白い橋がCMの舞台になった理由。'
+        },
+        {
+            title: 'しまなみ海道 — 島々を結ぶ橋の道',
+            genre: '旅の読み物', duration: '4分45秒',
+            file: '2026-11-07-column-29-shimanami.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: '尾道から今治へ約60km、瀬戸内の島々を橋で結ぶ道。来島海峡大橋と多島美の景色を語る。'
+        },
+        {
+            title: 'ニセコパノラマライン — 羊蹄山を望む19km',
+            genre: '旅の読み物', duration: '4分57秒',
+            file: '2026-11-07-column-31-niseko-panorama.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: 'ニセコと蘭越を結ぶ道道66号、約19kmの山岳路。ニセコ・アンヌプリの斜面を縫い、晴れれば「蝦夷富士」羊蹄山と日本海を望む。冬季閉鎖あり。'
+        },
+        {
+            title: '奥多摩周遊道路 — 東京で一番高い道',
+            genre: '旅の読み物', duration: '4分53秒',
+            file: '2026-11-07-column-32-okutama.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: '奥多摩湖から檜原村へ、都道の最高地点・風張峠（1,146m）を越える約19.7km。1973年に都初の有料道路として開通し、1990年に無料化された都内屈指のワインディング。'
+        },
+        {
+            title: '宗谷丘陵・白い道 — ホタテの貝殻でできた道',
+            genre: '旅の読み物', duration: '4分52秒',
+            file: '2026-11-07-column-33-shiroi-michi.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: '宗谷丘陵を東西に横切る約3kmの白い道。その正体は砕いたホタテの貝殻。産業廃棄物だった貝殻を路面材に変えた、稚内の職員のアイデアから生まれた道。'
+        },
+        {
+            title: '蔵王エコーライン — 雪の壁と御釜の道',
+            genre: '旅の読み物', duration: '4分53秒',
+            file: '2026-11-07-column-34-zao-ecoline.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: '宮城と山形を結ぶ全長約26kmの山岳観光道路。春の雪の壁、御釜の火口湖、秋の紅葉と、季節ごとに顔を変える道の物語。'
+        },
+        {
+            title: '箱根ターンパイク — 大観山と関白道',
+            genre: '旅の読み物', duration: '5分16秒',
+            file: '2026-11-07-column-35-hakone-turnpike.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: '1965年開通の観光有料道路。標高差約1,000mを駆け上がり、大観山からは芦ノ湖越しの富士山。秀吉の小田原攻めに由来する「関白道」の別名も持つ。'
+        },
+        {
+            title: '富士山スカイライン — 車で行ける日本最高地点',
+            genre: '旅の読み物', duration: '4分53秒',
+            file: '2026-11-07-column-36-fuji-skyline.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: '富士山南麓を走る全長34.5km。富士宮口五合目（約2,380m）は自家用車で行ける日本最高地点。周遊区間と登山区間の二つの顔を持つ道。'
+        },
+        {
+            title: 'ツーリングの積載 — バッグで積むか、箱で積むか',
+            genre: 'バイク', duration: '4分52秒',
+            file: '2026-11-07-column-37-loading.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: 'シートバッグ、サイドバッグ、タンクバッグ。バイクに荷物を積むためのバッグの種類と選び方。カブの大型リアボックス派にも、キャンプツーリング派にもつながる積載の話。'
+        },
+        {
+            title: 'チェーンとシャフトとベルト — 駆動の選び方',
+            genre: 'バイク', duration: '4分30秒',
+            file: '2026-11-07-column-38-final-drive.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: 'エンジンの力を後輪へ伝える三つの方式。チェーンは軽くて効率的だが手入れが必要、ベルトは静かで清潔、シャフトはほぼ手間いらず。GSのシャフトも含め、走り方で選ぶ駆動の話。'
+        },
+        {
+            title: 'スーパートラップ — 皿で塞がれたマフラーが消えた理由',
+            genre: 'バイク', duration: '4分42秒',
+            file: '2026-11-07-column-39-supertrapp.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: '90年代ストリートカスタムの定番だった、排気口が皿で塞がれたように見えるマフラー。ディスクの枚数で音と特性を変えられた名物パーツが、なぜ見かけなくなったのか。'
+        },
         {
             title: 'カブは世界の“足”になった',
             genre: 'バイク', duration: '3分43秒',
