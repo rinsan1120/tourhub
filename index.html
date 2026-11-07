@@ -160,7 +160,7 @@
 
         <p class="radio-note">
             過去の放送は <a href="https://github.com/rinsan1120/radio-columns/releases" target="_blank" rel="noopener noreferrer">GitHub Releases</a> にも置いています。<br>
-            音声：COEIROINK／アメノちゃん・つくよみちゃん
+            音声：COEIROINK／AI声優-青葉・つくよみちゃん、アメノちゃん・つくよみちゃん
         </p>
     </section>
 
@@ -191,19 +191,123 @@
 <script src="conf/weather-engine.js"></script>
 <script>// 放送データ。新しい放送はこの配列の先頭に追加する。
     const RELEASE_BASE = 'https://github.com/rinsan1120/radio-columns/releases/download/2026-11-06/';
+    const RELEASE_BASE_20261107 = 'https://github.com/rinsan1120/radio-columns/releases/download/2026-11-07/';
     const episodes = [
+        {
+            title: 'カブは世界の“足”になった',
+            genre: 'バイク', duration: '3分43秒',
+            file: '2026-11-07-column-04-kabu-world.mp3',
+            base: RELEASE_BASE_20261107,
+            summary: 'アジア各国で独自進化したドリームやウェーブ、そして模倣車との闘い。カブ系が各国の足になるまで。'
+        },
+        {
+            title: 'エサヌカ線 何もない16kmの直線',
+            genre: '旅の読み物', duration: '2分17秒',
+            file: '2026-11-07-column-05-esanuka.mp3',
+            base: RELEASE_BASE_20261107,
+            summary: '北海道・猿払村の村道。電柱も標識もない直線が、なぜライダーの聖地になったのか。'
+        },
+        {
+            title: 'やまなみハイウェイ 九州の高原を貫く',
+            genre: '旅の読み物', duration: '2分36秒',
+            file: '2026-11-07-column-06-yamanami.mp3',
+            base: RELEASE_BASE_20261107,
+            summary: '湯布院から阿蘇へ、くじゅう連山と飯田高原を抜ける約50km。長者原の直線が愛される理由を語る。'
+        },
+        {
+            title: '鈴鹿8耐はなぜ「8時間」なのか',
+            genre: 'バイク', duration: '3分30秒',
+            file: '2026-11-07-column-07-suzuka8.mp3',
+            base: RELEASE_BASE_20261107,
+            summary: '1978年に始まった真夏の祭典。24時間でも12時間でもなく8時間になった理由と、夜間ゴールの演出の話。'
+        },
+        {
+            title: '日本一高い国道 志賀草津高原ルート',
+            genre: '旅の読み物', duration: '3分29秒',
+            file: '2026-11-07-column-08-shigakusatsu.mp3',
+            base: RELEASE_BASE_20261107,
+            summary: '標高2,172mの国道最高地点を通る山岳路。冬季閉鎖と火山規制と付き合いながら愛される道の物語。'
+        },
+        {
+            title: 'モンキー 遊園地から生まれたバイク',
+            genre: 'バイク', duration: '3分37秒',
+            file: '2026-11-07-column-09-monkey.mp3',
+            base: RELEASE_BASE_20261107,
+            summary: '始まりは多摩テックの遊具。車のトランクに積めるレジャーバイクが、50年愛されるロングセラーになるまで。'
+        },
+        {
+            title: '道の駅はなぜ「駅」になったのか',
+            genre: '旅の読み物', duration: '3分40秒',
+            file: '2026-11-07-column-10-michinoeki.mp3',
+            base: RELEASE_BASE_20261107,
+            summary: '1993年に103駅から始まった制度は、なぜ全国1,200駅超まで増えたのか。休憩所から旅の目的地への変化を追う。'
+        },
+        {
+            title: '白バイはなぜナナハンだったのか',
+            genre: 'バイク', duration: '3分10秒',
+            file: '2026-11-07-column-11-shirobai.mp3',
+            base: RELEASE_BASE_20261107,
+            summary: 'CB750FOURが交通機動隊に採用されて以来の、白バイと大排気量の関係。速さだけではない採用の理由。'
+        },
+        {
+            title: '2ストロークの栄光と終わり',
+            genre: 'バイク', duration: '3分04秒',
+            file: '2026-11-07-column-12-twostroke.mp3',
+            base: RELEASE_BASE_20261107,
+            summary: '軽くて速い2ストが、なぜ表舞台から消えたのか。ナナハンに2ストで挑んだスズキGT750の物語と一緒に。'
+        },
+        {
+            title: 'フェリーという旅 北海道への玄関口',
+            genre: '旅の読み物', duration: '3分00秒',
+            file: '2026-11-07-column-14-ferry.mp3',
+            base: RELEASE_BASE_20261107,
+            summary: '大洗〜苫小牧、新潟〜小樽。走れない時間を船に任せる航路の選び方と、船上で始まるツーリングの文化。'
+        },
+        {
+            title: '磐梯吾妻スカイライン 火山の稜線を走る',
+            genre: '旅の読み物', duration: '2分56秒',
+            file: '2026-11-07-column-15-bandai-azuma.mp3',
+            base: RELEASE_BASE_20261107,
+            summary: 'つばくろ谷の不動沢橋から浄土平の荒涼まで、景色が一変する山岳道路の物語。'
+        },
+        {
+            title: '知床横断道路 世界遺産を貫く峠道',
+            genre: '旅の読み物', duration: '2分49秒',
+            file: '2026-11-07-column-17-shiretoko.mp3',
+            base: RELEASE_BASE_20261107,
+            summary: '羅臼岳を望み、雪の回廊から始まる国道334号。世界自然遺産の核心を貫く道の成り立ちと季節の話。'
+        },
+        {
+            title: '空冷エンジンが消えていく理由',
+            genre: 'バイク', duration: '3分38秒',
+            file: '2026-11-07-column-18-aircooled.mp3',
+            base: RELEASE_BASE_20261107,
+            summary: 'SR400もモンキー50も姿を消した。熱管理と排ガス規制の壁、それでも残る空冷の魅力を技術目線で。'
+        },
+        {
+            title: 'オロロンライン 利尻富士と風車の直線',
+            genre: '旅の読み物', duration: '2分55秒',
+            file: '2026-11-07-column-19-ororon.mp3',
+            base: RELEASE_BASE_20261107,
+            summary: 'サロベツ原野を貫く道道106号。電柱のない20数kmの直線、オトンルイの風車群と日本海の夕日を語る。'
+        },
+        {
+            title: 'UFOライン 四国の天空の道',
+            genre: '旅の読み物', duration: '3分06秒',
+            file: '2026-11-07-column-20-ufo-line.mp3',
+            base: RELEASE_BASE_20261107,
+            summary: 'もとは林道、名前の由来は雄峰と一枚の写真。石鎚山を背景に稜線を走る27kmの町道の話。'
+        },
         {
             title: '水平対向はなぜ100年生き残れたのか',
             genre: 'バイク', duration: '3分40秒',
             file: '2026-11-06-column-01-boxer.mp3',
-            script: '2026-11-06-column-01-boxer-script.md',
             summary: '生産撤退の窮地を救ったのは、パリダカの活躍とファンの購買運動だった。BMWボクサー100年の物語。'
         },
         {
             title: 'ビーナスラインという道の物語',
             genre: '旅の読み物', duration: '4分10秒',
             file: '2026-11-06-column-02-venusline.mp3',
-            script: '2026-11-06-column-02-venusline-script.md',
             summary: '茅野から美ヶ原へ、全長75.2kmの高原道路。名前の由来と4つのエリアの見どころを辿る。'
         }
     ];
@@ -221,13 +325,9 @@
         li.innerHTML =
             '<div class="radio-item-head"><span class="radio-item-title"></span>' +
             '<span class="radio-item-meta">' + ep.genre + ' ・ ' + ep.duration + '</span></div>' +
-            '<p class="radio-item-summary"></p>' +
-            '<div class="radio-item-links"><a class="radio-script-link" target="_blank" rel="noopener noreferrer">台本を読む</a></div>';
+            '<p class="radio-item-summary"></p>';
         li.querySelector('.radio-item-title').textContent = ep.title;
         li.querySelector('.radio-item-summary').textContent = ep.summary;
-        const link = li.querySelector('.radio-script-link');
-        link.href = RELEASE_BASE + ep.script;
-        link.addEventListener('click', (e) => e.stopPropagation());
         li.addEventListener('click', () => playAt(i));
         li.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); playAt(i); } });
         listEl.appendChild(li);
@@ -237,7 +337,7 @@
         if (i < 0 || i >= episodes.length) return;
         current = i;
         const ep = episodes[i];
-        player.src = RELEASE_BASE + ep.file;
+        player.src = (ep.base || RELEASE_BASE) + ep.file;
         player.play();
         nowTitle.textContent = ep.title;
         document.getElementById('mini-title').textContent = ep.title;
