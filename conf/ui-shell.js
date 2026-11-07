@@ -1,7 +1,7 @@
 /* Page navigation and normal-screen panels. Map/GPS/fullscreen engines remain shared. */
 (() => {
     const MOBILE_QUERY = '(max-width: 767px), (pointer: coarse) and (max-width: 1023px)';
-    const SHEET_STATES = ['peek', 'half', 'full'];
+    const SHEET_STATES = ['peek', 'full'];
     const DRAG_THRESHOLD_PX = 8;
     const SNAP_DURATION_MS = 220;
     const VELOCITY_PROJECTION_MS = 180;
@@ -10,7 +10,7 @@
     let drag = null, animation = null, suppressClickUntil = 0;
     function stops() {
         const height = sheetContainer.clientHeight;
-        return [104, Math.max(104, height * .46), Math.max(104, height * (innerHeight <= 500 ? 1 : .72))];
+        return [88, Math.max(88, height * .72)];
     }
     function paintHeight(height) {
         sheetContainer.style.setProperty('--sheet-height', `${height}px`);
@@ -71,7 +71,7 @@
             tab.tabIndex = selected ? 0 : -1;
             document.getElementById(tab.getAttribute('aria-controls')).hidden = !selected;
         });
-        if (mobile.matches && expand && panel.dataset.sheet === 'peek') setSheet('half', true);
+        if (mobile.matches && expand && panel.dataset.sheet === 'peek') setSheet('full', true);
     }
     tabs.forEach(tab => {
         tab.addEventListener('click', () => selectPanel(tab.dataset.panel));
@@ -110,19 +110,17 @@
         if (performance.now() < suppressClickUntil) { event.preventDefault(); return; }
         setSheet(SHEET_STATES[(SHEET_STATES.indexOf(panel.dataset.sheet) + 1) % SHEET_STATES.length], true);
     });
-    function beginDrag(y, fromBody) {
+    function beginDrag(y) {
         if (!mobile.matches || isMapFullscreen()) return;
         suppressClickUntil = 0;
         cancelAnimation();
-        drag = { y, lastY:y, time:performance.now(), height:panel.getBoundingClientRect().height, velocity:0, active:false, fromBody };
+        drag = { y, lastY:y, time:performance.now(), height:panel.getBoundingClientRect().height, velocity:0, active:false };
     }
     function moveDrag(y, event) {
         if (!drag) return;
         const delta = drag.y - y;
         if (!drag.active) {
             if (Math.abs(delta) < DRAG_THRESHOLD_PX) return;
-            // Native content scrolling owns upward gestures and gestures away from its top.
-            if (drag.fromBody && (sheetBody.scrollTop > 0 || delta > 0)) { drag = null; return; }
             drag.active = true;
             sheetBody.inert = false;
             panel.classList.add('is-dragging');
@@ -132,7 +130,7 @@
         drag.velocity = (drag.lastY - y) / Math.max(1, now - drag.time);
         drag.lastY = y; drag.time = now;
         const heights = stops();
-        paintHeight(Math.max(heights[0], Math.min(heights[2], drag.height + delta)));
+        paintHeight(Math.max(heights[0], Math.min(heights[1], drag.height + delta)));
     }
     function endDrag(cancelled = false) {
         if (!drag) return;
@@ -148,16 +146,15 @@
     }
     handle.addEventListener('pointerdown', event => {
         if (event.pointerType === 'touch' || !event.isPrimary || event.button !== 0) return;
-        beginDrag(event.clientY, false); handle.setPointerCapture(event.pointerId);
+        beginDrag(event.clientY); handle.setPointerCapture(event.pointerId);
     });
     handle.addEventListener('pointermove', event => { if (event.pointerType !== 'touch') moveDrag(event.clientY, event); });
     handle.addEventListener('pointerup', event => { if (event.pointerType !== 'touch') endDrag(); });
     handle.addEventListener('pointercancel', () => endDrag(true));
-    [handle, sheetBody].forEach(surface => {
+    [handle].forEach(surface => {
         surface.addEventListener('touchstart', event => {
             if (event.touches.length !== 1) { endDrag(true); return; }
-            if (surface === sheetBody && event.target.closest('a,button,input,select,textarea,label,summary')) return;
-            beginDrag(event.touches[0].clientY, surface === sheetBody);
+            beginDrag(event.touches[0].clientY);
         }, { passive:true });
         surface.addEventListener('touchmove', event => {
             if (event.touches.length !== 1) { endDrag(true); return; }

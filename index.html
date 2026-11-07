@@ -7,7 +7,7 @@
     <title>Rin’s Touring Hub</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <link rel="stylesheet" href="style.css?v=20261107-radio">
+    <link rel="stylesheet" href="style.css?v=20261107-map-ui">
     <style>
     .hub-navigation a.hub-nav-link { display:flex; align-items:center; justify-content:center; gap:9px; padding:0 22px; border-bottom:3px solid transparent; color:#dae5dc; font-weight:600; min-height:48px; text-decoration:none; }
     @media (hover:hover) { .hub-navigation a.hub-nav-link:hover { background:#ffffff12; } }
@@ -141,6 +141,7 @@
         <h2 class="hub-screen-title" tabindex="-1">旅のツール</h2>
         <h2>旅の計画</h2>
         <div id="category-container">読み込み中...</div>
+    <details id="updates-details" class="hub-updates"><summary>更新履歴</summary><ul id="dynamic-update-list" class="update-list"></ul></details>
     </section>
 
     <section id="screen-radio" class="hub-screen radio-wrap" aria-label="ラジオ" hidden>
@@ -160,16 +161,6 @@
 
     </section>
 
-    <div class="hub-utility-links">
-    <div class="spot-contribution">
-        <a href="https://docs.google.com/forms/d/e/1FAIpQLSdehrB_duWjjHXZBbfdP06jWxHQDwBeP20cQBR3OMX3DVtLZw/viewform?usp=sharing&ouid=106460317115165638365"
-           target="_blank"
-           class="spot-contribution-link">
-            <i class="fa-solid fa-plus"></i> 地図にスポットを追加する <span>（Googleフォーム）</span>
-        </a>
-    </div>
-</div>
-    <details id="updates-details" class="hub-updates"><summary>更新履歴</summary><ul id="dynamic-update-list" class="update-list"></ul></details>
     </div>
 </main>
 
@@ -378,7 +369,7 @@
     document.addEventListener('hubscreenchange', syncMini);
 
 </script>
-<script src="conf/ui-shell.js?v=20261107-radio"></script>
+<script src="conf/ui-shell.js?v=20261107-map-ui"></script>
 
 <script>
     // 周辺検索の読み込み
