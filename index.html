@@ -146,7 +146,14 @@
 
     <section id="screen-radio" class="hub-screen radio-wrap" aria-label="ラジオ" hidden>
         <h2 class="hub-screen-title" tabindex="-1">ラジオ</h2>
-        <p class="radio-intro">バイクと道にまつわるコラム対談です。エピソードを選ぶと再生が始まり、以降は3秒間隔でシャッフル再生します。</p>
+        <p class="radio-intro">バイクと道にまつわるコラム対談です。エピソードを選ぶと再生が始まり、以降は3秒間隔でシャッフル再生します。シャッフル再生はタブの中だけで行われます。</p>
+
+        <div class="radio-tabs" role="tablist" aria-label="ラジオの分類">
+            <button type="button" class="radio-tab active" id="tab-bike" role="tab" aria-selected="true">バイク</button>
+            <button type="button" class="radio-tab" id="tab-other" role="tab" aria-selected="false">その他</button>
+        </div>
+
+        <ol class="radio-list" id="episode-list-other" hidden></ol>
 
         <div class="radio-player">
             <p class="radio-now"><span class="radio-now-label">再生中</span><span id="now-title">未選択</span></p>
@@ -181,6 +188,57 @@
     const RELEASE_BASE_20261107 = 'https://github.com/rinsan1120/radio-columns/releases/download/2026-11-07/';
     const RELEASE_BASE_20261108 = 'https://github.com/rinsan1120/radio-columns/releases/download/2026-11-08/';
     const RELEASE_BASE_20261108B = 'https://github.com/rinsan1120/radio-columns/releases/download/2026-11-08-2/';
+    const episodesOther = [
+        {
+            title: 'Museの活用事例、みんな何に使っている？',
+            genre: 'AI・Muse', duration: '3分42秒',
+            file: '2026-11-06-column-03-muse.mp3',
+            base: RELEASE_BASE,
+            summary: 'noteに集まる個人の活用事例を材料に、「作ってみた」の実例と使いどころを対談で深掘りする。', tab: 'other'
+        },
+        {
+            title: '声にキャラクターが宿るまで 初音ミクと音声合成',
+            genre: 'AI・Muse', duration: '2分54秒',
+            file: '2026-11-07-column-13-miku-voice.mp3',
+            base: RELEASE_BASE_20261107,
+            summary: '2007年の初音ミクが開いた「合成音声に人格を見る」文化。', tab: 'other'
+        },
+        {
+            title: 'ローカルLLM 自宅で動かすAIの広がり',
+            genre: 'AI・Muse', duration: '3分12秒',
+            file: '2026-11-07-column-16-local-llm.mp3',
+            base: RELEASE_BASE_20261107,
+            summary: 'クラウドに送らず手元で動かすAIが、普通のノートPCでも実用になってきた。', tab: 'other'
+        },
+        {
+            title: 'COEIROINKとVOICEVOX — 無料の音声合成がここまで来た',
+            genre: 'AI・Muse', duration: '4分54秒',
+            file: '2026-11-07-column-26-coeiroink-voicevox.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: 'ラジオの対談の声そのものを作る道具の話。ローカルで動く無料TTSがどうやってここまで来たのか。', tab: 'other'
+        },
+        {
+            title: 'Claude Codeに声で話しかける開発',
+            genre: 'AI・Muse', duration: '4分54秒',
+            file: '2026-11-07-column-27-voice-dev.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: '音声で指示を出し、進捗を合成音声で受け取る。ローカルTTSを開発の相棒にする実例集。', tab: 'other'
+        },
+        {
+            title: '個人開発×AI — 1人でアプリを作る時代',
+            genre: 'AI・Muse', duration: '4分48秒',
+            file: '2026-11-07-column-30-indie-ai.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: 'Vercel＋Stripe＋AIで外国人向け日本語学習アプリを個人開発した話。', tab: 'other'
+        },
+        {
+            title: 'コードを書かずにカレンダーアプリを作った10日間',
+            genre: 'AI・Muse', duration: '5分16秒',
+            file: '2026-11-07-column-40-calendar-app.mp3',
+            base: RELEASE_BASE_20261108,
+            summary: 'コードを書けないライターが、Claude CodeだけでiPhoneアプリを10日で作った話。', tab: 'other'
+        },
+    ];
     const episodes = [
         {
             title: '八幡平アスピーテライン — 国内最長の雪の回廊',
@@ -484,7 +542,7 @@
     let remaining = [], history = [], forward = [], autoTimer = null;
 
     function shuffleRemaining(exclude) {
-        const order = episodes.map((_, i) => i).filter(i => i !== exclude);
+        const order = currentList.map((_, i) => i).filter(i => i !== exclude);
         for (let i = order.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [order[i], order[j]] = [order[j], order[i]];
@@ -495,7 +553,8 @@
         if (autoTimer !== null) clearTimeout(autoTimer);
         autoTimer = null;
     }
-    function selectEpisode(i) {
+    function selectEpisode(i, listName) {
+        if (listName) activeList = listName;
         cancelAutoAdvance();
         if (current >= 0 && current !== i) history.push(current);
         forward = [];
@@ -522,32 +581,63 @@
         playAt(history.pop());
     }
 
-    episodes.forEach((ep, i) => {
+    let activeList = 'bike';
+    let currentList = episodes;
+
+    function renderList(list, listEl, listName) {
+        list.forEach((ep, i) => {
         const li = document.createElement('li');
         li.className = 'radio-item';
         li.setAttribute('role', 'button');
         li.setAttribute('tabindex', '0');
         li.innerHTML =
-            '<div class="radio-item-head"><span class="radio-item-title"></span>' +
-            '<span class="radio-item-meta">' + ep.genre + ' ・ ' + ep.duration + '</span></div>' +
-            '<p class="radio-item-summary"></p>';
+                '<div class="radio-item-head"><span class="radio-item-title"></span>' +
+                '<span class="radio-item-meta">' + ep.genre + ' ・ ' + ep.duration + '</span></div>' +
+                '<p class="radio-item-summary"></p>';
         li.querySelector('.radio-item-title').textContent = ep.title;
         li.querySelector('.radio-item-summary').textContent = ep.summary;
-        li.addEventListener('click', () => selectEpisode(i));
-        li.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectEpisode(i); } });
+        li.addEventListener('click', () => selectEpisode(i, listName));
+        li.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectEpisode(i, listName); } });
         listEl.appendChild(li);
-    });
+        });
+    }
+    renderList(episodes, listEl, 'bike');
+    renderList(episodesOther, document.getElementById('episode-list-other'), 'other');
+
+    const tabBike = document.getElementById('tab-bike');
+    const tabOther = document.getElementById('tab-other');
+    const listOtherEl = document.getElementById('episode-list-other');
+    function switchTab(name) {
+        const toOther = name === 'other';
+        if ((activeList === 'other') === toOther) return;
+        activeList = name;
+        currentList = toOther ? episodesOther : episodes;
+        tabBike.classList.toggle('active', !toOther);
+        tabOther.classList.toggle('active', toOther);
+        tabBike.setAttribute('aria-selected', String(!toOther));
+        tabOther.setAttribute('aria-selected', String(toOther));
+        listEl.hidden = toOther;
+        listOtherEl.hidden = !toOther;
+        remaining = current >= 0 && ((currentList === episodes) === !toOther) ? remaining : [];
+        if (current >= 0) remaining = shuffleRemaining(current);
+        document.querySelectorAll('.radio-item').forEach(el => el.classList.remove('active'));
+        const activeEl = (toOther ? listOtherEl : listEl).children[current];
+        if (current >= 0 && activeEl) activeEl.classList.add('active');
+    }
+    tabBike.addEventListener('click', () => switchTab('bike'));
+    tabOther.addEventListener('click', () => switchTab('other'));
 
     function playAt(i) {
-        if (i < 0 || i >= episodes.length) return;
+        if (i < 0 || i >= currentList.length) return;
         current = i;
-        const ep = episodes[i];
+        const ep = currentList[i];
         player.src = (ep.base || RELEASE_BASE) + ep.file;
         player.play();
         nowTitle.textContent = ep.title;
         document.getElementById('mini-title').textContent = ep.title;
         syncMini();
-        document.querySelectorAll('.radio-item').forEach((el, j) => {
+        const activeListEl = activeList === 'other' ? listOtherEl : listEl;
+        activeListEl.querySelectorAll('.radio-item').forEach((el, j) => {
             el.classList.toggle('active', j === i);
         });
         if ('mediaSession' in navigator) {
