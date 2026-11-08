@@ -1225,7 +1225,10 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
     .radio-player audio { width: 100%; }
     .radio-controls { display: flex; gap: 10px; margin-top: 10px; }
     .radio-controls button { flex: 1; min-height: 44px; border: 1px solid var(--hub-line); border-radius: 8px; background: var(--hub-paper); color: var(--hub-ink); font-size: .9rem; cursor: pointer; }
-    .radio-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+    .radio-tabs { display: flex; gap: 8px; margin: 0 0 16px; }
+.radio-tab { border: 1px solid var(--hub-line); background: #fff; color: var(--hub-ink); border-radius: 999px; padding: 8px 18px; font-size: .95rem; cursor: pointer; }
+.radio-tab.active { background: var(--hub-ink); color: #fff; border-color: var(--hub-ink); }
+.radio-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
     .radio-item { border: 1px solid var(--hub-line); border-radius: 10px; padding: 14px 16px; background: #fff; cursor: pointer; }
     .radio-item.active { border-color: var(--hub-sand); background: #f7f3e8; }
     .radio-item-head { display: flex; align-items: baseline; gap: 10px; }
