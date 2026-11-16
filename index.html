@@ -945,10 +945,68 @@
         }
         return order;
     }
+    let gapPending = false, gapWatchdog = null, resumePending = false;
+    // 画面オフやバックグラウンドではタイマーが止められることがあるため、
+    // 話と話の間の3秒は「無音クリップの再生」で作り、終了イベントで次へ進む。
+    const gapPlayer = new Audio();
+    gapPlayer.preload = 'auto';
+    gapPlayer.src = makeSilenceUrl(AUTO_ADVANCE_DELAY_MS / 1000);
+    function makeSilenceUrl(seconds) {
+        const rate = 22050, len = Math.floor(rate * seconds);
+        const header = new ArrayBuffer(44), v = new DataView(header);
+        const wstr = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+        wstr(0, 'RIFF'); v.setUint32(4, 36 + len * 2, true); wstr(8, 'WAVE'); wstr(12, 'fmt ');
+        v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+        v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+        wstr(36, 'data'); v.setUint32(40, len * 2, true);
+        return URL.createObjectURL(new Blob([header, new Int16Array(len)], { type: 'audio/wav' }));
+    }
     function cancelAutoAdvance() {
         if (autoTimer !== null) clearTimeout(autoTimer);
         autoTimer = null;
+        if (gapWatchdog !== null) clearTimeout(gapWatchdog);
+        gapWatchdog = null;
+        gapPending = false;
+        if (!gapPlayer.paused) gapPlayer.pause();
+        try { gapPlayer.currentTime = 0; } catch (e) {}
     }
+    function finishGap() {
+        if (!gapPending) return;
+        gapPending = false;
+        if (autoTimer !== null) clearTimeout(autoTimer);
+        autoTimer = null;
+        if (gapWatchdog !== null) clearTimeout(gapWatchdog);
+        gapWatchdog = null;
+        nextEpisode();
+    }
+    function startAutoAdvance() {
+        cancelAutoAdvance();
+        if (current < 0) return;
+        gapPending = true;
+        const gp = gapPlayer.play();
+        if (gp && gp.catch) gp.catch(() => {
+            // 無音クリップを再生できない環境では、従来のタイマー方式に倒す
+            if (gapPending && autoTimer === null) autoTimer = setTimeout(() => { autoTimer = null; finishGap(); }, AUTO_ADVANCE_DELAY_MS);
+        });
+        // 無音クリップの終了を取りこぼした場合の保険
+        gapWatchdog = setTimeout(() => { gapWatchdog = null; finishGap(); }, AUTO_ADVANCE_DELAY_MS + 5000);
+        syncMini();
+    }
+    gapPlayer.addEventListener('ended', finishGap);
+    gapPlayer.addEventListener('error', () => {
+        if (gapPending && autoTimer === null) autoTimer = setTimeout(() => { autoTimer = null; finishGap(); }, AUTO_ADVANCE_DELAY_MS);
+    });
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) return;
+        if (gapPending && gapPlayer.paused && !gapPlayer.ended) {
+            const gp = gapPlayer.play();
+            if (gp && gp.catch) gp.catch(() => {});
+        }
+        if (resumePending && current >= 0 && player.paused && !player.ended) {
+            const pp = player.play();
+            if (pp && pp.catch) pp.catch(() => {});
+        }
+    });
     function selectEpisode(i, listName) {
         if (listName) activeList = listName;
         cancelAutoAdvance();
@@ -1028,7 +1086,8 @@
         current = i;
         const ep = currentList[i];
         player.src = (ep.base || RELEASE_BASE) + ep.file;
-        player.play();
+        const pp = player.play();
+        if (pp && pp.catch) pp.catch(() => { resumePending = true; });
         nowTitle.textContent = ep.title;
         document.getElementById('mini-title').textContent = ep.title;
         syncMini();
@@ -1048,10 +1107,8 @@
     document.getElementById('btn-prev').addEventListener('click', previousEpisode);
     document.getElementById('btn-next').addEventListener('click', nextEpisode);
     player.addEventListener('ended', () => {
-        cancelAutoAdvance();
         if (current < 0) return;
-        autoTimer = setTimeout(() => { autoTimer = null; nextEpisode(); }, AUTO_ADVANCE_DELAY_MS);
-        syncMini();
+        startAutoAdvance();
     });
     if ('mediaSession' in navigator) {
         navigator.mediaSession.setActionHandler('previoustrack', previousEpisode);
@@ -1069,7 +1126,7 @@
         const visible = current >= 0 && document.getElementById('screen-radio').hidden;
         mini.hidden = !visible;
         document.body.classList.toggle('has-radio-mini', visible);
-        const active = !player.paused || autoTimer !== null;
+        const active = !player.paused || gapPending;
         miniToggle.textContent = active ? '❚❚' : '▶';
         miniToggle.setAttribute('aria-label', active ? '一時停止' : '再生');
         document.getElementById('btn-prev').disabled = history.length === 0;
@@ -1077,13 +1134,13 @@
         document.getElementById('mini-next').disabled = current < 0;
     }
     miniToggle.addEventListener('click', () => {
-        if (autoTimer !== null) { cancelAutoAdvance(); syncMini(); }
+        if (gapPending) { cancelAutoAdvance(); syncMini(); }
         else if (player.paused) player.play();
         else player.pause();
     });
     document.getElementById('mini-next').addEventListener('click', nextEpisode);
-    player.addEventListener('play', () => { cancelAutoAdvance(); syncMini(); });
-    player.addEventListener('pause', () => { if (autoTimer !== null) cancelAutoAdvance(); syncMini(); });
+    player.addEventListener('play', () => { cancelAutoAdvance(); resumePending = false; syncMini(); });
+    player.addEventListener('pause', () => { syncMini(); });
     document.addEventListener('hubscreenchange', syncMini);
     syncMini();
 
